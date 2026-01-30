@@ -1,0 +1,89 @@
+/* Sidebar container */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: linear-gradient(180deg, #f8fafc, #e5e7eb);
+  color: #1e293b;
+  padding: 16px 12px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-header-icon {
+  font-size: 18px;
+}
+
+.sidebar-title {
+  font-size: 15px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* Menu list */
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Menu item */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;        /* 🔼 slightly bigger text */
+  font-weight: 500;
+  color: #1e293b;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Hover effect */
+.menu-item:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+  transform: translateX(4px);
+}
+
+/* Active menu */
+.menu-item.active {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Active indicator */
+.menu-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  background-color: #2563eb;
+  border-radius: 4px;
+}
+
+/* Menu icon */
+.menu-icon {
+  font-size: 14px;
+  color: #475569;
+}
+
+.menu-text {
+  white-space: nowrap;
+}

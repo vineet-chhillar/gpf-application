@@ -1,0 +1,314 @@
+.container {
+  margin: 0px auto;
+  padding: 25px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  font-family: "Segoe UI", sans-serif;
+  }
+
+h2 {
+  margin: 0;            /* 🔑 kill defaults */
+  padding: 6px 0;       /* controlled spacing */
+  text-align: center;
+  color: #2c3e50;
+}
+
+
+h3 {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  color: #34495e;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 5px;
+}
+
+hr {
+  margin: 2px 0;
+  border: none;
+  border-top: 1px dashed #ccc;
+}
+
+/* GRID LAYOUT */
+.container input,
+.container textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  transition: 0.2s ease-in-out;
+}
+
+.container textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #555;
+}
+
+/* INPUT FOCUS */
+input:focus,
+textarea:focus {
+  border-color: #1976d2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(25,118,210,0.15);
+}
+
+/* CHECKBOX */
+label input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+/* BUTTON */
+button {
+  background: #1976d2;
+  color: #fff;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.25s;
+}
+
+button:hover {
+  background: #125ea7;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* RESPONSIVE */
+.container {
+  max-width: 1200px;          /* optional but recommended */
+  margin: 0 auto;
+  padding: 25px;
+}
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+}
+
+
+input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+/* ===== FORM COMPACT OVERRIDES ===== */
+
+.form-label {
+  margin-bottom: 1px;
+}
+
+.form-input { margin-bottom: 0; }
+
+.form-row-center {
+  grid-column: 1 / -1;   /* 🔑 spans full grid */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0;
+}
+
+
+.form-label { margin-bottom: 2px; }
+
+
+.form-group {
+  min-width: 220px;
+}
+
+.form-row-center {
+  gap: 10px;
+  margin: 8px auto;
+  align-items: center;
+}
+
+.page-header {
+  line-height: 1.4;
+  padding-bottom: 14px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;          /* 🔑 allows wrapping */
+}
+
+@media (max-width: 1024px) {
+  .form-row .form-group {
+    flex: 1 1 calc(20% - 12px);   /* 2 per row */
+  }
+}
+
+.form-group.full-width {
+  flex: 1 1 100%;
+}
+.form-section {
+  margin-bottom: 12px;
+}
+.form-row {
+  grid-column: 1 / -1;
+}
+/* When textarea has content */
+/* ===== BASE INPUT STYLE ===== */
+.form-input {
+  background-color: #a6c8eb;     /* ✨ editable default */
+  border: 1px solid #cbd5e1;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* ===== READ-ONLY / SYSTEM FIELDS ===== */
+.form-input[readonly] {
+  background-color: #f1f5f9;     /* 🔒 system data */
+  color: #475569;
+  cursor: not-allowed;
+}
+
+/* ===== FOCUS STATE ===== */
+.form-input:focus {
+  background-color: #eef2ff;     /* 🎯 active edit */
+  border-color: #2563eb;
+  outline: none;
+}
+
+/* ===== DISABLED (if any) ===== */
+.form-input:disabled {
+  background-color: #e5e7eb;
+  cursor: not-allowed;
+}
+.error-summary {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #7f1d1d;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.error-summary ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+/* ===== FORM GRID ===== */
+.rule-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 14px 18px;
+  align-items: end;
+}
+
+/* ===== INPUT BASE ===== */
+.rule-input {
+  width: 100%;
+  max-width: 220px;     /* 🔑 prevents wide inputs */
+  padding: 7px 9px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #f9fafb;
+}
+
+/* Slightly wider field */
+.rule-input.wide {
+  max-width: 320px;
+}
+
+/* Smaller numeric fields */
+.rule-input.small {
+  max-width: 140px;
+  text-align: right;
+}
+
+/* ===== FORM GROUP ===== */
+.rule-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== CHECKBOX ===== */
+.checkbox-group {
+  grid-column: span 2;
+}
+
+.rule-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .rule-form {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .rule-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+/* ===== ACTION ROW ===== */
+.rule-action-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+  margin-top: 2px;
+}
+
+/* ===== BUTTON ===== */
+.rule-btn {
+  min-width: 160px;
+  padding: 10px 26px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-align: center;
+
+  background: linear-gradient(135deg, #536caf, #3f51b5);
+  color: #ffffff;
+
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+
+  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.35);
+  transition: all 0.25s ease;
+}
+
+/* ===== HOVER ===== */
+.rule-btn:hover {
+  background: linear-gradient(135deg, #3f51b5, #2c3e9f);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(63, 81, 181, 0.45);
+}
+
+/* ===== ACTIVE (CLICK) ===== */
+.rule-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(63, 81, 181, 0.3);
+}
+
+/* ===== DISABLED (FUTURE USE) ===== */
+.rule-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}

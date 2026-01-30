@@ -1,0 +1,152 @@
+/* Labels */
+/* Label */
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+/* Input */
+.form-input {
+  width: 100%;              /* full width of form-group */
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+
+.form-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+}
+
+/* Buttons (base) */
+.btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+/* Primary */
+.btn-primary {
+  background-color: #4b1885;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+/* Secondary */
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-secondary:hover {
+  background-color: #e2e8f0;
+}
+
+/* Danger (for later) */
+.btn-danger {
+  background-color: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+/* Centered single row */
+/* Whole row centered */
+.form-row-center {
+  display: flex;
+  align-items: flex-end;     /* aligns checkbox text with input */
+  justify-content: center;
+  gap: 30px;
+  margin: 20px auto;
+  width: 100%;
+}
+
+/* Input group */
+.form-group {
+  display: flex;
+  flex-direction: column;   /* label above input */
+  min-width: 260px;         /* 🔑 prevents small input */
+}
+
+/* Checkbox style */
+/* Checkbox */
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  margin-bottom: 4px;       /* aligns baseline with input */
+}
+
+.form-checkbox input {
+  cursor: pointer;
+}
+.form-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;   /* 🔑 center */
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 20px;
+}
+
+.form-title-icon {
+  font-size: 20px;
+}
+
+.form-title-text {
+  letter-spacing: 0.3px;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;      /* 🔑 center */
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 25px;
+  padding-bottom: 8px;
+  position: relative;
+  cursor: default;
+}
+
+/* Icon */
+.page-header-icon {
+  font-size: 24px;
+}
+
+/* Accent underline */
+.page-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background-color: #2563eb;
+  border-radius: 2px;
+}
+
+/* Subtle hover */
+.page-header:hover {
+  color: #1e293b;
+}

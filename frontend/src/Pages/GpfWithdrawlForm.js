@@ -1,0 +1,554 @@
+import React, { useState, useEffect } from "react";
+import api from "../api/axios";
+import "../styles/GpfWithdrawlForm.css";
+import { useRef } from "react";
+const GpfWithdrawlForm = () => {
+
+  /* ================= API DATA ================= */
+  const [masterApiData, setMasterApiData] = useState(null);
+  const [detailsApiData, setDetailsApiData] = useState(null);
+
+  /* ================= USER INPUT ================= */
+  const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0]; // yyyy-MM-dd
+};
+const [errors, setErrors] = useState({});
+
+    const [userInput, setUserInput] = useState({
+    concernedofficername: "",
+    amountofwithdrawlrequested: "",
+    purposeofwithdrawl: "",
+    withdrawlrule: "",
+    ispriorwithdrawlforsamepurpose: false,
+    priorwithdrawlamount: "",
+    priorwithdrawlfinyear: "",
+    dateofapplication: getTodayDate()
+  });
+  
+  const getLastFinancialYearEndDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth(); // 0 = Jan
+
+  // If before April, FY belongs to previous year
+  const fyEndYear = month < 3 ? year - 1 : year;
+
+  return `${fyEndYear}-03-31`; // yyyy-MM-dd
+};
+const getCurrentFinancialYearStartDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth(); // 0 = Jan
+
+  // If Jan–Mar → FY started last year
+  const fyStartYear = month < 3 ? year - 1 : year;
+
+  return `${fyStartYear}-04-01`; // yyyy-MM-dd
+};
+const [withdrawalRules, setWithdrawalRules] = useState([]);
+
+const didLoadRef = useRef(false);
+
+const DEFAULT_MASTER_DATA = {
+  empcode: "EMP005",
+  empname: "Test Employee",
+  designation: "Clerk",
+  empdivision: "Accounts",
+  empmobileno: "9876543210",
+  empemailid: "test.employee@gov.in",
+  dateofjoining: "2018-04-01",
+  dateofsuperannuation: "2038-03-31"
+};
+
+const DEFAULT_DETAILS_DATA = {
+  basicpay: 45000,
+  outstandingbalance: 250000,
+  totalcreditamount: 54000,
+  refundafterdateofoutstandingbalance: 260000,
+  totalwithdrawlamount: 20000,
+  netbalance: 34000
+};
+
+  /* ================= LOAD DATA ================= */
+  useEffect(() => {
+  if (didLoadRef.current) return;
+  didLoadRef.current = true;
+
+  const loadData = async () => {
+    try {
+      {/*const masterRes = await api.get("/gpf/master");
+      const detailsRes = await api.get("/gpf/details");
+
+      setMasterApiData(masterRes.data);
+      setDetailsApiData(detailsRes.data);*/}
+      // ✅ MOCK DEFAULT DATA
+      setMasterApiData(DEFAULT_MASTER_DATA);
+      setDetailsApiData(DEFAULT_DETAILS_DATA);
+      // ================= WITHDRAWAL RULES =================
+      // When API is ready, uncomment this:
+       const rulesRes = await api.get("/gpf/withdrawal-rules/active");
+       
+       setWithdrawalRules(rulesRes.data);
+
+      // TEMP MOCK (API STRUCTURE FINALIZED)
+      
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load employee data");
+    }
+  };
+
+  loadData();
+}, []);
+
+  /* ================= HANDLERS ================= */
+  const handleUserChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setUserInput(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  const buildGpfAccountNo = (empcode) => `GPF-ACC-${empcode}`;
+const ONLY_CHARS_REGEX = /^[A-Za-z ]+$/;
+const validateForm = () => {
+  const newErrors = {};
+
+  // ---- MASTER ----
+  if (!userInput.concernedofficername.trim()) {
+  newErrors.concernedofficername = "Concerned Officer is required";
+} else if (userInput.concernedofficername.length > 100) {
+  newErrors.concernedofficername =
+    "Concerned Officer name cannot exceed 100 characters";
+} else if (!ONLY_CHARS_REGEX.test(userInput.concernedofficername)) {
+  newErrors.concernedofficername =
+    "Concerned Officer name must contain only alphabets and spaces";
+}
+
+
+  // ---- DETAILS (USER INPUT) ----
+  const amount = Number(userInput.amountofwithdrawlrequested);
+
+  if (!amount || amount <= 0) {
+    newErrors.amountofwithdrawlrequested =
+      "Withdrawal amount must be greater than 0";
+  } else if (amount > Number(detailsApiData.netbalance)) {
+    newErrors.amountofwithdrawlrequested =
+      "Withdrawal amount cannot exceed net balance";
+  }
+
+  if (!userInput.purposeofwithdrawl.trim()) {
+    newErrors.purposeofwithdrawl = "Purpose of withdrawal is required";
+  } else if (userInput.purposeofwithdrawl.length < 5) {
+    newErrors.purposeofwithdrawl =
+      "Purpose must be at least 5 characters";
+  }
+
+  if (!userInput.withdrawlrule.trim()) {
+    newErrors.withdrawlrule = "Withdrawal rule is required";
+  }
+
+  // ---- PRIOR WITHDRAWAL ----
+  if (userInput.ispriorwithdrawlforsamepurpose) {
+    if (
+      userInput.priorwithdrawlamount === "" ||
+      Number(userInput.priorwithdrawlamount) < 0
+    ) {
+      newErrors.priorwithdrawlamount =
+        "Valid prior withdrawal amount required";
+    }
+
+    if (!/^\d{4}-\d{2}$/.test(userInput.priorwithdrawlfinyear)) {
+      newErrors.priorwithdrawlfinyear =
+        "Financial year must be in YYYY-YY format";
+    }
+  }
+
+  // ---- DATE OF APPLICATION ----
+  if (!userInput.dateofapplication) {
+    newErrors.dateofapplication = "Date of application is required";
+  } else if (userInput.dateofapplication > getTodayDate()) {
+    newErrors.dateofapplication =
+      "Date of application cannot be in the future";
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+    return;
+  }
+    try {
+      if (!masterApiData || !detailsApiData) {
+        alert("Required data not loaded");
+        return;
+      }
+
+      const payload = {
+        master: {
+          ...masterApiData,
+          concernedofficername: userInput.concernedofficername
+        },
+        details: {
+          ...detailsApiData,
+
+          gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
+
+          amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
+          purposeofwithdrawl: userInput.purposeofwithdrawl,
+          withdrawlrule: userInput.withdrawlrule,
+          ispriorwithdrawlforsamepurpose:
+            userInput.ispriorwithdrawlforsamepurpose,
+
+          priorwithdrawlamount:
+            userInput.ispriorwithdrawlforsamepurpose
+              ? userInput.priorwithdrawlamount
+              : 0,
+
+          priorwithdrawlfinyear:
+            userInput.ispriorwithdrawlforsamepurpose
+              ? userInput.priorwithdrawlfinyear
+              : "",
+
+          dateofapplication: userInput.dateofapplication,
+          status: { id: 1 }
+        }
+      };
+
+      await api.post("/gpf-withdrawl/save", payload);
+      alert("✅ GPF Withdrawal Application submitted successfully");
+
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || "Error while saving");
+    }
+  };
+
+  /* ================= JSX ================= */
+  return (
+    <div className="container">
+      <h2>GPF Withdrawal Application</h2>
+
+      {/* ================= EMPLOYEE DETAILS ================= */}
+      <h3>Employee Details</h3>
+      <div className="form-section">
+
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Employee Code</label>
+            <input className="form-input" value={masterApiData?.empcode || ""} readOnly />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Employee Name</label>
+            <input className="form-input" value={masterApiData?.empname || ""} readOnly />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Designation</label>
+            <input className="form-input" value={masterApiData?.designation || ""} readOnly />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Division</label>
+            <input className="form-input" value={masterApiData?.empdivision || ""} readOnly />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Mobile No</label>
+            <input className="form-input" value={masterApiData?.empmobileno || ""} readOnly />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email ID</label>
+            <input className="form-input" value={masterApiData?.empemailid || ""} readOnly />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Date of Joining</label>
+            <input className="form-input" value={masterApiData?.dateofjoining || ""} readOnly />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Date of Superannuation</label>
+            <input className="form-input" value={masterApiData?.dateofsuperannuation || ""} readOnly />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Concerned Officer</label>
+            <input
+              className="form-input"
+              name="concernedofficername"
+              value={userInput.concernedofficername}
+              onChange={handleUserChange}
+            />
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      {/* ================= WITHDRAWAL DETAILS ================= */}
+      {/* ================= WITHDRAWAL DETAILS ================= */}
+<h3>Withdrawal Details</h3>
+<div className="form-section">
+
+  {/* ---- SYSTEM / API DATA (READ ONLY) ---- */}
+  <div className="form-row">
+    <div className="form-group">
+      <label className="form-label">GPF Account No</label>
+      <input
+        className="form-input"
+        value={
+          masterApiData
+            ? buildGpfAccountNo(masterApiData.empcode)
+            : ""
+        }
+        readOnly
+      />
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">Basic Pay</label>
+      <input
+        className="form-input"
+        value={detailsApiData?.basicpay || ""}
+        readOnly
+      />
+    </div>
+
+    <div className="form-group">
+  <label className="form-label">Outstanding Balance As On</label>
+  <input
+    className="form-input"
+    type="date"
+    value={getLastFinancialYearEndDate()}
+    readOnly
+  />
+</div>
+
+
+    <div className="form-group">
+      <label className="form-label">Outstanding Balance</label>
+      <input
+        className="form-input"
+        value={detailsApiData?.outstandingbalance || ""}
+        readOnly
+      />
+    </div>
+  </div>
+
+  <div className="form-row">
+    <div className="form-group">
+  <label className="form-label">Credit From</label>
+  <input
+    className="form-input"
+    type="date"
+    value={getCurrentFinancialYearStartDate()}
+    readOnly
+  />
+</div>
+
+<div className="form-group">
+  <label className="form-label">Credit To</label>
+  <input
+    className="form-input"
+    type="date"
+    value={getTodayDate()}
+    readOnly
+  />
+</div>
+
+
+    <div className="form-group">
+      <label className="form-label">Total Credit Amount</label>
+      <input
+        className="form-input"
+        value={detailsApiData?.totalcreditamount || ""}
+        readOnly
+      />
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">
+        Refund After Outstanding Balance
+      </label>
+      <input
+        className="form-input"
+        value={detailsApiData?.refundafterdateofoutstandingbalance || ""}
+        readOnly
+      />
+    </div>
+  </div>
+
+  <div className="form-row">
+    <div className="form-group">
+  <label className="form-label">Withdrawal From</label>
+  <input
+    className="form-input"
+    type="date"
+    value={getCurrentFinancialYearStartDate()}
+    readOnly
+  />
+</div>
+
+<div className="form-group">
+  <label className="form-label">Withdrawal To</label>
+  <input
+    className="form-input"
+    type="date"
+    value={getTodayDate()}
+    readOnly
+  />
+</div>
+
+
+    <div className="form-group">
+      <label className="form-label">Total Withdrawal Amount</label>
+      <input
+        className="form-input"
+        value={detailsApiData?.totalwithdrawlamount || ""}
+        readOnly
+      />
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">Net Balance</label>
+      <input
+        className="form-input"
+        value={detailsApiData?.netbalance || ""}
+        readOnly
+      />
+    </div>
+  </div>
+
+  {/* ---- USER INPUT ---- */}
+  <div className="form-row">
+    <div className="form-group">
+      <label className="form-label">Amount of Withdrawal Requested</label>
+      <input
+        className="form-input"
+        name="amountofwithdrawlrequested"
+        value={userInput.amountofwithdrawlrequested}
+        onChange={handleUserChange}
+      />
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">Date of Application</label>
+      <input
+        className="form-input"
+        type="date"
+        name="dateofapplication"
+        value={userInput.dateofapplication}
+        onChange={handleUserChange}
+      />
+    </div>
+  </div>
+
+  <div className="form-row">
+    <div className="form-group">
+      <label className="form-label">Purpose of Withdrawal</label>
+    <textarea
+  className={`form-input ${
+    userInput.purposeofwithdrawl ? "filled" : ""
+  }`}
+  name="purposeofwithdrawl"
+  value={userInput.purposeofwithdrawl}
+  onChange={handleUserChange}
+  placeholder="Enter purpose of withdrawal"
+/>
+
+
+    </div>
+
+    
+    <div className="form-group">
+  <label className="form-label">Withdrawal Rule</label>
+  <select
+    className="form-input"
+    name="withdrawlrule"
+    value={userInput.withdrawlrule}
+    onChange={handleUserChange}
+  >
+    <option value="">-- Select Withdrawal Rule --</option>
+
+    {withdrawalRules.map(rule => (
+      <option key={rule.rule_code} value={rule.ruleCode}>
+        {rule.ruleDescription}
+      </option>
+    ))}
+  </select>
+</div>
+
+    
+  </div>
+
+  <div className="form-row">
+    <div className="form-group">
+      <label className="form-checkbox">
+        <input
+          type="checkbox"
+          name="ispriorwithdrawlforsamepurpose"
+          checked={userInput.ispriorwithdrawlforsamepurpose}
+          onChange={handleUserChange}
+        />
+        Prior withdrawal for same purpose
+      </label>
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">Prior Amount</label>
+      <input
+        className="form-input"
+        name="priorwithdrawlamount"
+        disabled={!userInput.ispriorwithdrawlforsamepurpose}
+        value={userInput.priorwithdrawlamount}
+        onChange={handleUserChange}
+      />
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">Financial Year</label>
+      <input
+        className="form-input"
+        name="priorwithdrawlfinyear"
+        disabled={!userInput.ispriorwithdrawlforsamepurpose}
+        value={userInput.priorwithdrawlfinyear}
+        onChange={handleUserChange}
+      />
+    </div>
+  </div>
+</div>
+
+{Object.keys(errors).length > 0 && (
+  <div className="error-summary">
+    <strong>Please fix the following errors:</strong>
+    <ul>
+      {Object.values(errors).map((msg, index) => (
+        <li key={index}>{msg}</li>
+      ))}
+    </ul>
+  </div>
+)}
+      <div className="form-row-center">
+        <button className="rule-btn" onClick={handleSubmit}>
+          Submit Application
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default GpfWithdrawlForm;
