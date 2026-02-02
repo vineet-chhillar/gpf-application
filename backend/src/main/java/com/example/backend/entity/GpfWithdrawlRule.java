@@ -16,6 +16,14 @@ public class GpfWithdrawlRule {
     @Column(name = "rule_code", nullable = false, unique = true)
     private String ruleCode;
 
+    @Column(name = "withdrawl_reason")
+private String withdrawlReason;
+    public String getWithdrawlReason() {
+        return withdrawlReason;
+    }
+    public void setWithdrawlReason(String withdrawlReason) {
+        this.withdrawlReason = withdrawlReason;
+    }
     @Column(name = "rule_description", nullable = false)
     private String ruleDescription;
 
@@ -43,6 +51,7 @@ public class GpfWithdrawlRule {
     @Column(name = "createdby", nullable = false)
     private String createdby;
 
+    
 
 
     @PrePersist

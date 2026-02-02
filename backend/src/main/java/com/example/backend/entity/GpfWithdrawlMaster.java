@@ -2,7 +2,7 @@ package com.example.backend.entity;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
+
 @Entity
 @Table(name = "gpfwithdrawlmaster")
 

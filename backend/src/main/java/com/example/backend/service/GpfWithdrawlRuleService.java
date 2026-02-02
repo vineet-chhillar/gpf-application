@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
+
 @Service
 public class GpfWithdrawlRuleService {
 
@@ -20,9 +22,21 @@ public class GpfWithdrawlRuleService {
 }
 
 
-    public GpfWithdrawlRule saveRule(GpfWithdrawlRule rule) {
-        return repo.save(rule);
+   public GpfWithdrawlRule saveRule(GpfWithdrawlRule rule) {
+
+    // ✅ Pre-check to give clean message
+    if (repo.existsByRuleCode(rule.getRuleCode())) {
+        throw new IllegalStateException("Rule Code already exists");
     }
+
+    try {
+        return repo.save(rule);
+    } catch (DataIntegrityViolationException ex) {
+        // ✅ Safety net (race condition)
+        throw new IllegalStateException("Rule Code already exists");
+    }
+}
+
     
 
     @Transactional

@@ -7,6 +7,7 @@ const WithdrawlRuleMaster = () => {
   const [rules, setRules] = useState([]);
   const [form, setForm] = useState({
     ruleCode: "",
+    withdrawlReason: "",     // ✅ NEW
     ruleDescription: "",
     maxPercentage: "",
     maxMonthsPay: "",
@@ -33,9 +34,19 @@ const WithdrawlRuleMaster = () => {
   };
 
   const handleSubmit = async () => {
+  try {
     await api.post("/gpf/withdrawal-rules", form);
+    alert("Rule saved successfully");
     loadRules();
-  };
+  } catch (err) {
+    if (err.response?.status === 409) {
+      alert(err.response.data); // "Rule Code already exists"
+    } else {
+      alert("Error saving rule");
+    }
+  }
+};
+
 const toggleRule = async (ruleId) => {
   await api.patch(`/gpf/withdrawal-rules/${ruleId}/toggle`);
   loadRules(); // refresh list
@@ -56,6 +67,17 @@ const toggleRule = async (ruleId) => {
       onChange={handleChange}
     />
   </div>
+
+<div className="rule-form-group">
+  <label>Withdrawal Reason</label>
+  <input
+    className="rule-input"
+    name="withdrawlReason"
+    placeholder="Illness / Education / Marriage"
+    onChange={handleChange}
+  />
+</div>
+
 
   <div className="rule-form-group">
     <label>Description</label>
@@ -137,6 +159,8 @@ const toggleRule = async (ruleId) => {
   <thead>
     <tr>
       <th>Rule Code</th>
+      <th>Withdrawal Reason</th>
+
       <th>Description</th>
       <th>Max %</th>
       <th>Max Months Pay</th>
@@ -154,6 +178,8 @@ const toggleRule = async (ruleId) => {
     {Array.isArray(rules) && rules.map((r) => (
       <tr key={r.ruleId}>
         <td>{r.ruleCode}</td>
+        <td>{r.withdrawlReason ?? "-"}</td>
+
         <td>{r.ruleDescription}</td>
         <td>{r.maxPercentage ?? "-"}</td>
         <td>{r.maxMonthsPay ?? "-"}</td>

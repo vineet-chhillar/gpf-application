@@ -312,3 +312,10 @@ input:disabled {
   cursor: not-allowed;
   box-shadow: none;
 }
+.rule-description-box {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-left: 4px solid #007bff;
+  font-size: 14px;
+}

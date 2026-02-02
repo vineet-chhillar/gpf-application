@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import "../styles/GpfWithdrawlForm.css";
 import { useRef } from "react";
+
+
+api.get("/gpf/withdrawal-rules/active")
+
+
 const GpfWithdrawlForm = () => {
 
   /* ================= API DATA ================= */
@@ -13,13 +18,18 @@ const GpfWithdrawlForm = () => {
   const today = new Date();
   return today.toISOString().split("T")[0]; // yyyy-MM-dd
 };
+const [rules, setRules] = React.useState([]);
+const [selectedRuleId, setSelectedRuleId] = React.useState("");
+const selectedRule = rules.find(
+  r => r.ruleId === Number(selectedRuleId)
+);
+
 const [errors, setErrors] = useState({});
 
     const [userInput, setUserInput] = useState({
     concernedofficername: "",
     amountofwithdrawlrequested: "",
     purposeofwithdrawl: "",
-    withdrawlrule: "",
     ispriorwithdrawlforsamepurpose: false,
     priorwithdrawlamount: "",
     priorwithdrawlfinyear: "",
@@ -49,9 +59,9 @@ const getCurrentFinancialYearStartDate = () => {
 const [withdrawalRules, setWithdrawalRules] = useState([]);
 
 const didLoadRef = useRef(false);
-
+const CURRENT_ROLE = "EMPLOYEE"; // TEMP – will come from parent app later
 const DEFAULT_MASTER_DATA = {
-  empcode: "EMP005",
+  empcode: "EMP008",
   empname: "Test Employee",
   designation: "Clerk",
   empdivision: "Accounts",
@@ -60,7 +70,6 @@ const DEFAULT_MASTER_DATA = {
   dateofjoining: "2018-04-01",
   dateofsuperannuation: "2038-03-31"
 };
-
 const DEFAULT_DETAILS_DATA = {
   basicpay: 45000,
   outstandingbalance: 250000,
@@ -69,6 +78,24 @@ const DEFAULT_DETAILS_DATA = {
   totalwithdrawlamount: 20000,
   netbalance: 34000
 };
+
+
+
+React.useEffect(() => {
+  api
+    .get("/gpf/withdrawal-rules/active")
+    .then(res => {
+      setRules(res.data);
+    })
+    .catch(err => {
+      console.error(
+        "Failed to load withdrawal rules",
+        err.response?.status,
+        err.response?.data
+      );
+    });
+}, []);
+
 
   /* ================= LOAD DATA ================= */
   useEffect(() => {
@@ -87,9 +114,9 @@ const DEFAULT_DETAILS_DATA = {
       setDetailsApiData(DEFAULT_DETAILS_DATA);
       // ================= WITHDRAWAL RULES =================
       // When API is ready, uncomment this:
-       const rulesRes = await api.get("/gpf/withdrawal-rules/active");
+       {/*const rulesRes = await api.get("/gpf/withdrawal-rules/active");
        
-       setWithdrawalRules(rulesRes.data);
+       setWithdrawalRules(rulesRes.data);*/}
 
       // TEMP MOCK (API STRUCTURE FINALIZED)
       
@@ -147,9 +174,10 @@ const validateForm = () => {
       "Purpose must be at least 5 characters";
   }
 
-  if (!userInput.withdrawlrule.trim()) {
-    newErrors.withdrawlrule = "Withdrawal rule is required";
-  }
+  if (!selectedRuleId) {
+  newErrors.withdrawlrule = "Withdrawal rule is required";
+}
+
 
   // ---- PRIOR WITHDRAWAL ----
   if (userInput.ispriorwithdrawlforsamepurpose) {
@@ -203,7 +231,8 @@ const validateForm = () => {
 
           amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
           purposeofwithdrawl: userInput.purposeofwithdrawl,
-          withdrawlrule: userInput.withdrawlrule,
+          withdrawlrule: Number(selectedRuleId),
+
           ispriorwithdrawlforsamepurpose:
             userInput.ispriorwithdrawlforsamepurpose,
 
@@ -218,7 +247,8 @@ const validateForm = () => {
               : "",
 
           dateofapplication: userInput.dateofapplication,
-          status: { id: 1 }
+          currentOwnerRole: "ADMIN",
+          status: { id: 9 }
         }
       };
 
@@ -455,9 +485,6 @@ const validateForm = () => {
         onChange={handleUserChange}
       />
     </div>
-  </div>
-
-  <div className="form-row">
     <div className="form-group">
       <label className="form-label">Purpose of Withdrawal</label>
     <textarea
@@ -468,29 +495,32 @@ const validateForm = () => {
   value={userInput.purposeofwithdrawl}
   onChange={handleUserChange}
   placeholder="Enter purpose of withdrawal"
-/>
+/>    </div>
 
+  </div>
 
-    </div>
-
+  <div className="form-row">
+    
     
     <div className="form-group">
   <label className="form-label">Withdrawal Rule</label>
-  <select
-    className="form-input"
+   <select
+  className="form-input"
     name="withdrawlrule"
-    value={userInput.withdrawlrule}
-    onChange={handleUserChange}
-  >
-    <option value="">-- Select Withdrawal Rule --</option>
+  value={selectedRuleId}
+  onChange={(e) => setSelectedRuleId(e.target.value)}
+>
+  <option value="">-- Select Withdrawal Reason --</option>
 
-    {withdrawalRules.map(rule => (
-      <option key={rule.rule_code} value={rule.ruleCode}>
-        {rule.ruleDescription}
-      </option>
-    ))}
-  </select>
+  {rules.map(rule => (
+    <option key={rule.ruleId} value={rule.ruleId}>
+      {rule.withdrawlReason}
+    </option>
+  ))}
+</select>
+
 </div>
+
 
     
   </div>
@@ -530,6 +560,12 @@ const validateForm = () => {
       />
     </div>
   </div>
+  {selectedRule && (
+  <div className="rule-description-box">
+    <strong>Rule Description:</strong>
+    <div>{selectedRule.ruleDescription}</div>
+  </div>
+)}
 </div>
 
 {Object.keys(errors).length > 0 && (

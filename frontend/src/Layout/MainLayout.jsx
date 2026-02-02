@@ -9,6 +9,8 @@ import AppFlowState from "../Pages/AppFlowState";
 import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
 import Advance from "../Pages/Advance";
 import WithdrawlRuleMaster from "../Pages/WithdrawlRuleMaster";
+import AdminWithdrawalInbox from "../Pages/AdminWithdrawalInbox"; 
+
 
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
@@ -21,7 +23,9 @@ const MainLayout = () => {
     { menuId: 5, menuName: "Generate App Flow HQ" },
     { menuId: 6, menuName: "Generate App Flow States" },
     { menuId: 7, menuName: "WithDrawl" },
-    { menuId: 8, menuName: "Advance" }
+    { menuId: 8, menuName: "Advance" },
+    { menuId: 9, menuName: "Admin Withdrawl Inbox" },
+    
   ];
 const pageMap = {
   "Status Master": <StatusMasterPage />,
@@ -31,7 +35,9 @@ const pageMap = {
   "Generate App Flow HQ": <AppFlowHQ />,
   "Generate App Flow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
-  "Advance": <Advance />
+  "Advance": <Advance />,
+  "Admin Withdrawl Inbox": <AdminWithdrawalInbox />,
+  
 };
 
 

@@ -3,6 +3,8 @@ package com.example.backend.controller;
 import com.example.backend.entity.GpfWithdrawlRule;
 import com.example.backend.service.GpfWithdrawlRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,9 +35,17 @@ public class GpfWithdrawlRuleController {
         service.toggleActive(id);
     }
 
+    
     /* ================= CREATE RULE ================= */
-    @PostMapping("/withdrawal-rules")
-    public GpfWithdrawlRule createRule(@RequestBody GpfWithdrawlRule rule) {
-        return service.saveRule(rule);
+   @PostMapping("/withdrawal-rules")
+public ResponseEntity<?> createRule(@RequestBody GpfWithdrawlRule rule) {
+    try {
+        GpfWithdrawlRule saved = service.saveRule(rule);
+        return ResponseEntity.ok(saved);
+    } catch (IllegalStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ex.getMessage());
     }
+}
 }

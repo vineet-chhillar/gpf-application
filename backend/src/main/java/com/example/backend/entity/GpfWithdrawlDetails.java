@@ -18,6 +18,8 @@ public class GpfWithdrawlDetails {
     @Column(name = "empcode", nullable = false, length = 20)
     private String empcode;
 
+   
+
     @Column(name = "gpfaccountno", nullable = false, length = 50)
     private String gpfaccountno;
 
@@ -68,8 +70,9 @@ public class GpfWithdrawlDetails {
     @Column(name = "purposeofwithdrawl", length = 500)
     private String purposeofwithdrawl;
 
-    @Column(name = "withdrawlrule", length = 100)
-    private String withdrawlrule;
+    @Column(name = "withdrawlrule")
+private Long withdrawlrule;
+
 
     /* ================= PRIOR WITHDRAWAL ================= */
 
@@ -97,6 +100,9 @@ public class GpfWithdrawlDetails {
 
     @Column(name = "createdat", insertable = false, updatable = false)
     private LocalDateTime createdat;
+
+    @Column(name = "current_owner_role", nullable = false)
+private String currentOwnerRole;
 
     /* ================= GETTERS & SETTERS ================= */
 
@@ -224,13 +230,14 @@ public class GpfWithdrawlDetails {
         this.purposeofwithdrawl = purposeofwithdrawl;
     }
 
-    public String getWithdrawlrule() {
-        return withdrawlrule;
-    }
+    public Long getWithdrawlrule() {
+    return withdrawlrule;
+}
 
-    public void setWithdrawlrule(String withdrawlrule) {
-        this.withdrawlrule = withdrawlrule;
-    }
+public void setWithdrawlrule(Long withdrawlrule) {
+    this.withdrawlrule = withdrawlrule;
+}
+
 
     public Boolean getIspriorwithdrawlforsamepurpose() {
         return ispriorwithdrawlforsamepurpose;
@@ -275,4 +282,12 @@ public class GpfWithdrawlDetails {
     public LocalDateTime getCreatedat() {
         return createdat;
     }
+    public String getCurrentOwnerRole() {
+    return currentOwnerRole;
+}
+
+public void setCurrentOwnerRole(String currentOwnerRole) {
+    this.currentOwnerRole = currentOwnerRole;
+}
+
 }
