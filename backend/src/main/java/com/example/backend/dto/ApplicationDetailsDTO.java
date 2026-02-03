@@ -18,6 +18,16 @@ public class ApplicationDetailsDTO {
     private String purposeOfWithdrawal;
     private String withdrawalRule;
     private LocalDate dateOfApplication;
+// Credit period
+private LocalDate creditFromDate;
+private LocalDate creditToDate;
+private BigDecimal totalCreditAmount;
+private BigDecimal refundAfterOutstandingBalance;
+
+// Withdrawal period
+private LocalDate withdrawlFromDate;
+private LocalDate withdrawlToDate;
+private BigDecimal totalWithdrawlAmount;
 
     // Financial
     private BigDecimal basicPay;
@@ -141,4 +151,53 @@ public class ApplicationDetailsDTO {
     public void setCurrentOwnerRole(String currentOwnerRole) {
         this.currentOwnerRole = currentOwnerRole;
     }
+    public LocalDate getCreditFromDate() {
+    return creditFromDate;
+}
+public void setCreditFromDate(LocalDate creditFromDate) {
+    this.creditFromDate = creditFromDate;
+}
+
+public LocalDate getCreditToDate() {
+    return creditToDate;
+}
+public void setCreditToDate(LocalDate creditToDate) {
+    this.creditToDate = creditToDate;
+}
+
+public BigDecimal getTotalCreditAmount() {
+    return totalCreditAmount;
+}
+public void setTotalCreditAmount(BigDecimal totalCreditAmount) {
+    this.totalCreditAmount = totalCreditAmount;
+}
+
+public BigDecimal getRefundAfterOutstandingBalance() {
+    return refundAfterOutstandingBalance;
+}
+public void setRefundAfterOutstandingBalance(BigDecimal refundAfterOutstandingBalance) {
+    this.refundAfterOutstandingBalance = refundAfterOutstandingBalance;
+}
+
+public LocalDate getWithdrawlFromDate() {
+    return withdrawlFromDate;
+}
+public void setWithdrawlFromDate(LocalDate withdrawlFromDate) {
+    this.withdrawlFromDate = withdrawlFromDate;
+}
+
+public LocalDate getWithdrawlToDate() {
+    return withdrawlToDate;
+}
+public void setWithdrawlToDate(LocalDate withdrawlToDate) {
+    this.withdrawlToDate = withdrawlToDate;
+}
+
+public BigDecimal getTotalWithdrawlAmount() {
+    return totalWithdrawlAmount;
+}
+public void setTotalWithdrawlAmount(BigDecimal totalWithdrawlAmount) {
+    this.totalWithdrawlAmount = totalWithdrawlAmount;
+}
+
 }

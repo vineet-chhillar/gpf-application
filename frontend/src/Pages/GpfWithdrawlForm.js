@@ -61,7 +61,7 @@ const [withdrawalRules, setWithdrawalRules] = useState([]);
 const didLoadRef = useRef(false);
 const CURRENT_ROLE = "EMPLOYEE"; // TEMP – will come from parent app later
 const DEFAULT_MASTER_DATA = {
-  empcode: "EMP008",
+  empcode: "EMP012",
   empname: "Test Employee",
   designation: "Clerk",
   empdivision: "Accounts",
@@ -225,31 +225,39 @@ const validateForm = () => {
           concernedofficername: userInput.concernedofficername
         },
         details: {
-          ...detailsApiData,
+  ...detailsApiData,
 
-          gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
+  gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
 
-          amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
-          purposeofwithdrawl: userInput.purposeofwithdrawl,
-          withdrawlrule: Number(selectedRuleId),
+  // ===== CREDIT PERIOD (SYSTEM CALCULATED) =====
+  creditfromdate: getCurrentFinancialYearStartDate(),
+  credittodate: getTodayDate(),
 
-          ispriorwithdrawlforsamepurpose:
-            userInput.ispriorwithdrawlforsamepurpose,
+  // ===== WITHDRAWAL PERIOD (SYSTEM CALCULATED) =====
+  withdrawlfromdate: getCurrentFinancialYearStartDate(),
+  withdrawltodate: getTodayDate(),
 
-          priorwithdrawlamount:
-            userInput.ispriorwithdrawlforsamepurpose
-              ? userInput.priorwithdrawlamount
-              : 0,
+  amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
+  purposeofwithdrawl: userInput.purposeofwithdrawl,
+  withdrawlrule: Number(selectedRuleId),
 
-          priorwithdrawlfinyear:
-            userInput.ispriorwithdrawlforsamepurpose
-              ? userInput.priorwithdrawlfinyear
-              : "",
+  ispriorwithdrawlforsamepurpose: userInput.ispriorwithdrawlforsamepurpose,
 
-          dateofapplication: userInput.dateofapplication,
-          currentOwnerRole: "ADMIN",
-          status: { id: 9 }
-        }
+  priorwithdrawlamount:
+    userInput.ispriorwithdrawlforsamepurpose
+      ? userInput.priorwithdrawlamount
+      : 0,
+
+  priorwithdrawlfinyear:
+    userInput.ispriorwithdrawlforsamepurpose
+      ? userInput.priorwithdrawlfinyear
+      : "",
+
+  dateofapplication: userInput.dateofapplication,
+  currentOwnerRole: "ADMIN",
+  status: { id: 9 }
+}
+
       };
 
       await api.post("/gpf-withdrawl/save", payload);

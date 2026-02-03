@@ -22,7 +22,8 @@ import com.example.backend.repository.StatusMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
 import com.example.backend.service.GpfWithdrawlRuleService;
 import com.example.backend.entity.GpfWithdrawlRule;
-
+import com.example.backend.dto.EmployeeInboxDTO;
+import com.example.backend.dto.ApplicationStatusTrailDTO;
 @Service
 public class GpfWithdrawlWorkflowService {
 
@@ -98,13 +99,71 @@ StatusMaster nextStatus = statusRepo
 
     trailRepo.save(trail);
 }
+@Transactional
+public void cashVerify(Long applicationId, String remarks) {
 
-public List<AdminInboxDTO> getAdminInbox() {
 
-    List<GpfWithdrawlDetails> apps =
-            repo.findByCurrentOwnerRoleAndStatus_StatusCode(
-                    "ADMIN", "SUBMITTED"
-            );
+
+    // 1️⃣ Remarks mandatory
+    if (remarks == null || remarks.trim().isEmpty()) {
+        throw new IllegalStateException("Remarks are mandatory");
+    }
+
+    // 2️⃣ Load application
+    GpfWithdrawlDetails app = repo.findById(applicationId)
+        .orElseThrow(() -> new RuntimeException("Application not found"));
+System.out.println(
+  "CASH VERIFY → id=" + applicationId +
+  ", owner=" + app.getCurrentOwnerRole() +
+  ", status=" + app.getStatus().getStatusCode()
+);
+    // 3️⃣ Final lock check
+    if (app.getStatus().isFinal()) {
+        throw new IllegalStateException("Finalized application cannot be modified");
+    }
+
+    // 4️⃣ Owner role check
+    if (!"CASH".equals(app.getCurrentOwnerRole())) {
+        throw new IllegalStateException("Application is not with CASH");
+    }
+
+    // 5️⃣ Status check
+    if (!"ADMIN_VERIFIED".equals(app.getStatus().getStatusCode())) {
+        throw new IllegalStateException(
+            "Application is not in ADMIN_VERIFIED state"
+        );
+    }
+
+    // 6️⃣ Load next status
+    StatusMaster nextStatus = statusRepo
+        .findByStatusCode("CASH_VERIFIED")
+        .orElseThrow(() ->
+            new IllegalStateException("Status CASH_VERIFIED not found")
+        );
+
+    // 7️⃣ Update application
+    app.setStatus(nextStatus);
+    app.setCurrentOwnerRole("ADMIN");
+    repo.save(app);
+
+    // 8️⃣ Insert audit trail
+    ApplicationStatusTrail trail = new ApplicationStatusTrail();
+    trail.setApplicationid(app.getId());
+    trail.setStatusid(nextStatus.getId());
+    trail.setActionby("CASH");
+    trail.setRemarks(remarks);
+
+    trailRepo.save(trail);
+}
+public List<AdminInboxDTO> getCashInbox() {
+
+    
+        List<GpfWithdrawlDetails> apps =
+    repo.findByCurrentOwnerRoleAndStatus_StatusCodeIn(
+        "CASH",
+        List.of("ADMIN_VERIFIED")
+    );
+
 
     List<AdminInboxDTO> result = new ArrayList<>();
 
@@ -114,6 +173,48 @@ public List<AdminInboxDTO> getAdminInbox() {
 
         dto.setApplicationId(app.getId());
         dto.setEmpCode(app.getEmpcode());
+        // Load name from master
+GpfWithdrawlMaster master = masterRepo
+        .findByEmpcode(app.getEmpcode())
+        .orElse(null);
+
+dto.setEmpName(master != null ? master.getEmpname() : null);
+
+        dto.setAmountRequested(app.getAmountofwithdrawlrequested());
+        dto.setDateOfApplication(app.getDateofapplication());
+
+        dto.setStatusCode(app.getStatus().getStatusCode());
+        dto.setCurrentOwnerRole(app.getCurrentOwnerRole());
+
+        dto.setCanView(true);
+        dto.setCanVerify(
+            "CASH".equals(app.getCurrentOwnerRole())
+            && "ADMIN_VERIFIED".equals(app.getStatus().getStatusCode())
+        );
+
+        result.add(dto);
+    }
+
+    return result;
+}
+
+public List<AdminInboxDTO> getAdminInbox() {
+
+    List<GpfWithdrawlDetails> apps =
+    repo.findByCurrentOwnerRoleAndStatus_StatusCodeIn(
+        "ADMIN",
+        List.of("SUBMITTED", "CASH_VERIFIED")
+    );
+
+
+    List<AdminInboxDTO> result = new ArrayList<>();
+
+    for (GpfWithdrawlDetails app : apps) {
+
+        AdminInboxDTO dto = new AdminInboxDTO();
+
+        dto.setApplicationId(app.getId());
+        
        dto.setEmpCode(app.getEmpcode());
 
 // Load name from master
@@ -130,12 +231,16 @@ dto.setEmpName(master != null ? master.getEmpname() : null);
         dto.setStatusCode(app.getStatus().getStatusCode());
         dto.setCurrentOwnerRole(app.getCurrentOwnerRole());
 
+        
         // ADMIN rules
         dto.setCanView(true);
         dto.setCanVerify(
-                "ADMIN".equals(app.getCurrentOwnerRole())
-                && "SUBMITTED".equals(app.getStatus().getStatusCode())
-        );
+    "ADMIN".equals(app.getCurrentOwnerRole()) &&
+    (
+        "SUBMITTED".equals(app.getStatus().getStatusCode()) ||
+        "CASH_VERIFIED".equals(app.getStatus().getStatusCode())
+    )
+);
 
         result.add(dto);
     }
@@ -172,6 +277,18 @@ public ApplicationDetailsDTO getApplicationDetails(Long id) {
     dto.setBasicPay(app.getBasicpay());
     dto.setOutstandingBalance(app.getOutstandingbalance());
     dto.setNetBalance(app.getNetbalance());
+// ===== CREDIT DETAILS =====
+dto.setCreditFromDate(app.getCreditfromdate());
+dto.setCreditToDate(app.getCredittodate());
+dto.setTotalCreditAmount(app.getTotalcreditamount());
+dto.setRefundAfterOutstandingBalance(
+        app.getRefundafterdateofoutstandingbalance()
+);
+
+// ===== WITHDRAWAL PERIOD DETAILS =====
+dto.setWithdrawlFromDate(app.getWithdrawlfromdate());
+dto.setWithdrawlToDate(app.getWithdrawltodate());
+dto.setTotalWithdrawlAmount(app.getTotalwithdrawlamount());
 
     // Workflow
     dto.setStatusCode(app.getStatus().getStatusCode());
@@ -192,7 +309,67 @@ dto.setWithdrawalRule(withdrawalRuleText);
 
     return dto;
 }
+public List<EmployeeInboxDTO> getEmployeeInbox(String empcode) {
 
+    List<GpfWithdrawlDetails> apps =
+        repo.findByEmpcodeOrderByDateofapplicationDesc(empcode);
+
+    List<EmployeeInboxDTO> result = new ArrayList<>();
+
+    for (GpfWithdrawlDetails app : apps) {
+
+        EmployeeInboxDTO dto = new EmployeeInboxDTO();
+        dto.setApplicationId(app.getId());
+        dto.setDateOfApplication(app.getDateofapplication());
+        dto.setAmountRequested(app.getAmountofwithdrawlrequested());
+        dto.setStatusCode(app.getStatus().getStatusCode());
+        dto.setCurrentOwnerRole(app.getCurrentOwnerRole());
+        dto.setIsFinal(Boolean.TRUE.equals(app.getStatus().isFinal()));
+
+        result.add(dto);
+    }
+
+    return result;
+}
+
+public List<ApplicationStatusTrailDTO> getStatusTrail(Long applicationId) {
+
+    System.out.println("STATUS TRAIL → applicationId = " + applicationId);
+
+    List<ApplicationStatusTrail> trails =
+        trailRepo.findByApplicationidOrderByActionatAsc(applicationId);
+
+    System.out.println("STATUS TRAIL → rows found = " + trails.size());
+
+    List<ApplicationStatusTrailDTO> result = new ArrayList<>();
+
+    for (ApplicationStatusTrail t : trails) {
+
+        System.out.println(
+            "TRAIL → id=" + t.getId() +
+            ", statusid=" + t.getStatusid() +
+            ", actionBy=" + t.getActionby()
+        );
+
+        ApplicationStatusTrailDTO dto = new ApplicationStatusTrailDTO();
+
+        String statusCode = null;
+        if (t.getStatusid() != null) {
+            statusCode = statusRepo.findById(t.getStatusid())
+                    .map(StatusMaster::getStatusCode)
+                    .orElse("UNKNOWN_STATUS");
+        }
+
+        dto.setStatusCode(statusCode);
+        dto.setActionBy(t.getActionby());
+        dto.setRemarks(t.getRemarks());
+        dto.setActionAt(t.getActionat());
+
+        result.add(dto);
+    }
+
+    return result;
+}
 
 
 
