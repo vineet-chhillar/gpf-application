@@ -4,7 +4,7 @@ import "../styles/GpfWithdrawlForm.css";
 
 const EmployeeWithdrawalInbox = () => {
 
-  const EMP_CODE = "EMP010"; // TEMP – from parent app later
+  const EMP_CODE = "EMP011"; // TEMP – from parent app later
 
   const [applications, setApplications] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -109,14 +109,26 @@ const EmployeeWithdrawalInbox = () => {
             </div>
 
             {/* ===== WITHDRAWAL ===== */}
-            <div className="card">
-              <div className="card-header">📝 Withdrawal Details</div>
-              <div className="card-body">
-                <p><b>Amount:</b> {details.amountRequested}</p>
-                <p><b>Purpose:</b> {details.purposeOfWithdrawal}</p>
-                <p><b>Rule:</b> {details.withdrawalRule}</p>
-              </div>
-            </div>
+           <div className="card-body">
+  <p><b>Amount Requested:</b> {details.amountRequested}</p>
+  <p><b>Purpose:</b> {details.purposeOfWithdrawal}</p>
+  <p><b>Rule:</b> {details.withdrawalRule}</p>
+
+  <hr />
+
+  <p><b>Credit From:</b> {details.creditFromDate}</p>
+  <p><b>Credit To:</b> {details.creditToDate}</p>
+  <p><b>Total Credit Amount:</b> {details.totalCreditAmount}</p>
+
+  <p><b>Refund After Outstanding Balance:</b> {details.refundAfterOutstandingBalance}</p>
+
+  <hr />
+
+  <p><b>Withdrawal From:</b> {details.withdrawlFromDate}</p>
+  <p><b>Withdrawal To:</b> {details.withdrawlToDate}</p>
+  <p><b>Total Withdrawal Amount:</b> {details.totalWithdrawlAmount}</p>
+</div>
+
 
             {/* ===== FINANCIAL ===== */}
             <div className="card">

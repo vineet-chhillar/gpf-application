@@ -61,7 +61,7 @@ const [withdrawalRules, setWithdrawalRules] = useState([]);
 const didLoadRef = useRef(false);
 const CURRENT_ROLE = "EMPLOYEE"; // TEMP – will come from parent app later
 const DEFAULT_MASTER_DATA = {
-  empcode: "EMP012",
+  empcode: "EMP013",
   empname: "Test Employee",
   designation: "Clerk",
   empdivision: "Accounts",
@@ -232,7 +232,7 @@ const validateForm = () => {
   // ===== CREDIT PERIOD (SYSTEM CALCULATED) =====
   creditfromdate: getCurrentFinancialYearStartDate(),
   credittodate: getTodayDate(),
-
+  dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
   // ===== WITHDRAWAL PERIOD (SYSTEM CALCULATED) =====
   withdrawlfromdate: getCurrentFinancialYearStartDate(),
   withdrawltodate: getTodayDate(),
