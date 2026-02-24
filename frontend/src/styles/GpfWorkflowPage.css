@@ -1,0 +1,282 @@
+
+.workflow-container {
+  margin-top: -20px;
+}
+
+.workflow-table-wrapper {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+
+.workflow-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.workflow-table th,
+.workflow-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.workflow-table th {
+  background-color: #f2f2f2;
+}
+
+.workflow-action-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* ================= CONTAINER ================= */
+
+
+/* ================= TABLE ================= */
+.workflow-table-wrapper {
+  max-height: 800px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  
+}
+
+.workflow-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.workflow-table th {
+  background: #5c6c97;
+  color: white;
+  padding: 10px;
+  position: sticky;
+  top: 0;
+}
+
+.workflow-table td {
+  padding: 6px 10px;
+  
+}
+
+.workflow-table tbody tr:hover {
+  background-color: #f1f5f9;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* ================= ACTION BAR ================= */
+.workflow-action-bar {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+/* ================= DROPDOWN ================= */
+.action-dropdown {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 200px;
+  transition: 0.2s ease;
+}
+
+.action-dropdown:hover {
+  border-color: #2563eb;
+}
+
+.action-dropdown:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+}
+
+/* ================= REMARKS ================= */
+.remarks-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 250px;
+  transition: 0.2s ease;
+}
+
+.remarks-input:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 5px rgba(22, 163, 74, 0.4);
+}
+
+/* ================= BUTTON ================= */
+.process-btn {
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.process-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.process-btn:active {
+  transform: scale(0.97);
+}
+/* Expanded row styling */
+.expanded-row td {
+  padding: 12px;
+}
+
+.details-container {
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+}
+
+.details-section {
+  flex: 1;
+}
+
+.trail-section {
+  flex: 1;
+  border-left: 2px solid #e5e7eb;
+  padding-left: 20px;
+}
+
+/* Timeline style */
+.trail-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.trail-role {
+  font-weight: bold;
+  color: #1e3a8a;
+}
+
+.trail-action {
+  margin-left: 10px;
+  color: #2563eb;
+}
+
+.trail-time {
+  float: right;
+  font-size: 12px;
+  color: gray;
+}
+
+.trail-remarks {
+  margin-top: 5px;
+  font-style: italic;
+}
+.main-row:hover {
+  background-color: #f3f4f6;
+  cursor: pointer;
+}
+
+.expanded-row td {
+  background: #f9fafb;
+  padding: 20px;
+}
+
+.expanded-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.left-panel, .right-panel {
+  flex: 1;
+}
+
+.trail-box {
+  background: white;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.remarks {
+  font-style: italic;
+  color: #555;
+}
+.main-row:hover {
+  background-color: #f3f4f6;
+  cursor: pointer;
+}
+
+.expanded-row td {
+  background: #f9fafb;
+  padding: 20px;
+}
+
+.expanded-content {
+  gap: 20px;
+}
+
+.left-panel, .right-panel {
+  flex: 1;
+}
+
+.trail-box {
+  margin-bottom: 6px;
+  padding: 6px 8px;
+}
+
+.remarks {
+  font-style: italic;
+  color: #555;
+}
+.left-panel p,
+.right-panel p {
+  margin: 4px 0;
+}
+h1, h2, h3, h4 {
+  margin-top: 0;
+}
+.pending-role{
+  font-weight:600;
+  color:#1e40af;
+}
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.form-group {
+  flex: 1;
+  min-width: 220px;
+}
+
+.form-input {
+  width: 100%;
+}
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
+.selected-row{
+  background:#e8f2ff;
+  border-left:4px solid #1976d2;
+  transition:all 0.2s ease;
+}
+
+.main-row:hover{
+  background:#f3f7ff;
+  cursor:pointer;
+}

@@ -1,51 +1,50 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import StatusMasterPage from "../Pages/StatusMaster/StatusMasterPage";
+
 import WithdrawlApplicationStatus from "../Pages/WithdrawlApplicationStatus";
 import AdvanceApplicationStatus from "../Pages/AdvanceApplicationStatus";
-import AppFlowHQ from "../Pages/AppFlowHQ";
+import WorkflowViewerPage from "../Pages/WorkflowViewerPage";
 import AppFlowState from "../Pages/AppFlowState";
 import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
 import Advance from "../Pages/Advance";
 import WithdrawlRuleMaster from "../Pages/WithdrawlRuleMaster";
-import AdminWithdrawalInbox from "../Pages/AdminWithdrawalInbox"; 
-import CashWithdrawalInbox from "../Pages/CashWithdrawalInbox"; 
-import EmployeeWithdrawalInbox from "../Pages/EmployeeWithdrawalInbox";
-
+import GpfWorkflowPage from "../Pages/GpfWorkflowPage";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
 
   const menus = [
-    { menuId: 1, menuName: "Status Master" },
-    { menuId: 2, menuName: "Withdrawl Rule Master" },
-    { menuId: 3, menuName: "Withdrawl Application Status" },
-    { menuId: 4, menuName: "Advance Application Status" },
-    { menuId: 5, menuName: "Generate App Flow HQ" },
-    { menuId: 6, menuName: "Generate App Flow States" },
-    { menuId: 7, menuName: "WithDrawl" },
-    { menuId: 8, menuName: "Employee Withdrawl Inbox" },
-    { menuId: 9, menuName: "Advance" },
-    { menuId: 10, menuName: "Admin Withdrawl Inbox" },
-    { menuId: 11, menuName: "Cash Withdrawl Inbox" },
+    
+    { menuId: 1, menuName: "Withdrawl Rule Master" },
+    { menuId: 2, menuName: "Withdrawl Application Status" },
+    { menuId: 3, menuName: "Advance Application Status" },
+    { menuId: 4, menuName: "App WorkFlow HQ" },
+    { menuId: 5, menuName: "Generate App Flow States" },
+    { menuId: 6, menuName: "WithDrawl" },
+    { menuId: 7, menuName: "Advance" },
+    { menuId: 8, menuName: "WorkFlow/Pending For Action" },
     
     
   ];
 const pageMap = {
-  "Status Master": <StatusMasterPage />,
   "Withdrawl Rule Master": <WithdrawlRuleMaster />,
   "Withdrawl Application Status": <WithdrawlApplicationStatus />,
   "Advance Application Status": <AdvanceApplicationStatus />,
-  "Generate App Flow HQ": <AppFlowHQ />,
+  "App WorkFlow HQ": <WorkflowViewerPage />,
   "Generate App Flow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
-  "Advance": <Advance />,
-  "Admin Withdrawl Inbox": <AdminWithdrawalInbox />,
-  "Cash Withdrawl Inbox": <CashWithdrawalInbox />,
-  "Employee Withdrawl Inbox": <EmployeeWithdrawalInbox />,
+  "Advance": <Advance />,  
+   "WorkFlow/Pending For Action": <GpfWorkflowPage />
+,
   
 };
-
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={11} roleName="DDO" />*/}
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={146} roleName="DEALING HAND(DDO)" />*/}
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={144} roleName="SECTION OFFICER(Admin-2)" />*/}
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={145} roleName="DEALING HAND(Admin-2)" />*/}
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={144} roleName="SECTION OFFICER(Admin-2)" />*/}
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={7} roleName="HO/JD" />*/}
+{/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={147} roleName="HOG" />*/}
 
 
 
@@ -66,7 +65,7 @@ const pageMap = {
         <Header title={activePage} />
 
         {/* CONTENT (TEMP) */}
-        <div style={{ padding: "20px" }}>
+        <div style={{ padding: "0px" }}>
   {pageMap[activePage] || <h2>No page mapped</h2>}
 </div>
 

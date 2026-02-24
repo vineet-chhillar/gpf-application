@@ -7,18 +7,18 @@ import java.util.List;
 public interface GpfWithdrawlDetailsRepository
         extends JpaRepository<GpfWithdrawlDetails, Long> {
 
-    Optional<GpfWithdrawlDetails> findByEmpcode(String empcode);
-
-   List<GpfWithdrawlDetails> 
-findByCurrentOwnerRoleAndStatus_StatusCodeIn(
-    String role,
-    List<String> statusCodes
-);
-
-List<GpfWithdrawlDetails> findByEmpcodeOrderByDateofapplicationDesc(String empcode);
+    Optional<GpfWithdrawlDetails> 
+findByMaster_Empcode(String empcode);
 
 
+    List<GpfWithdrawlDetails>
+    findByCurrentOwnerRole(Long role);
 
+  List<GpfWithdrawlDetails> 
+findByMaster_EmpcodeOrderByDateofapplicationDesc(String empcode);
+Optional<GpfWithdrawlDetails> 
+findFirstByCurrentOwnerRoleNotOrderByCurrentOwnerRoleAsc(Long role);
 
+List<GpfWithdrawlDetails> findByCurrentOwnerRoleNot(Long roleId);
 
 }

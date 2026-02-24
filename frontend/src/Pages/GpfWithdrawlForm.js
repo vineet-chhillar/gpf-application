@@ -13,6 +13,20 @@ const GpfWithdrawlForm = () => {
   const [masterApiData, setMasterApiData] = useState(null);
   const [detailsApiData, setDetailsApiData] = useState(null);
 
+  const [showVerification, setShowVerification] = useState(false);
+
+  const formatDate = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
   /* ================= USER INPUT ================= */
   const getTodayDate = () => {
   const today = new Date();
@@ -59,25 +73,25 @@ const getCurrentFinancialYearStartDate = () => {
 const [withdrawalRules, setWithdrawalRules] = useState([]);
 
 const didLoadRef = useRef(false);
-const CURRENT_ROLE = "EMPLOYEE"; // TEMP – will come from parent app later
+//const CURRENT_ROLE = "DDO"; // TEMP – will come from parent app later
 const DEFAULT_MASTER_DATA = {
-  empcode: "EMP013",
-  empname: "Test Employee",
-  designation: "Clerk",
+  empcode: "EMP021",
+  empname: "Test Employee21",
+  designation: "Scientist-B",
   empdivision: "Accounts",
+  functionalpost: 11,
   empmobileno: "9876543210",
   empemailid: "test.employee@gov.in",
-  dateofjoining: "2018-04-01",
+  dateofjoining: "2019-04-01",
   dateofsuperannuation: "2038-03-31"
 };
 const DEFAULT_DETAILS_DATA = {
   basicpay: 45000,
-  outstandingbalance: 250000,
-  totalcreditamount: 54000,
-  refundafterdateofoutstandingbalance: 260000,
-  totalwithdrawlamount: 20000,
-  netbalance: 34000
-};
+  outstandingbalance: 500000,
+  totalcreditamount: 50000,
+  refundafterdateofoutstandingbalance: 200000,
+  totalwithdrawlamount: 100000,
+  netbalance: 650000};
 
 
 
@@ -145,7 +159,7 @@ const validateForm = () => {
   const newErrors = {};
 
   // ---- MASTER ----
-  if (!userInput.concernedofficername.trim()) {
+  {/*if (!userInput.concernedofficername.trim()) {
   newErrors.concernedofficername = "Concerned Officer is required";
 } else if (userInput.concernedofficername.length > 100) {
   newErrors.concernedofficername =
@@ -153,7 +167,7 @@ const validateForm = () => {
 } else if (!ONLY_CHARS_REGEX.test(userInput.concernedofficername)) {
   newErrors.concernedofficername =
     "Concerned Officer name must contain only alphabets and spaces";
-}
+}*/}
 
 
   // ---- DETAILS (USER INPUT) ----
@@ -207,67 +221,135 @@ const validateForm = () => {
   return Object.keys(newErrors).length === 0;
 };
 
+const confirmSubmit = async () => {
 
+  try {
+
+    const payload = {
+      master: {
+        ...masterApiData,
+        concernedofficername: userInput.concernedofficername
+      },
+      details: {
+        ...detailsApiData,
+        gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
+
+        creditfromdate: getCurrentFinancialYearStartDate(),
+        credittodate: getTodayDate(),
+        dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
+
+        withdrawlfromdate: getCurrentFinancialYearStartDate(),
+        withdrawltodate: getTodayDate(),
+
+        amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
+        purposeofwithdrawl: userInput.purposeofwithdrawl,
+        withdrawlrule: Number(selectedRuleId),
+
+        ispriorwithdrawlforsamepurpose: userInput.ispriorwithdrawlforsamepurpose,
+
+        priorwithdrawlamount: userInput.ispriorwithdrawlforsamepurpose
+          ? userInput.priorwithdrawlamount
+          : 0,
+
+        priorwithdrawlfinyear: userInput.ispriorwithdrawlforsamepurpose
+          ? userInput.priorwithdrawlfinyear
+          : "",
+
+        dateofapplication: userInput.dateofapplication,
+
+        action: { actionId: 17 },
+        roleId: 2
+      }
+    };
+
+    await api.post("/gpf-withdrawl/save", payload);
+
+    alert("✅ Application Submitted Successfully");
+
+    setShowVerification(false);
+
+  } catch (err) {
+    alert(err.response?.data || "Submission failed");
+  }
+};
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-    return;
-  }
-    try {
-      if (!masterApiData || !detailsApiData) {
-        alert("Required data not loaded");
-        return;
-      }
 
-      const payload = {
-        master: {
-          ...masterApiData,
-          concernedofficername: userInput.concernedofficername
-        },
-        details: {
-  ...detailsApiData,
+  if (!validateForm()) return;
 
-  gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
+  const withdrawAmount = Number(userInput.amountofwithdrawlrequested);
+  const netBalance = Number(detailsApiData.netbalance);
 
-  // ===== CREDIT PERIOD (SYSTEM CALCULATED) =====
-  creditfromdate: getCurrentFinancialYearStartDate(),
-  credittodate: getTodayDate(),
-  dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
-  // ===== WITHDRAWAL PERIOD (SYSTEM CALCULATED) =====
-  withdrawlfromdate: getCurrentFinancialYearStartDate(),
-  withdrawltodate: getTodayDate(),
+  const confirmMessage = `
+Please verify before submitting
 
-  amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
-  purposeofwithdrawl: userInput.purposeofwithdrawl,
-  withdrawlrule: Number(selectedRuleId),
+Net Balance : ₹${netBalance}
+Withdrawal Requested : ₹${withdrawAmount}
 
-  ispriorwithdrawlforsamepurpose: userInput.ispriorwithdrawlforsamepurpose,
+Do you want to continue?
+`;
 
-  priorwithdrawlamount:
-    userInput.ispriorwithdrawlforsamepurpose
-      ? userInput.priorwithdrawlamount
-      : 0,
+  const confirmed = window.confirm(confirmMessage);
 
-  priorwithdrawlfinyear:
-    userInput.ispriorwithdrawlforsamepurpose
-      ? userInput.priorwithdrawlfinyear
-      : "",
+  if (!confirmed) return;
 
-  dateofapplication: userInput.dateofapplication,
-  currentOwnerRole: "ADMIN",
-  status: { id: 9 }
-}
+  try {
 
-      };
-
-      await api.post("/gpf-withdrawl/save", payload);
-      alert("✅ GPF Withdrawal Application submitted successfully");
-
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data || "Error while saving");
+    if (!masterApiData || !detailsApiData) {
+      alert("Required data not loaded");
+      return;
     }
-  };
+
+    const payload = {
+      master: {
+        ...masterApiData,
+        concernedofficername: userInput.concernedofficername
+      },
+      details: {
+        ...detailsApiData,
+
+        gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
+
+        creditfromdate: getCurrentFinancialYearStartDate(),
+        credittodate: getTodayDate(),
+        dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
+
+        withdrawlfromdate: getCurrentFinancialYearStartDate(),
+        withdrawltodate: getTodayDate(),
+
+        amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
+        purposeofwithdrawl: userInput.purposeofwithdrawl,
+        withdrawlrule: Number(selectedRuleId),
+
+        ispriorwithdrawlforsamepurpose:
+          userInput.ispriorwithdrawlforsamepurpose,
+
+        priorwithdrawlamount:
+          userInput.ispriorwithdrawlforsamepurpose
+            ? userInput.priorwithdrawlamount
+            : 0,
+
+        priorwithdrawlfinyear:
+          userInput.ispriorwithdrawlforsamepurpose
+            ? userInput.priorwithdrawlfinyear
+            : "",
+
+        dateofapplication: userInput.dateofapplication,
+
+        action: { actionId: 17 },
+        roleId: 2
+      }
+    };
+
+    await api.post("/gpf-withdrawl/save", payload);
+
+    alert("✅ GPF Withdrawal Application submitted successfully");
+
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data || "Error while saving");
+  }
+};
 
   /* ================= JSX ================= */
   return (
@@ -281,12 +363,31 @@ const validateForm = () => {
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">Employee Code</label>
-            <input className="form-input" value={masterApiData?.empcode || ""} readOnly />
+            {/*<input className="form-input" value={masterApiData?.empcode || ""} readOnly />*/}
+            <input
+  className="form-input"
+  value={masterApiData?.empcode || ""}
+  onChange={(e) =>
+    setMasterApiData(prev => ({
+      ...prev,
+      empcode: e.target.value
+    }))
+  }
+/>
           </div>
 
           <div className="form-group">
             <label className="form-label">Employee Name</label>
-            <input className="form-input" value={masterApiData?.empname || ""} readOnly />
+           <input
+  className="form-input"
+  value={masterApiData?.empname || ""}
+  onChange={(e) =>
+    setMasterApiData(prev => ({
+      ...prev,
+      empname: e.target.value
+    }))
+  }
+/>
           </div>
 
           <div className="form-group">
@@ -313,12 +414,12 @@ const validateForm = () => {
 
           <div className="form-group">
             <label className="form-label">Date of Joining</label>
-            <input className="form-input" value={masterApiData?.dateofjoining || ""} readOnly />
+            <input className="form-input" value={formatDate(masterApiData?.dateofjoining)} readOnly />
           </div>
 
           <div className="form-group">
             <label className="form-label">Date of Superannuation</label>
-            <input className="form-input" value={masterApiData?.dateofsuperannuation || ""} readOnly />
+            <input className="form-input" value={formatDate(masterApiData?.dateofsuperannuation)} readOnly />
           </div>
         </div>
 
@@ -369,11 +470,10 @@ const validateForm = () => {
     <div className="form-group">
   <label className="form-label">Outstanding Balance As On</label>
   <input
-    className="form-input"
-    type="date"
-    value={getLastFinancialYearEndDate()}
-    readOnly
-  />
+  className="form-input"
+  value={formatDate(getLastFinancialYearEndDate())}
+  readOnly
+/>
 </div>
 
 
@@ -392,8 +492,7 @@ const validateForm = () => {
   <label className="form-label">Credit From</label>
   <input
     className="form-input"
-    type="date"
-    value={getCurrentFinancialYearStartDate()}
+    value={formatDate(getCurrentFinancialYearStartDate())}
     readOnly
   />
 </div>
@@ -402,8 +501,7 @@ const validateForm = () => {
   <label className="form-label">Credit To</label>
   <input
     className="form-input"
-    type="date"
-    value={getTodayDate()}
+    value={formatDate(getTodayDate())}
     readOnly
   />
 </div>
@@ -435,8 +533,7 @@ const validateForm = () => {
   <label className="form-label">Withdrawal From</label>
   <input
     className="form-input"
-    type="date"
-    value={getCurrentFinancialYearStartDate()}
+    value={formatDate(getCurrentFinancialYearStartDate())}
     readOnly
   />
 </div>
@@ -445,8 +542,7 @@ const validateForm = () => {
   <label className="form-label">Withdrawal To</label>
   <input
     className="form-input"
-    type="date"
-    value={getTodayDate()}
+    value={formatDate(getTodayDate())}
     readOnly
   />
 </div>
@@ -474,7 +570,9 @@ const validateForm = () => {
   {/* ---- USER INPUT ---- */}
   <div className="form-row">
     <div className="form-group">
-      <label className="form-label">Amount of Withdrawal Requested</label>
+     <label className="form-label">
+  Amount of Withdrawal Requested <span className="required">*</span>
+</label>
       <input
         className="form-input"
         name="amountofwithdrawlrequested"
@@ -484,17 +582,17 @@ const validateForm = () => {
     </div>
 
     <div className="form-group">
-      <label className="form-label">Date of Application</label>
+      <label className="form-label">Date of Application <span className="required">*</span></label>
       <input
         className="form-input"
         type="date"
         name="dateofapplication"
-        value={userInput.dateofapplication}
+        value={(userInput.dateofapplication)}
         onChange={handleUserChange}
       />
     </div>
     <div className="form-group">
-      <label className="form-label">Purpose of Withdrawal</label>
+      <label className="form-label">Purpose of Withdrawal <span className="required">*</span></label>
     <textarea
   className={`form-input ${
     userInput.purposeofwithdrawl ? "filled" : ""
@@ -511,7 +609,7 @@ const validateForm = () => {
     
     
     <div className="form-group">
-  <label className="form-label">Withdrawal Rule</label>
+  <label className="form-label">Withdrawal Rule <span className="required">*</span></label>
    <select
   className="form-input"
     name="withdrawlrule"
@@ -531,42 +629,44 @@ const validateForm = () => {
 
 
     
+  
+
+  
+  <div className="prior-withdrawal-box">
+
+  <label className="prior-checkbox">
+    <input
+      type="checkbox"
+      name="ispriorwithdrawlforsamepurpose"
+      checked={userInput.ispriorwithdrawlforsamepurpose}
+      onChange={handleUserChange}
+    />
+    Prior withdrawal for same purpose
+  </label>
+
+  <div className="prior-field">
+    <label>Prior Amount</label>
+    <input
+      className="form-input"
+      name="priorwithdrawlamount"
+      disabled={!userInput.ispriorwithdrawlforsamepurpose}
+      value={userInput.priorwithdrawlamount}
+      onChange={handleUserChange}
+    />
   </div>
 
-  <div className="form-row">
-    <div className="form-group">
-      <label className="form-checkbox">
-        <input
-          type="checkbox"
-          name="ispriorwithdrawlforsamepurpose"
-          checked={userInput.ispriorwithdrawlforsamepurpose}
-          onChange={handleUserChange}
-        />
-        Prior withdrawal for same purpose
-      </label>
-    </div>
+  <div className="prior-field">
+    <label>Financial Year</label>
+    <input
+      className="form-input"
+      name="priorwithdrawlfinyear"
+      disabled={!userInput.ispriorwithdrawlforsamepurpose}
+      value={userInput.priorwithdrawlfinyear}
+      onChange={handleUserChange}
+    />
+  </div>
 
-    <div className="form-group">
-      <label className="form-label">Prior Amount</label>
-      <input
-        className="form-input"
-        name="priorwithdrawlamount"
-        disabled={!userInput.ispriorwithdrawlforsamepurpose}
-        value={userInput.priorwithdrawlamount}
-        onChange={handleUserChange}
-      />
-    </div>
-
-    <div className="form-group">
-      <label className="form-label">Financial Year</label>
-      <input
-        className="form-input"
-        name="priorwithdrawlfinyear"
-        disabled={!userInput.ispriorwithdrawlforsamepurpose}
-        value={userInput.priorwithdrawlfinyear}
-        onChange={handleUserChange}
-      />
-    </div>
+</div>
   </div>
   {selectedRule && (
   <div className="rule-description-box">
@@ -587,7 +687,27 @@ const validateForm = () => {
   </div>
 )}
       <div className="form-row-center">
-        <button className="rule-btn" onClick={handleSubmit}>
+        {showVerification && (
+  <div className="verification-box">
+
+    <h3>Verify Withdrawal</h3>
+
+    <p>
+      <strong>Net Balance:</strong> ₹{detailsApiData?.netbalance}
+    </p>
+
+    <p>
+      <strong>Requested Withdrawal:</strong> ₹{userInput.amountofwithdrawlrequested}
+    </p>
+
+    <div className="verification-actions">
+      <button onClick={confirmSubmit}>Confirm</button>
+      <button onClick={() => setShowVerification(false)}>Cancel</button>
+    </div>
+
+  </div>
+)}
+        <button className="process-btn" onClick={handleSubmit}>
           Submit Application
         </button>
       </div>

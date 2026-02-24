@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "gpfwithdrawldetails")
 public class GpfWithdrawlDetails {
@@ -15,10 +16,8 @@ public class GpfWithdrawlDetails {
 
     /* ================= BASIC DETAILS ================= */
 
-    @Column(name = "empcode", nullable = false, length = 20)
-    private String empcode;
-
-   
+    //@Column(name = "empcode", nullable = false, length = 20)
+    //private String empcode;
 
     @Column(name = "gpfaccountno", nullable = false, length = 50)
     private String gpfaccountno;
@@ -71,8 +70,7 @@ public class GpfWithdrawlDetails {
     private String purposeofwithdrawl;
 
     @Column(name = "withdrawlrule")
-private Long withdrawlrule;
-
+    private Long withdrawlrule;
 
     /* ================= PRIOR WITHDRAWAL ================= */
 
@@ -90,11 +88,11 @@ private Long withdrawlrule;
     @Column(name = "dateofapplication")
     private LocalDate dateofapplication;
 
-    /* ================= STATUS ================= */
+    /* ================= ACTION (Replaced Status) ================= */
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "statusid", nullable = false)
-    private StatusMaster status;
+    @JoinColumn(name = "action_id", nullable = false)
+    private ActionMaster action;
 
     /* ================= AUDIT ================= */
 
@@ -102,21 +100,49 @@ private Long withdrawlrule;
     private LocalDateTime createdat;
 
     @Column(name = "current_owner_role", nullable = false)
-private String currentOwnerRole;
+    private Long currentOwnerRole;
+
+    /* ================= WORKFLOW ================= */
+
+@Column(name = "workflow_id")
+private Long workflowId;
+
+@ManyToOne(fetch = FetchType.EAGER)
+@JoinColumn(name = "application_id", nullable = false)
+private GpfWithdrawlMaster master;
+
+@Column(name = "current_step")
+private Integer currentStep;
 
     /* ================= GETTERS & SETTERS ================= */
+
+    public Long getCurrentOwnerRole() {
+    return currentOwnerRole;
+}
+
+public void setCurrentOwnerRole(Long currentOwnerRole) {
+    this.currentOwnerRole = currentOwnerRole;
+}
+
+public GpfWithdrawlMaster getMaster() {
+    return master;
+}
+
+public void setMaster(GpfWithdrawlMaster master) {
+    this.master = master;
+}
 
     public Long getId() {
         return id;
     }
 
-    public String getEmpcode() {
-        return empcode;
-    }
+    //public String getEmpcode() {
+      //  return empcode;
+   // }
 
-    public void setEmpcode(String empcode) {
-        this.empcode = empcode;
-    }
+    //public void setEmpcode(String empcode) {
+       // this.empcode = empcode;
+   // }
 
     public String getGpfaccountno() {
         return gpfaccountno;
@@ -231,13 +257,12 @@ private String currentOwnerRole;
     }
 
     public Long getWithdrawlrule() {
-    return withdrawlrule;
-}
+        return withdrawlrule;
+    }
 
-public void setWithdrawlrule(Long withdrawlrule) {
-    this.withdrawlrule = withdrawlrule;
-}
-
+    public void setWithdrawlrule(Long withdrawlrule) {
+        this.withdrawlrule = withdrawlrule;
+    }
 
     public Boolean getIspriorwithdrawlforsamepurpose() {
         return ispriorwithdrawlforsamepurpose;
@@ -271,23 +296,35 @@ public void setWithdrawlrule(Long withdrawlrule) {
         this.dateofapplication = dateofapplication;
     }
 
-    public StatusMaster getStatus() {
-        return status;
+    public ActionMaster getAction() {
+        return action;
     }
 
-    public void setStatus(StatusMaster status) {
-        this.status = status;
+    public void setAction(ActionMaster action) {
+        this.action = action;
     }
 
     public LocalDateTime getCreatedat() {
         return createdat;
     }
-    public String getCurrentOwnerRole() {
-    return currentOwnerRole;
+
+  
+
+    
+
+    public Long getWorkflowId() {
+    return workflowId;
 }
 
-public void setCurrentOwnerRole(String currentOwnerRole) {
-    this.currentOwnerRole = currentOwnerRole;
+public void setWorkflowId(Long workflowId) {
+    this.workflowId = workflowId;
+}
+public Integer getCurrentStep() {
+    return currentStep;
+}
+
+public void setCurrentStep(Integer currentStep) {
+    this.currentStep = currentStep;
 }
 
 }

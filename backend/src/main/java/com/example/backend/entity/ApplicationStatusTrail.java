@@ -1,7 +1,5 @@
 package com.example.backend.entity;
 
-
-
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,45 +12,43 @@ public class ApplicationStatusTrail {
     private Long id;
 
     @Column(name = "applicationid", nullable = false)
-    private Long applicationid;
+    private Long applicationId;
 
-    @Column(name = "statusid", nullable = false)
-    private Long statusid;
 
-    @Column(name = "remarks", length = 500)
+    @Column(name = "action_id", nullable = false)
+    private Long actionId;
+
+    @Column(name = "remarks")
     private String remarks;
 
-    @Column(name = "actionby", length = 100)
-    private String actionby;
+   @Column(name = "action_by_role")
+private Long actionByRole;
 
-    @Column(name = "actionat", nullable = false, updatable = false)
+
+    @Column(name = "actionat", insertable = false, updatable = false)
     private LocalDateTime actionat;
 
-    @PrePersist
-    public void onCreate() {
-        this.actionat = LocalDateTime.now();
-    }
-
-    /* ===== Getters & Setters ===== */
+    // ===== GETTERS & SETTERS =====
 
     public Long getId() {
         return id;
     }
 
-    public Long getApplicationid() {
-        return applicationid;
+   public Long getApplicationId() {
+    return applicationId;
+}
+
+public void setApplicationId(Long applicationId) {
+    this.applicationId = applicationId;
+}
+
+
+    public Long getActionId() {
+        return actionId;
     }
 
-    public void setApplicationid(Long applicationid) {
-        this.applicationid = applicationid;
-    }
-
-    public Long getStatusid() {
-        return statusid;
-    }
-
-    public void setStatusid(Long statusid) {
-        this.statusid = statusid;
+    public void setActionId(Long actionId) {
+        this.actionId = actionId;
     }
 
     public String getRemarks() {
@@ -63,16 +59,19 @@ public class ApplicationStatusTrail {
         this.remarks = remarks;
     }
 
-    public String getActionby() {
-        return actionby;
-    }
+    public Long getActionByRole() {
+    return actionByRole;
+}
 
-    public void setActionby(String actionby) {
-        this.actionby = actionby;
-    }
+public void setActionByRole(Long actionByRole) {
+    this.actionByRole = actionByRole;
+}
+
 
     public LocalDateTime getActionat() {
         return actionat;
     }
+
+    
 }
 

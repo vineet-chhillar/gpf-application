@@ -10,6 +10,11 @@ import java.util.List;
 public interface ApplicationStatusTrailRepository
         extends JpaRepository<ApplicationStatusTrail, Long> {
 
-    List<ApplicationStatusTrail>
-    findByApplicationidOrderByActionatAsc(Long applicationid);
+
+List<ApplicationStatusTrail>
+findByApplicationIdOrderByActionatAsc(Long applicationId);
+
+//List<ApplicationStatusTrail>
+//findByApplicationIdOrderByCreatedAtAsc(Long applicationId);
+
 }

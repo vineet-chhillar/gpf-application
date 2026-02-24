@@ -1,0 +1,187 @@
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+/* ================= CONTAINER ================= */
+
+.workflow-container {
+  padding: 25px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+/* ================= TABLE WRAPPER ================= */
+
+.workflow-table-wrapper {
+  width: 100%;
+  overflow-x: auto; /* allow horizontal scroll only if needed */
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+
+/* ================= TABLE ================= */
+
+.workflow-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.workflow-table th {
+  background: #5c6c97;
+  color: white;
+  padding: 10px;
+  text-align: left;
+  position: static;
+}
+
+.workflow-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.workflow-table tbody tr:hover {
+  background-color: #f1f5f9;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+
+/* ================= ACTION BAR ================= */
+
+.workflow-action-bar {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+
+/* ================= DROPDOWN ================= */
+
+.action-dropdown {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 200px;
+  transition: 0.2s ease;
+}
+
+.action-dropdown:hover {
+  border-color: #2563eb;
+}
+
+.action-dropdown:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+}
+
+
+/* ================= REMARK INPUT ================= */
+
+.remarks-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 250px;
+}
+
+.remarks-input:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 5px rgba(22, 163, 74, 0.4);
+}
+
+
+/* ================= BUTTON ================= */
+
+.process-btn {
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.process-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.process-btn:active {
+  transform: scale(0.97);
+}
+
+
+/* ================= EXPANDED ROW ================= */
+
+.expanded-row td {
+  background: #f9fafb;
+  padding: 20px;
+}
+
+.expanded-content {
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+}
+
+.left-panel,
+.right-panel {
+  flex: 1;
+}
+
+
+/* ================= TRAIL ================= */
+
+.trail-box {
+  background: white;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.trail-role {
+  font-weight: bold;
+  color: #1e3a8a;
+}
+
+.trail-action {
+  margin-left: 8px;
+  color: #2563eb;
+}
+
+.trail-time {
+  float: right;
+  font-size: 12px;
+  color: gray;
+}
+
+.remarks {
+  margin-top: 5px;
+  font-style: italic;
+  color: #555;
+}
+.expanded-content {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.selected-row{
+  background:#e8f2ff;
+  border-left:4px solid #1976d2;
+  transition:all 0.2s ease;
+}
+
+.main-row:hover{
+  background:#f3f7ff;
+  cursor:pointer;
+}

@@ -1,5 +1,6 @@
 package com.example.backend.entity;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.time.LocalDate;
 import jakarta.persistence.*;
 
@@ -44,6 +45,10 @@ public GpfWithdrawlMaster() {
      
    @Column(name = "createdat",nullable = false,updatable = false,insertable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "master", cascade = CascadeType.ALL)
+    private List<GpfWithdrawlDetails> details;
+
 
     // ✅ Getters & Setters (generate via IDE)
     public Long getId() {
