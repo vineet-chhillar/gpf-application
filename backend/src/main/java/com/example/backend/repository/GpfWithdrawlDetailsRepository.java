@@ -20,5 +20,5 @@ Optional<GpfWithdrawlDetails>
 findFirstByCurrentOwnerRoleNotOrderByCurrentOwnerRoleAsc(Long role);
 
 List<GpfWithdrawlDetails> findByCurrentOwnerRoleNot(Long roleId);
-
+Optional<GpfWithdrawlDetails> findByMaster_Id(Long id);
 }

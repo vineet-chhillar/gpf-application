@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import java.math.BigDecimal;
+
 import com.example.backend.entity.GpfWithdrawlMaster;
 
 public class InboxApplicationDTO {
@@ -7,10 +9,28 @@ public class InboxApplicationDTO {
     private Long applicationId;
     private String employeeName;
     private String empCode;
-    private Double amount;
+    private BigDecimal amount;
     private String applicationDate;
     private String pendingWithRole;
+    private String designation;
+private String purpose;
 
+
+public String getDesignation() {
+    return designation;
+}
+
+public void setDesignation(String designation) {
+    this.designation = designation;
+}
+
+public String getPurpose() {
+    return purpose;
+}
+
+public void setPurpose(String purpose) {
+    this.purpose = purpose;
+}
     public InboxApplicationDTO() {
     }
 
@@ -38,11 +58,11 @@ public class InboxApplicationDTO {
         this.empCode = empCode;
     }
 
-    public Double getAmount() {
+     public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -61,6 +81,8 @@ public class InboxApplicationDTO {
     public void setPendingWithRole(String pendingWithRole) {
         this.pendingWithRole = pendingWithRole;
     }
+
+    
 
     
 }

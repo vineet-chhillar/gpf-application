@@ -143,24 +143,28 @@ useEffect(() => {
 
         <table className="workflow-table">
           <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  onChange={toggleSelectAll}
-                  checked={
-                    applications.length > 0 &&
-                    selectedIds.length === applications.length
-                  }
-                />
-              </th>
-              <th>Application ID</th>
-              <th>Employee</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Pending With</th>
-            </tr>
-          </thead>
+<tr>
+<th className="col-check">
+<input
+type="checkbox"
+onChange={toggleSelectAll}
+checked={
+applications.length > 0 &&
+selectedIds.length === applications.length
+}
+/>
+</th>
+
+<th className="col-id">App ID</th>
+<th className="col-empcode">Emp Code</th>
+<th className="col-name">Name</th>
+<th className="col-designation">Designation</th>
+<th className="col-amount">Amount</th>
+<th className="col-date">Date</th>
+<th className="col-purpose">Purpose</th>
+<th className="col-pending">Pending With</th>
+</tr>
+</thead>
 
           <tbody>
   {applications.map(app => (
@@ -187,15 +191,23 @@ useEffect(() => {
         </td>
 
         <td>{app.applicationId}</td>
+<td>{app.empCode}</td>
 <td>{app.employeeName}</td>
-<td>{app.amount}</td>
+<td>{app.designation}</td>
+<td>₹{app.amount}</td>
+
 <td>
-  {app.applicationDate
-    ? new Date(app.applicationDate).toLocaleDateString()
-    : ""}
+{app.applicationDate
+? new Date(app.applicationDate).toLocaleDateString()
+: ""}
 </td>
+
+<td className="purpose-cell">
+{app.purpose}
+</td>
+
 <td className="pending-role">
-  {app.pendingWithRole}
+{app.pendingWithRole}
 </td>
       </tr>
 
@@ -208,75 +220,183 @@ useEffect(() => {
 
   return (
     <tr className="expanded-row">
-      <td colSpan="6">
+      <td colSpan="9">
         <div className="expanded-content">
 
           <div className="left-panel">
 
             <h4>Employee Details</h4>
 
-            <p><strong>Employee Code:</strong> {master.empcode}</p>
-            <p><strong>Name:</strong> {master.empname}</p>
-            <p><strong>Designation:</strong> {master.designation}</p>
-            <p><strong>Division:</strong> {master.empdivision}</p>
-            <p><strong>Mobile:</strong> {master.empmobileno}</p>
-            <p><strong>Email:</strong> {master.empemailid}</p>
-            <p><strong>Date of Joining:</strong> {master.dateofjoining}</p>
-            <p><strong>Retirement Date:</strong> {master.dateofsuperannuation}</p>
+            <div className="details-grid">
 
-            <hr />
+<div className="detail-item">
+<span className="label">Employee Code</span>
+<span className="value">{master.empcode}</span>
+</div>
 
-            <h4>GPF Account Summary</h4>
+<div className="detail-item">
+<span className="label">Name</span>
+<span className="value">{master.empname}</span>
+</div>
 
-            <p><strong>GPF Account No:</strong> {details.gpfaccountno}</p>
-            <p><strong>Basic Pay:</strong> ₹{details.basicpay}</p>
+<div className="detail-item">
+<span className="label">Designation</span>
+<span className="value">{master.designation}</span>
+</div>
 
-            <p><strong>Outstanding Balance Date:</strong> {details.dateofoutstandingbalance}</p>
-            <p><strong>Outstanding Balance:</strong> ₹{details.outstandingbalance}</p>
+<div className="detail-item">
+<span className="label">Division</span>
+<span className="value">{master.empdivision}</span>
+</div>
 
-            <p><strong>Credit From:</strong> {details.creditfromdate}</p>
-            <p><strong>Credit To:</strong> {details.credittodate}</p>
+<div className="detail-item">
+<span className="label">Mobile</span>
+<span className="value">{master.empmobileno}</span>
+</div>
 
-            <p><strong>Total Credit Amount:</strong> ₹{details.totalcreditamount}</p>
-            <p><strong>Refund After Balance Date:</strong> ₹{details.refundafterdateofoutstandingbalance}</p>
+<div className="detail-item">
+<span className="label">Email</span>
+<span className="value">{master.empemailid}</span>
+</div>
 
-            <hr />
+<div className="detail-item">
+<span className="label">Joining Date</span>
+<span className="value">{master.dateofjoining}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Retirement</span>
+<span className="value">{master.dateofsuperannuation}</span>
+</div>
+
+</div>
+
+            
+
+        <h4>GPF Account Summary</h4>
+
+<div className="details-grid">
+
+<div className="detail-item">
+<span className="label">GPF Account No</span>
+<span className="value">{details.gpfaccountno}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Basic Pay</span>
+<span className="value">₹{details.basicpay}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Outstanding Balance Date</span>
+<span className="value">{details.dateofoutstandingbalance}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Outstanding Balance</span>
+<span className="value">₹{details.outstandingbalance}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Credit From</span>
+<span className="value">{details.creditfromdate}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Credit To</span>
+<span className="value">{details.credittodate}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Total Credit Amount</span>
+<span className="value">₹{details.totalcreditamount}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Refund After Balance</span>
+<span className="value">₹{details.refundafterdateofoutstandingbalance}</span>
+</div>
+
+</div>
 
             <h4>Withdrawal Calculation</h4>
 
-            <p><strong>Withdraw From:</strong> {details.withdrawlfromdate}</p>
-            <p><strong>Withdraw To:</strong> {details.withdrawltodate}</p>
+<div className="details-grid">
 
-            <p><strong>Total Withdrawal Amount:</strong> ₹{details.totalwithdrawlamount}</p>
-            <p><strong>Net Balance:</strong> ₹{details.netbalance}</p>
+<div className="detail-item">
+<span className="label">Withdraw From</span>
+<span className="value">{details.withdrawlfromdate}</span>
+</div>
 
-            <hr />
+<div className="detail-item">
+<span className="label">Withdraw To</span>
+<span className="value">{details.withdrawltodate}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Total Withdrawal</span>
+<span className="value">₹{details.totalwithdrawlamount}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Net Balance</span>
+<span className="value">₹{details.netbalance}</span>
+</div>
+
+</div>
 
             <h4>Withdrawal Request</h4>
 
-            <p><strong>Requested Amount:</strong> ₹{details.amountofwithdrawlrequested}</p>
-            <p><strong>Purpose:</strong> {details.purposeofwithdrawl}</p>
-            <p><strong>Withdrawal Rule:</strong> {details.withdrawlrule}</p>
+<div className="details-grid">
 
-            <p>
-              <strong>Application Date:</strong>{" "}
-              {details.dateofapplication
-                ? new Date(details.dateofapplication).toLocaleDateString()
-                : ""}
-            </p>
+<div className="detail-item">
+<span className="label">Requested Amount</span>
+<span className="value">₹{details.amountofwithdrawlrequested}</span>
+</div>
 
-            <hr />
+<div className="detail-item">
+<span className="label">Purpose</span>
+<span className="value">{details.purposeofwithdrawl}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Withdrawal Rule</span>
+<span className="value">{details.withdrawlrule}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Application Date</span>
+<span className="value">
+{details.dateofapplication
+? new Date(details.dateofapplication).toLocaleDateString()
+: ""}
+</span>
+</div>
+
+</div>
 
             <h4>Previous Withdrawal Details</h4>
 
-            <p>
-              <strong>Prior Withdrawal For Same Purpose:</strong>{" "}
-              {details.ispriorwithdrawlforsamepurpose ? "Yes" : "No"}
-            </p>
+<div className="details-grid">
 
-            <p><strong>Previous Withdrawal Amount:</strong> ₹{details.priorwithdrawlamount}</p>
+<div className="detail-item">
+<span className="label">Prior Withdrawal</span>
+<span className="value">
+{details.ispriorwithdrawlforsamepurpose ? "Yes" : "No"}
+</span>
+</div>
 
-            <p><strong>Previous Financial Year:</strong> {details.priorwithdrawlfinyear}</p>
+<div className="detail-item">
+<span className="label">Previous Amount</span>
+<span className="value">₹{details.priorwithdrawlamount}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Financial Year</span>
+<span className="value">{details.priorwithdrawlfinyear}</span>
+</div>
+
+</div>
 
           </div>
 

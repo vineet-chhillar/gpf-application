@@ -7,6 +7,9 @@ const HARDCODED_EMPCODE = "EMP021";
 function WithdrawlApplicationStatus() {
 
   const [expandedRow, setExpandedRow] = useState(null);
+const [search, setSearch] = useState("");
+
+
 
   {/*const [application, setApplication] = useState({
     master: {},
@@ -15,7 +18,10 @@ function WithdrawlApplicationStatus() {
   });*/}
 
 const [applications, setApplications] = useState([]);
-
+const filteredApps = applications.filter(a =>
+  a.master?.empname?.toLowerCase().includes(search.toLowerCase()) ||
+  a.master?.empcode?.toLowerCase().includes(search.toLowerCase())
+);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,28 +56,59 @@ setApplications(res.data);
 
       <h2>GPF Withdrawal Application Status</h2>
 
+<div className="dashboard-cards">
+
+<div className="card">
+<h3>Total Applications</h3>
+<p>{applications.length}</p>
+</div>
+
+<div className="card">
+<h3>Pending</h3>
+<p>{applications.filter(a => a.currentOwnerRole !== "Completed").length}</p>
+</div>
+
+<div className="card">
+<h3>Completed</h3>
+<p>{applications.filter(a => a.currentOwnerRole === "Completed").length}</p>
+</div>
+
+</div>
+<div className="search-container">
+  <input
+    type="text"
+    className="search-input"
+    placeholder="Search by name or employee code..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+  />
+</div>
       <div className="workflow-table-wrapper">
         <table className="workflow-table">
 
-          <thead>
-            <tr>
-              <th>Employee Code</th>
-              <th>Name</th>
-              <th>Designation</th>
-              <th>Division</th>
-              <th>Basic Pay</th>
-              <th>Net Balance</th>
-            </tr>
-          </thead>
+         <thead>
+<tr>
+  <th>Employee Code</th>
+  <th>Name</th>
+  <th>Designation</th>
+  <th>Division</th>
+  <th>Basic Pay</th>
+  <th>Net Balance</th>
+ <th>Status</th>
+<th>Pending With</th>
+<th>Last Action By</th>
+<th>Last Remarks</th>
+</tr>
+</thead>
 
           <tbody>
 
-{applications.map((app, index) => {
+{filteredApps.map((app, index) => {
 
 const master = app.master || {};
 const details = app.details || {};
 const trail = app.trail || [];
-
+const lastTrail = trail.length > 0 ? trail[trail.length - 1] : {};
 return (
 <React.Fragment key={index}>
 
@@ -85,68 +122,183 @@ return (
   <td>{master.empdivision}</td>
   <td>{details.basicpay}</td>
   <td>{details.netbalance}</td>
+
+  <td>
+<span className={
+  app.currentOwnerRole === "Completed"
+    ? "status-complete"
+    : "status-pending"
+}>
+  {app.currentOwnerRole === "Completed" ? "Completed" : "Pending"}
+</span>
+</td>
+
+<td><span className="pending-role">{app.currentOwnerRole}</span></td>
+<td>{app.lastActionByRole}</td>
+<td className="remarks-column">{app.lastRemarks}</td>
 </tr>
 
 {expandedRow === index && (
 <tr className="expanded-row">
-<td colSpan="6">
+<td colSpan="10">
 
 <div className="expanded-content">
 
 {/* LEFT PANEL */}
 <div className="left-panel">
 
-<h3>Employee Information</h3>
+<h4>Employee Information</h4>
 
-<p><b>Mobile:</b> {master.empmobileno}</p>
-<p><b>Email:</b> {master.empemailid}</p>
-<p><b>Date of Joining:</b> {master.dateofjoining}</p>
-<p><b>Retirement:</b> {master.dateofsuperannuation}</p>
+<div className="details-grid">
 
-<hr />
+<div className="detail-item">
+<div className="detail-label">Mobile</div>
+<div className="detail-value">{master.empmobileno}</div>
+</div>
 
-<h3>GPF Account Summary</h3>
+<div className="detail-item">
+<div className="detail-label">Email</div>
+<div className="detail-value">{master.empemailid}</div>
+</div>
 
-<p><b>Basic Pay:</b> ₹{details.basicpay}</p>
-<p><b>Outstanding Balance Date:</b> {details.dateofoutstandingbalance}</p>
-<p><b>Outstanding Balance:</b> ₹{details.outstandingbalance}</p>
-<p><b>Credit From:</b> {details.creditfromdate}</p>
-<p><b>Credit To:</b> {details.credittodate}</p>
-<p><b>Total Credit Amount:</b> ₹{details.totalcreditamount}</p>
-<p><b>Refund After Balance Date:</b> ₹{details.refundafterdateofoutstandingbalance}</p>
+<div className="detail-item">
+<div className="detail-label">Date of Joining</div>
+<div className="detail-value">{master.dateofjoining}</div>
+</div>
 
-<hr />
+<div className="detail-item">
+<div className="detail-label">Retirement</div>
+<div className="detail-value">{master.dateofsuperannuation}</div>
+</div>
 
-<h3>Withdrawal Calculation</h3>
+</div>
 
-<p><b>Withdraw From:</b> {details.withdrawlfromdate}</p>
-<p><b>Withdraw To:</b> {details.withdrawltodate}</p>
-<p><b>Total Withdrawal Amount:</b> ₹{details.totalwithdrawlamount}</p>
-<p><b>Net Balance:</b> ₹{details.netbalance}</p>
 
-<hr />
 
-<h3>Withdrawal Request</h3>
+<h4>GPF Account Summary</h4>
 
-<p><b>Requested Amount:</b> ₹{details.amountofwithdrawlrequested}</p>
-<p><b>Purpose:</b> {details.purposeofwithdrawl}</p>
-<p><b>Withdrawal Rule:</b> {details.withdrawlrule}</p>
-<p><b>Application Date:</b>
+<div className="details-grid">
+
+<div className="detail-item">
+<div className="detail-label">Basic Pay</div>
+<div className="detail-value">₹{details.basicpay}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Outstanding Balance Date</div>
+<div className="detail-value">{details.dateofoutstandingbalance}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Outstanding Balance</div>
+<div className="detail-value">₹{details.outstandingbalance}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Credit From</div>
+<div className="detail-value">{details.creditfromdate}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Credit To</div>
+<div className="detail-value">{details.credittodate}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Total Credit Amount</div>
+<div className="detail-value">₹{details.totalcreditamount}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Refund After Balance Date</div>
+<div className="detail-value">₹{details.refundafterdateofoutstandingbalance}</div>
+</div>
+
+</div>
+
+
+<h4>Withdrawal Calculation</h4>
+
+<div className="details-grid">
+
+<div className="detail-item">
+<div className="detail-label">Withdraw From</div>
+<div className="detail-value">{details.withdrawlfromdate}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Withdraw To</div>
+<div className="detail-value">{details.withdrawltodate}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Total Withdrawal Amount</div>
+<div className="detail-value">₹{details.totalwithdrawlamount}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Net Balance</div>
+<div className="detail-value">₹{details.netbalance}</div>
+</div>
+
+</div>
+
+
+
+<h4>Withdrawal Request</h4>
+
+<div className="details-grid">
+
+<div className="detail-item">
+<div className="detail-label">Requested Amount</div>
+<div className="detail-value">₹{details.amountofwithdrawlrequested}</div>
+</div>
+
+<div className="detail-item detail-wide">
+<div className="detail-label">Purpose</div>
+<div className="detail-value">{details.purposeofwithdrawl}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Withdrawal Rule</div>
+<div className="detail-value">{details.withdrawlrule}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Application Date</div>
+<div className="detail-value">
 {details.dateofapplication
   ? new Date(details.dateofapplication).toLocaleDateString()
   : ""}
-</p>
+</div>
+</div>
 
-<hr />
+</div>
 
-<h3>Previous Withdrawal</h3>
 
-<p><b>Previously Withdrawn For Same Purpose:</b>
+
+<h4>Previous Withdrawal</h4>
+
+<div className="details-grid">
+
+<div className="detail-item">
+<div className="detail-label">Prior Withdrawal For Same Purpose</div>
+<div className="detail-value">
 {details.ispriorwithdrawlforsamepurpose ? "Yes" : "No"}
-</p>
+</div>
+</div>
 
-<p><b>Previous Withdrawal Amount:</b> ₹{details.priorwithdrawlamount}</p>
-<p><b>Previous Financial Year:</b> {details.priorwithdrawlfinyear}</p>
+<div className="detail-item">
+<div className="detail-label">Previous Withdrawal Amount</div>
+<div className="detail-value">₹{details.priorwithdrawlamount}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Previous Financial Year</div>
+<div className="detail-value">{details.priorwithdrawlfinyear}</div>
+</div>
+
+</div>
 
 </div>
 

@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8081/api/statusmaster";
+const BASE_URL = "http://10.1.60.34:8081/api/statusmaster";
 
 async function handleResponse(res) {
   if (!res.ok) {

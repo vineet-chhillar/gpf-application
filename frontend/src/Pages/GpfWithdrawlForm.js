@@ -2,12 +2,17 @@ import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import "../styles/GpfWithdrawlForm.css";
 import { useRef } from "react";
+import {
+  getMasterByEmpCode,
+  getDetailsByAccount
+} from "../mock/gpfMockApi";
 
-
-api.get("/gpf/withdrawal-rules/active")
+//api.get("/gpf/withdrawal-rules/active")
 
 
 const GpfWithdrawlForm = () => {
+const [empCodeInput, setEmpCodeInput] = useState("");
+const [gpfAccountInput, setGpfAccountInput] = useState("");
 
   /* ================= API DATA ================= */
   const [masterApiData, setMasterApiData] = useState(null);
@@ -74,7 +79,7 @@ const [withdrawalRules, setWithdrawalRules] = useState([]);
 
 const didLoadRef = useRef(false);
 //const CURRENT_ROLE = "DDO"; // TEMP – will come from parent app later
-const DEFAULT_MASTER_DATA = {
+{/*const DEFAULT_MASTER_DATA = {
   empcode: "EMP021",
   empname: "Test Employee21",
   designation: "Scientist-B",
@@ -91,10 +96,60 @@ const DEFAULT_DETAILS_DATA = {
   totalcreditamount: 50000,
   refundafterdateofoutstandingbalance: 200000,
   totalwithdrawlamount: 100000,
-  netbalance: 650000};
+  netbalance: 650000};*/}
+useEffect(() => {
 
+  if (!empCodeInput) return;
 
+  const timer = setTimeout(async () => {
 
+    try {
+
+      const master = await getMasterByEmpCode(empCodeInput);
+
+      if (master) {
+        setMasterApiData(master);
+      }
+
+    } catch (err) {
+      console.error("Master fetch failed", err);
+    }
+
+  }, 400);
+
+  return () => clearTimeout(timer);
+
+}, [empCodeInput]);
+useEffect(() => {
+
+  if (!gpfAccountInput) return;
+
+  const timer = setTimeout(async () => {
+
+    try {
+
+      const details = await getDetailsByAccount(gpfAccountInput);
+
+      if (details) {
+        setDetailsApiData(details);
+      }
+
+    } catch (err) {
+      console.error("Details fetch failed", err);
+    }
+
+  }, 400);
+
+  return () => clearTimeout(timer);
+
+}, [gpfAccountInput]);
+useEffect(() => {
+
+  if (!empCodeInput) return;
+
+  setGpfAccountInput(`GPF-NIC-${empCodeInput}`);
+
+}, [empCodeInput]);
 React.useEffect(() => {
   api
     .get("/gpf/withdrawal-rules/active")
@@ -116,31 +171,45 @@ React.useEffect(() => {
   if (didLoadRef.current) return;
   didLoadRef.current = true;
 
-  const loadData = async () => {
-    try {
-      {/*const masterRes = await api.get("/gpf/master");
-      const detailsRes = await api.get("/gpf/details");
+const loadData = async () => {
 
-      setMasterApiData(masterRes.data);
-      setDetailsApiData(detailsRes.data);*/}
-      // ✅ MOCK DEFAULT DATA
-      setMasterApiData(DEFAULT_MASTER_DATA);
-      setDetailsApiData(DEFAULT_DETAILS_DATA);
-      // ================= WITHDRAWAL RULES =================
-      // When API is ready, uncomment this:
-       {/*const rulesRes = await api.get("/gpf/withdrawal-rules/active");
-       
-       setWithdrawalRules(rulesRes.data);*/}
+  try {
 
-      // TEMP MOCK (API STRUCTURE FINALIZED)
-      
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load employee data");
+    if (!empCodeInput) {
+      alert("Enter Employee Code");
+      return;
     }
-  };
 
-  loadData();
+    if (!gpfAccountInput) {
+      alert("Enter GPF Account No");
+      return;
+    }
+
+    const master = await getMasterByEmpCode(empCodeInput);
+
+    const details = await getDetailsByAccount(gpfAccountInput);
+
+    if (!master) {
+      alert("Employee not found");
+      return;
+    }
+
+    if (!details) {
+      alert("GPF account not found");
+      return;
+    }
+
+    setMasterApiData(master);
+    setDetailsApiData(details);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load employee data");
+  }
+
+};
+
+  //loadData();
 }, []);
 
   /* ================= HANDLERS ================= */
@@ -153,7 +222,7 @@ React.useEffect(() => {
     }));
   };
 
-  const buildGpfAccountNo = (empcode) => `GPF-ACC-${empcode}`;
+  const buildGpfAccountNo = (empcode) => `GPF-NIC-${empcode}`;
 const ONLY_CHARS_REGEX = /^[A-Za-z ]+$/;
 const validateForm = () => {
   const newErrors = {};
@@ -265,6 +334,24 @@ const confirmSubmit = async () => {
     await api.post("/gpf-withdrawl/save", payload);
 
     alert("✅ Application Submitted Successfully");
+    // Clear form
+setMasterApiData(null);
+setDetailsApiData(null);
+
+setEmpCodeInput("");
+setGpfAccountInput("");
+
+setSelectedRuleId("");
+
+setUserInput({
+  concernedofficername: "",
+  amountofwithdrawlrequested: "",
+  purposeofwithdrawl: "",
+  ispriorwithdrawlforsamepurpose: false,
+  priorwithdrawlamount: "",
+  priorwithdrawlfinyear: "",
+  dateofapplication: getTodayDate()
+});
 
     setShowVerification(false);
 
@@ -285,7 +372,7 @@ Please verify before submitting
 
 Net Balance : ₹${netBalance}
 Withdrawal Requested : ₹${withdrawAmount}
-
+Net Balance After Withdrawal : ₹${netBalance - withdrawAmount}
 Do you want to continue?
 `;
 
@@ -364,77 +451,63 @@ Do you want to continue?
           <div className="form-group">
             <label className="form-label">Employee Code</label>
             {/*<input className="form-input" value={masterApiData?.empcode || ""} readOnly />*/}
-            <input
+     <input
   className="form-input"
-  value={masterApiData?.empcode || ""}
-  onChange={(e) =>
-    setMasterApiData(prev => ({
-      ...prev,
-      empcode: e.target.value
-    }))
-  }
+  value={empCodeInput}
+  onChange={(e) => setEmpCodeInput(e.target.value)}
 />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Employee Name</label>
-           <input
-  className="form-input"
-  value={masterApiData?.empname || ""}
-  onChange={(e) =>
-    setMasterApiData(prev => ({
-      ...prev,
-      empname: e.target.value
-    }))
-  }
-/>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Designation</label>
-            <input className="form-input" value={masterApiData?.designation || ""} readOnly />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Division</label>
-            <input className="form-input" value={masterApiData?.empdivision || ""} readOnly />
-          </div>
+          
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Mobile No</label>
-            <input className="form-input" value={masterApiData?.empmobileno || ""} readOnly />
-          </div>
 
-          <div className="form-group">
-            <label className="form-label">Email ID</label>
-            <input className="form-input" value={masterApiData?.empemailid || ""} readOnly />
-          </div>
+          <div className="info-grid">
 
-          <div className="form-group">
-            <label className="form-label">Date of Joining</label>
-            <input className="form-input" value={formatDate(masterApiData?.dateofjoining)} readOnly />
-          </div>
+<div className="info-card">
+<div className="info-label">Employee Code</div>
+<div className="info-value">{masterApiData?.empcode || "-"}</div>
+</div>
 
-          <div className="form-group">
-            <label className="form-label">Date of Superannuation</label>
-            <input className="form-input" value={formatDate(masterApiData?.dateofsuperannuation)} readOnly />
-          </div>
+<div className="info-card">
+<div className="info-label">Employee Name</div>
+<div className="info-value">{masterApiData?.empname || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Designation</div>
+<div className="info-value">{masterApiData?.designation || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Division</div>
+<div className="info-value">{masterApiData?.empdivision || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Mobile</div>
+<div className="info-value">{masterApiData?.empmobileno || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Email</div>
+<div className="info-value">{masterApiData?.empemailid || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Date of Joining</div>
+<div className="info-value">{formatDate(masterApiData?.dateofjoining)}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Retirement Date</div>
+<div className="info-value">{formatDate(masterApiData?.dateofsuperannuation)}</div>
+</div>
+
+</div>
+
         </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Concerned Officer</label>
-            <input
-              className="form-input"
-              name="concernedofficername"
-              value={userInput.concernedofficername}
-              onChange={handleUserChange}
-            />
-          </div>
-        </div>
-      </div>
+      
 
       <hr />
 
@@ -448,127 +521,14 @@ Do you want to continue?
     <div className="form-group">
       <label className="form-label">GPF Account No</label>
       <input
-        className="form-input"
-        value={
-          masterApiData
-            ? buildGpfAccountNo(masterApiData.empcode)
-            : ""
-        }
-        readOnly
-      />
-    </div>
-
-    <div className="form-group">
-      <label className="form-label">Basic Pay</label>
-      <input
-        className="form-input"
-        value={detailsApiData?.basicpay || ""}
-        readOnly
-      />
-    </div>
-
-    <div className="form-group">
-  <label className="form-label">Outstanding Balance As On</label>
-  <input
   className="form-input"
-  value={formatDate(getLastFinancialYearEndDate())}
-  readOnly
+  value={gpfAccountInput}
+  onChange={(e) => setGpfAccountInput(e.target.value)}
 />
-</div>
-
-
-    <div className="form-group">
-      <label className="form-label">Outstanding Balance</label>
-      <input
-        className="form-input"
-        value={detailsApiData?.outstandingbalance || ""}
-        readOnly
-      />
     </div>
-  </div>
-
-  <div className="form-row">
-    <div className="form-group">
-  <label className="form-label">Credit From</label>
-  <input
-    className="form-input"
-    value={formatDate(getCurrentFinancialYearStartDate())}
-    readOnly
-  />
-</div>
-
-<div className="form-group">
-  <label className="form-label">Credit To</label>
-  <input
-    className="form-input"
-    value={formatDate(getTodayDate())}
-    readOnly
-  />
-</div>
-
-
-    <div className="form-group">
-      <label className="form-label">Total Credit Amount</label>
-      <input
-        className="form-input"
-        value={detailsApiData?.totalcreditamount || ""}
-        readOnly
-      />
-    </div>
-
-    <div className="form-group">
-      <label className="form-label">
-        Refund After Outstanding Balance
-      </label>
-      <input
-        className="form-input"
-        value={detailsApiData?.refundafterdateofoutstandingbalance || ""}
-        readOnly
-      />
-    </div>
-  </div>
-
-  <div className="form-row">
-    <div className="form-group">
-  <label className="form-label">Withdrawal From</label>
-  <input
-    className="form-input"
-    value={formatDate(getCurrentFinancialYearStartDate())}
-    readOnly
-  />
-</div>
-
-<div className="form-group">
-  <label className="form-label">Withdrawal To</label>
-  <input
-    className="form-input"
-    value={formatDate(getTodayDate())}
-    readOnly
-  />
-</div>
-
-
-    <div className="form-group">
-      <label className="form-label">Total Withdrawal Amount</label>
-      <input
-        className="form-input"
-        value={detailsApiData?.totalwithdrawlamount || ""}
-        readOnly
-      />
-    </div>
-
-    <div className="form-group">
-      <label className="form-label">Net Balance</label>
-      <input
-        className="form-input"
-        value={detailsApiData?.netbalance || ""}
-        readOnly
-      />
-    </div>
-  </div>
-
-  {/* ---- USER INPUT ---- */}
-  <div className="form-row">
+  
+    {/* ---- USER INPUT ---- */}
+  
     <div className="form-group">
      <label className="form-label">
   Amount of Withdrawal Requested <span className="required">*</span>
@@ -592,6 +552,15 @@ Do you want to continue?
       />
     </div>
     <div className="form-group">
+            <label className="form-label">Concerned Officer</label>
+            <input
+              className="form-input"
+              name="concernedofficername"
+              value={userInput.concernedofficername}
+              onChange={handleUserChange}
+            />
+          </div>
+    <div className="form-group">
       <label className="form-label">Purpose of Withdrawal <span className="required">*</span></label>
     <textarea
   className={`form-input ${
@@ -606,8 +575,7 @@ Do you want to continue?
   </div>
 
   <div className="form-row">
-    
-    
+       
     <div className="form-group">
   <label className="form-label">Withdrawal Rule <span className="required">*</span></label>
    <select
@@ -626,11 +594,6 @@ Do you want to continue?
 </select>
 
 </div>
-
-
-    
-  
-
   
   <div className="prior-withdrawal-box">
 
@@ -668,6 +631,57 @@ Do you want to continue?
 
 </div>
   </div>
+<div className="info-grid">
+    <div className="info-card">
+<div className="info-label">Basic Pay</div>
+<div className="info-value">₹{detailsApiData?.basicpay || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Outstanding Balance As On</div>
+<div className="info-value">{formatDate(getLastFinancialYearEndDate())}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Outstanding Balance</div>
+<div className="info-value">₹{detailsApiData?.outstandingbalance || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Credit From</div>
+<div className="info-value">{formatDate(getCurrentFinancialYearStartDate())}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Credit To</div>
+<div className="info-value">{formatDate(getTodayDate())}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Total Credit Amount</div>
+<div className="info-value">₹{detailsApiData?.totalcreditamount || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Refund After Outstanding</div>
+<div className="info-value">
+₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
+</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Total Withdrawal Amount</div>
+<div className="info-value">₹{detailsApiData?.totalwithdrawlamount || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Net Balance</div>
+<div className="info-value">₹{detailsApiData?.netbalance || "-"}</div>
+</div>
+
+</div>
+
+  
   {selectedRule && (
   <div className="rule-description-box">
     <strong>Rule Description:</strong>

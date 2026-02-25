@@ -209,7 +209,7 @@ public void processApplications(WorkflowProcessRequestDTO request) {
 
     for (Long appId : request.getApplicationIds()) {
 
-    GpfWithdrawlDetails details = detailsRepo.findById(appId)
+    GpfWithdrawlDetails details = detailsRepo.findByMaster_Id(appId) 
             .orElseThrow(() ->
                     new IllegalStateException("Application not found: " + appId));
 
@@ -351,7 +351,8 @@ public List<ApplicationTrailDTO> getTrail(Long applicationId) {
 
     }).toList();
 }
-@Override
+
+
 public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
     List<GpfWithdrawlMaster> masters = masterRepo.findAll();
@@ -378,10 +379,42 @@ public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
                 }).toList();
 
+        /* -------- GET LAST ACTION -------- */
+
+        String lastRemarks = null;
+        String lastActionByRole = null;
+
+        if (!trails.isEmpty()) {
+
+            ApplicationStatusTrail last =
+                    trails.get(trails.size() - 1);
+
+            lastRemarks = last.getRemarks();
+            lastActionByRole = resolveRoleName(last.getActionByRole());
+        }
+String currentRoleName = "-";
+
+if (details != null && details.getCurrentOwnerRole() != null) {
+
+    if (details.getCurrentOwnerRole() == 0) {
+        currentRoleName = "Completed";
+    } else {
+        currentRoleName = resolveRoleName(details.getCurrentOwnerRole());
+    }
+}
+        /* -------- BUILD RESPONSE -------- */
+
         GpfApplicationStatusResponseDTO res = new GpfApplicationStatusResponseDTO();
         res.setMaster(master);
         res.setDetails(details);
         res.setTrail(trailDTO);
+
+        res.setLastRemarks(lastRemarks);
+        res.setLastActionByRole(lastActionByRole);
+        res.setCurrentOwnerRole(currentRoleName);
+        if (details != null) {
+            res.setCurrentOwnerRole(resolveRoleName(details.getCurrentOwnerRole()));
+        }
 
         return res;
 
@@ -412,14 +445,11 @@ public List<InboxApplicationDTO> getAllPendingApplications() {
         if (d.getMaster() != null) {
             dto.setEmployeeName(d.getMaster().getEmpname());
             dto.setEmpCode(d.getMaster().getEmpcode());
+             dto.setDesignation(d.getMaster().getDesignation());
         }
 
-        dto.setAmount(
-    d.getAmountofwithdrawlrequested() != null
-        ? d.getAmountofwithdrawlrequested().doubleValue()
-        : null
-);
-
+       dto.setAmount(d.getAmountofwithdrawlrequested());
+dto.setPurpose(d.getPurposeofwithdrawl());
         if (d.getDateofapplication() != null) {
             dto.setApplicationDate(d.getDateofapplication().toString());
         }

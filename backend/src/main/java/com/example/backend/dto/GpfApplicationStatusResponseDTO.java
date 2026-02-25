@@ -7,7 +7,9 @@ public class GpfApplicationStatusResponseDTO {
     private Object master;
     private Object details;
     private List<ApplicationTrailDTO> trail;
-
+private String lastRemarks;
+private String lastActionByRole;
+private String currentOwnerRole;
     public Object getMaster() {
         return master;
     }
@@ -31,4 +33,28 @@ public class GpfApplicationStatusResponseDTO {
     public void setTrail(List<ApplicationTrailDTO> trail) {
         this.trail = trail;
     }
+public String getLastRemarks() {
+    return lastRemarks;
+}
+
+public void setLastRemarks(String lastRemarks) {
+    this.lastRemarks = lastRemarks;
+}
+
+public String getLastActionByRole() {
+    return lastActionByRole;
+}
+
+public void setLastActionByRole(String lastActionByRole) {
+    this.lastActionByRole = lastActionByRole;
+}
+
+public String getCurrentOwnerRole() {
+    return currentOwnerRole;
+}
+
+public void setCurrentOwnerRole(String currentOwnerRole) {
+    this.currentOwnerRole = currentOwnerRole;
+}
+    
 }
