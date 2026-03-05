@@ -65,6 +65,29 @@ const [errors, setErrors] = useState({});
 
   return `${fyEndYear}-03-31`; // yyyy-MM-dd
 };
+const resetForm = () => {
+
+  setMasterApiData(null);
+  setDetailsApiData(null);
+
+  setEmpCodeInput("");
+  setGpfAccountInput("");
+
+  setSelectedRuleId("");
+
+  setUserInput({
+    concernedofficername: "",
+    amountofwithdrawlrequested: "",
+    purposeofwithdrawl: "",
+    ispriorwithdrawlforsamepurpose: false,
+    priorwithdrawlamount: "",
+    priorwithdrawlfinyear: "",
+    dateofapplication: getTodayDate()
+  });
+
+  setErrors({});
+  setShowVerification(false);
+};
 const getCurrentFinancialYearStartDate = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -333,25 +356,8 @@ const confirmSubmit = async () => {
 
     await api.post("/gpf-withdrawl/save", payload);
 
-    alert("✅ Application Submitted Successfully");
-    // Clear form
-setMasterApiData(null);
-setDetailsApiData(null);
-
-setEmpCodeInput("");
-setGpfAccountInput("");
-
-setSelectedRuleId("");
-
-setUserInput({
-  concernedofficername: "",
-  amountofwithdrawlrequested: "",
-  purposeofwithdrawl: "",
-  ispriorwithdrawlforsamepurpose: false,
-  priorwithdrawlamount: "",
-  priorwithdrawlfinyear: "",
-  dateofapplication: getTodayDate()
-});
+   alert("✅ Application Submitted Successfully");
+resetForm();
 
     setShowVerification(false);
 
@@ -431,6 +437,7 @@ Do you want to continue?
     await api.post("/gpf-withdrawl/save", payload);
 
     alert("✅ GPF Withdrawal Application submitted successfully");
+resetForm();
 
   } catch (err) {
     console.error(err);

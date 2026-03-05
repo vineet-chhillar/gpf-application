@@ -7,8 +7,9 @@ import AdvanceApplicationStatus from "../Pages/AdvanceApplicationStatus";
 import WorkflowViewerPage from "../Pages/WorkflowViewerPage";
 import AppFlowState from "../Pages/AppFlowState";
 import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
-import Advance from "../Pages/Advance";
+import GpfAdvanceForm from "../Pages/GpfAdvanceForm";
 import WithdrawlRuleMaster from "../Pages/WithdrawlRuleMaster";
+import AdvanceRuleMaster from "../Pages/AdvanceRuleMaster";
 import GpfWorkflowPage from "../Pages/GpfWorkflowPage";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
@@ -16,24 +17,26 @@ const MainLayout = () => {
   const menus = [
     
     { menuId: 1, menuName: "Withdrawl Rule Master" },
-    { menuId: 2, menuName: "Withdrawl Application Status" },
-    { menuId: 3, menuName: "Advance Application Status" },
-    { menuId: 4, menuName: "App WorkFlow HQ" },
-    { menuId: 5, menuName: "Generate App Flow States" },
-    { menuId: 6, menuName: "WithDrawl" },
-    { menuId: 7, menuName: "Advance" },
-    { menuId: 8, menuName: "WorkFlow/Pending For Action" },
+    { menuId: 2, menuName: "Advance Rule Master" },
+    { menuId: 3, menuName: "Withdrawl Application Status" },
+    { menuId: 4, menuName: "Advance Application Status" },
+    { menuId: 5, menuName: "App WorkFlow HQ" },
+    { menuId: 6, menuName: "Generate App Flow States" },
+    { menuId: 7, menuName: "WithDrawl" },
+    { menuId: 8, menuName: "Advance" },
+    { menuId: 9, menuName: "WorkFlow/Pending For Action" },
     
     
   ];
 const pageMap = {
   "Withdrawl Rule Master": <WithdrawlRuleMaster />,
+  "Advance Rule Master": <AdvanceRuleMaster />,
   "Withdrawl Application Status": <WithdrawlApplicationStatus />,
   "Advance Application Status": <AdvanceApplicationStatus />,
   "App WorkFlow HQ": <WorkflowViewerPage />,
   "Generate App Flow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
-  "Advance": <Advance />,  
+  "Advance": <GpfAdvanceForm />,  
    "WorkFlow/Pending For Action": <GpfWorkflowPage />
 ,
   

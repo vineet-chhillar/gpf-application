@@ -131,9 +131,9 @@
 }
 
 .rule-table th {
-  background-color: #f1f5f9;
+  background-color: #5c6c97;
   font-weight: 600;
-  color: #1f2937;
+  color: #f6f8f6;
 }
 
 .rule-table tr:nth-child(even) {

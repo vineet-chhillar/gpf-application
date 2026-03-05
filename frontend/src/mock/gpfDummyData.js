@@ -20,8 +20,53 @@ export const EMPLOYEES = [
     empemailid: "rahul@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP032",
+    empname: "Pankaj Sharma",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543222",
+    empemailid: "pankaj@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP033",
+    empname: "Rajesh Kumar",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543223",
+    empemailid: "rajesh@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP034",
+    empname: "Ramesh Kumar",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543223",
+    empemailid: "ramesh@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP035",
+    empname: "Subodh Kumar",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543223",
+    empemailid: "subodh@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
   }
 ];
+
 
 export const GPF_DETAILS = [
   {
@@ -31,7 +76,8 @@ export const GPF_DETAILS = [
     totalcreditamount: 50000,
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 100000,
-    netbalance: 650000
+    netbalance: 650000,
+    amountofadvanceoutstanding: 50000
   },
   {
     gpfaccountno: "GPF-NIC-EMP031",
@@ -40,6 +86,47 @@ export const GPF_DETAILS = [
     totalcreditamount: 40000,
     refundafterdateofoutstandingbalance: 150000,
     totalwithdrawlamount: 120000,
-    netbalance: 670000
+    netbalance: 670000,
+    amountofadvanceoutstanding: 40000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP032",
+    basicpay: 52000,
+    outstandingbalance: 600000,
+    totalcreditamount: 40000,
+    refundafterdateofoutstandingbalance: 150000,
+    totalwithdrawlamount: 120000,
+    netbalance: 670000,
+    amountofadvanceoutstanding: 25000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP033",
+    basicpay: 62000,
+    outstandingbalance: 700000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 120000,
+    netbalance: 830000,
+    amountofadvanceoutstanding: 60000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP034",
+    basicpay: 62000,
+    outstandingbalance: 700000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 120000,
+    netbalance: 830000,
+    amountofadvanceoutstanding: 45000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP035",
+    basicpay: 62000,
+    outstandingbalance: 700000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 120000,
+    netbalance: 830000,
+    amountofadvanceoutstanding: 45000
   }
 ];
