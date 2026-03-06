@@ -19,7 +19,7 @@ const [gpfAccountInput, setGpfAccountInput] = useState("");
   const [detailsApiData, setDetailsApiData] = useState(null);
 
   const [showVerification, setShowVerification] = useState(false);
-
+const [showSuccess, setShowSuccess] = useState(false);
   const formatDate = (dateString) => {
   if (!dateString) return "";
 
@@ -46,7 +46,6 @@ const selectedRule = rules.find(
 const [errors, setErrors] = useState({});
 
     const [userInput, setUserInput] = useState({
-    concernedofficername: "",
     amountofwithdrawlrequested: "",
     purposeofwithdrawl: "",
     ispriorwithdrawlforsamepurpose: false,
@@ -76,7 +75,6 @@ const resetForm = () => {
   setSelectedRuleId("");
 
   setUserInput({
-    concernedofficername: "",
     amountofwithdrawlrequested: "",
     purposeofwithdrawl: "",
     ispriorwithdrawlforsamepurpose: false,
@@ -126,19 +124,21 @@ useEffect(() => {
 
   const timer = setTimeout(async () => {
 
-    try {
+  try {
 
-      const master = await getMasterByEmpCode(empCodeInput);
+    const empCode = empCodeInput.toUpperCase();   // ⭐ normalize
 
-      if (master) {
-        setMasterApiData(master);
-      }
+    const master = await getMasterByEmpCode(empCode);
 
-    } catch (err) {
-      console.error("Master fetch failed", err);
+    if (master) {
+      setMasterApiData(master);
     }
 
-  }, 400);
+  } catch (err) {
+    console.error("Master fetch failed", err);
+  }
+
+}, 400);
 
   return () => clearTimeout(timer);
 
@@ -151,7 +151,9 @@ useEffect(() => {
 
     try {
 
-      const details = await getDetailsByAccount(gpfAccountInput);
+      const account = gpfAccountInput.trim().toUpperCase();   // ⭐ normalize
+
+      const details = await getDetailsByAccount(account);
 
       if (details) {
         setDetailsApiData(details);
@@ -166,13 +168,16 @@ useEffect(() => {
   return () => clearTimeout(timer);
 
 }, [gpfAccountInput]);
-useEffect(() => {
+
+{/*useEffect(() => {
 
   if (!empCodeInput) return;
 
   setGpfAccountInput(`GPF-NIC-${empCodeInput}`);
 
-}, [empCodeInput]);
+}, [empCodeInput]);*/}
+
+
 React.useEffect(() => {
   api
     .get("/gpf/withdrawal-rules/active")
@@ -319,84 +324,7 @@ const confirmSubmit = async () => {
 
     const payload = {
       master: {
-        ...masterApiData,
-        concernedofficername: userInput.concernedofficername
-      },
-      details: {
-        ...detailsApiData,
-        gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
-
-        creditfromdate: getCurrentFinancialYearStartDate(),
-        credittodate: getTodayDate(),
-        dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
-
-        withdrawlfromdate: getCurrentFinancialYearStartDate(),
-        withdrawltodate: getTodayDate(),
-
-        amountofwithdrawlrequested: userInput.amountofwithdrawlrequested,
-        purposeofwithdrawl: userInput.purposeofwithdrawl,
-        withdrawlrule: Number(selectedRuleId),
-
-        ispriorwithdrawlforsamepurpose: userInput.ispriorwithdrawlforsamepurpose,
-
-        priorwithdrawlamount: userInput.ispriorwithdrawlforsamepurpose
-          ? userInput.priorwithdrawlamount
-          : 0,
-
-        priorwithdrawlfinyear: userInput.ispriorwithdrawlforsamepurpose
-          ? userInput.priorwithdrawlfinyear
-          : "",
-
-        dateofapplication: userInput.dateofapplication,
-
-        action: { actionId: 17 },
-        roleId: 2
-      }
-    };
-
-    await api.post("/gpf-withdrawl/save", payload);
-
-   alert("✅ Application Submitted Successfully");
-resetForm();
-
-    setShowVerification(false);
-
-  } catch (err) {
-    alert(err.response?.data || "Submission failed");
-  }
-};
-
-  const handleSubmit = async () => {
-
-  if (!validateForm()) return;
-
-  const withdrawAmount = Number(userInput.amountofwithdrawlrequested);
-  const netBalance = Number(detailsApiData.netbalance);
-
-  const confirmMessage = `
-Please verify before submitting
-
-Net Balance : ₹${netBalance}
-Withdrawal Requested : ₹${withdrawAmount}
-Net Balance After Withdrawal : ₹${netBalance - withdrawAmount}
-Do you want to continue?
-`;
-
-  const confirmed = window.confirm(confirmMessage);
-
-  if (!confirmed) return;
-
-  try {
-
-    if (!masterApiData || !detailsApiData) {
-      alert("Required data not loaded");
-      return;
-    }
-
-    const payload = {
-      master: {
-        ...masterApiData,
-        concernedofficername: userInput.concernedofficername
+        ...masterApiData        
       },
       details: {
         ...detailsApiData,
@@ -436,13 +364,31 @@ Do you want to continue?
 
     await api.post("/gpf-withdrawl/save", payload);
 
-    alert("✅ GPF Withdrawal Application submitted successfully");
+    setShowVerification(false);
+
+    setShowSuccess(true);
 resetForm();
 
   } catch (err) {
+
     console.error(err);
     alert(err.response?.data || "Error while saving");
+
   }
+
+};
+
+  const handleSubmit = () => {
+
+  if (!validateForm()) return;
+
+  if (!masterApiData || !detailsApiData) {
+    alert("Required data not loaded");
+    return;
+  }
+
+  setShowVerification(true);
+
 };
 
   /* ================= JSX ================= */
@@ -558,15 +504,7 @@ resetForm();
         onChange={handleUserChange}
       />
     </div>
-    <div className="form-group">
-            <label className="form-label">Concerned Officer</label>
-            <input
-              className="form-input"
-              name="concernedofficername"
-              value={userInput.concernedofficername}
-              onChange={handleUserChange}
-            />
-          </div>
+  
     <div className="form-group">
       <label className="form-label">Purpose of Withdrawal <span className="required">*</span></label>
     <textarea
@@ -578,12 +516,7 @@ resetForm();
   onChange={handleUserChange}
   placeholder="Enter purpose of withdrawal"
 />    </div>
-
-  </div>
-
-  <div className="form-row">
-       
-    <div className="form-group">
+<div className="form-group">
   <label className="form-label">Withdrawal Rule <span className="required">*</span></label>
    <select
   className="form-input"
@@ -601,6 +534,11 @@ resetForm();
 </select>
 
 </div>
+  </div>
+
+  <div className="form-row">
+       
+    
   
   <div className="prior-withdrawal-box">
 
@@ -708,22 +646,47 @@ resetForm();
   </div>
 )}
       <div className="form-row-center">
-        {showVerification && (
-  <div className="verification-box">
+     {showVerification && (
+  <div className="modal-overlay">
 
-    <h3>Verify Withdrawal</h3>
+    <div className="modal-box">
 
-    <p>
-      <strong>Net Balance:</strong> ₹{detailsApiData?.netbalance}
-    </p>
+      <h3>Verify Withdrawal</h3>
 
-    <p>
-      <strong>Requested Withdrawal:</strong> ₹{userInput.amountofwithdrawlrequested}
-    </p>
+      <div className="modal-content">
 
-    <div className="verification-actions">
-      <button onClick={confirmSubmit}>Confirm</button>
-      <button onClick={() => setShowVerification(false)}>Cancel</button>
+        <div className="modal-row">
+          <span>Net Balance</span>
+          <strong>₹{detailsApiData?.netbalance}</strong>
+        </div>
+
+        <div className="modal-row">
+          <span>Withdrawal Requested</span>
+          <strong>₹{userInput.amountofwithdrawlrequested}</strong>
+        </div>
+
+        <div className="modal-row highlight">
+          <span>Balance After Withdrawal</span>
+          <strong>
+            ₹{Number(detailsApiData?.netbalance || 0) - Number(userInput.amountofwithdrawlrequested || 0)}
+          </strong>
+        </div>
+
+      </div>
+
+      <div className="modal-actions">
+        <button className="confirm-btn" onClick={confirmSubmit}>
+          Confirm
+        </button>
+
+        <button
+          className="cancel-btn"
+          onClick={() => setShowVerification(false)}
+        >
+          Cancel
+        </button>
+      </div>
+
     </div>
 
   </div>
@@ -731,6 +694,28 @@ resetForm();
         <button className="process-btn" onClick={handleSubmit}>
           Submit Application
         </button>
+        {showSuccess && (
+
+<div className="modal-overlay">
+
+<div className="modal-box success">
+
+<h3>✅ Withdrawal Submitted Successfully</h3>
+
+<p>Your GPF withdrawal application has been submitted.</p>
+
+<button
+className="confirm-btn"
+onClick={() => setShowSuccess(false)}
+>
+OK
+</button>
+
+</div>
+
+</div>
+
+)}
       </div>
     </div>
   );

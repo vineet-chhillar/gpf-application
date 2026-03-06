@@ -2,149 +2,193 @@ import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import "../styles/GpfWorkflowPage.css";
 
-//const GpfWorkflowPage = ({ roleId, roleName }) => {
-  const GpfWorkflowPage = () => {
+const GpfWorkflowPage = () => {
 
-  const [applications, setApplications] = useState([]);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [actions, setActions] = useState([]);
-  const [selectedAction, setSelectedAction] = useState("");
-  const [remarks, setRemarks] = useState("");
+const [applications, setApplications] = useState([]);
+const [selectedIds, setSelectedIds] = useState([]);
+const [actions, setActions] = useState([]);
+const [selectedAction, setSelectedAction] = useState("");
+const [remarks, setRemarks] = useState("");
 const [expandedRow, setExpandedRow] = useState(null);
 const [trailMap, setTrailMap] = useState({});
 const [detailsMap, setDetailsMap] = useState({});
-
+const [appType, setAppType] = useState("withdrawl");
 
 const toggleExpand = async (applicationId, empCode) => {
 
-  if (expandedRow === applicationId) {
-    setExpandedRow(null);
-    return;
-  }
+if (expandedRow === applicationId) {
+setExpandedRow(null);
+return;
+}
 
-  try {
+try {
 
-    const [trailRes, detailsRes] = await Promise.all([
-      api.get(`/gpf-withdrawl/trail/${applicationId}`),
-      api.get(`/gpf-withdrawl/status/${empCode}`)
-    ]);
+const base =
+appType === "withdrawl"
+? "/gpf-withdrawl"
+: "/gpf-advance";
 
-    setTrailMap(prev => ({
-      ...prev,
-      [applicationId]: trailRes.data
-    }));
+const [trailRes, detailsRes] = await Promise.all([
+api.get(`${base}/trail/${applicationId}`),
+api.get(`${base}/status/${empCode}`)
+]);
 
-    setDetailsMap(prev => ({
-      ...prev,
-      [applicationId]: detailsRes.data
-    }));
+setTrailMap(prev => ({
+...prev,
+[applicationId]: trailRes.data
+}));
 
-  } catch (err) {
-    console.error("Expand load error", err);
-  }
+setDetailsMap(prev => ({
+...prev,
+[applicationId]: detailsRes.data
+}));
 
-  setExpandedRow(applicationId);
+} catch (err) {
+console.error("Expand load error", err);
+}
+
+setExpandedRow(applicationId);
 };
 
+/* ================= LOAD INBOX ================= */
 
-
-  /* ================= LOAD INBOX ================= */
-  {/*useEffect(() => {
-    if (!roleId) return;
-    api.get(`/gpf-withdrawl/inbox/${roleId}`)
-      .then(res => setApplications(res.data))
-      .catch(err => console.error("Inbox load error", err));
-  }, [roleId]);*/}
 useEffect(() => {
 
-  api.get(`/gpf-withdrawl/inbox`)
-    .then(res => {
-      setApplications(res.data);
-    })
-    .catch(err => console.error("Inbox load error", err));
+const url =
+appType === "withdrawl"
+? "/gpf-withdrawl/inbox"
+: "/gpf-advance/inbox";
 
+api.get(url)
+.then(res => {
+setApplications(res.data);
+setExpandedRow(null);
+})
+.catch(err => console.error("Inbox load error", err));
+
+}, [appType]);
+
+/* ================= LOAD ACTIONS ================= */
+
+useEffect(() => {
+api.get("/gpf-withdrawl/actions")
+.then(res => {
+setActions(Array.isArray(res.data) ? res.data : []);
+})
+.catch(err => console.error("Action load error", err));
 }, []);
-  /* ================= LOAD ACTIONS ================= */
-  useEffect(() => {
-  api.get("/gpf-withdrawl/actions")
-    .then(res => {
-      console.log("Actions response:", res.data);
-      setActions(Array.isArray(res.data) ? res.data : []);
 
-    })
-    .catch(err => console.error("Action load error", err));
-}, []);
+/* ================= CHECKBOX ================= */
 
-
-  /* ================= CHECKBOX ================= */
-  const toggleSelection = (id) => {
-    setSelectedIds(prev =>
-      prev.includes(id)
-        ? prev.filter(x => x !== id)
-        : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === applications.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(applications.map(app => app.applicationId));
-    }
-  };
-
-  /* ================= PROCESS ================= */
- const handleProcess = async () => {
-
-  if (selectedIds.length === 0) {
-    alert("Select at least one application");
-    return;
-  }
-
-  if (!selectedAction) {
-    alert("Select action");
-    return;
-  }
-
-  try {
-
-    await api.post("/gpf-withdrawl/process", {
-      applicationIds: selectedIds,
-      actionId: selectedAction,
-      remarks
-    });
-
-    alert("Processed successfully");
-
-    const res = await api.get(`/gpf-withdrawl/inbox`);
-    setApplications(res.data);
-
-    setSelectedIds([]);
-    setSelectedAction("");
-    setRemarks("");
-
-  } catch (err) {
-    alert(err.response?.data || "Processing failed");
-  }
+const toggleSelection = (id) => {
+setSelectedIds(prev =>
+prev.includes(id)
+? prev.filter(x => x !== id)
+: [...prev, id]
+);
 };
-{/*useEffect(() => {
-  console.log("ROLE ID:", roleId);
-}, [roleId]);*/}
 
-  return (
-    
-    <div className="workflow-container">
+const toggleSelectAll = () => {
+if (selectedIds.length === applications.length) {
+setSelectedIds([]);
+} else {
+setSelectedIds(applications.map(app => app.applicationId));
+}
+};
 
-      {/*<h2>{roleName} Inbox</h2>*/}
-      <h2>Pending Applications</h2>
+/* ================= PROCESS ================= */
 
-      {/* ================= INBOX TABLE ================= */}
-      <div className="workflow-table-wrapper">
+const handleProcess = async () => {
 
-        <table className="workflow-table">
-          <thead>
+if (selectedIds.length === 0) {
+alert("Select at least one application");
+return;
+}
+
+if (!selectedAction) {
+alert("Select action");
+return;
+}
+
+try {
+
+const url =
+appType === "withdrawl"
+? "/gpf-withdrawl/process"
+: "/gpf-advance/process";
+
+await api.post(url, {
+applicationIds: selectedIds,
+actionId: selectedAction,
+remarks
+});
+
+alert("Processed successfully");
+
+const reloadUrl =
+appType === "withdrawl"
+? "/gpf-withdrawl/inbox"
+: "/gpf-advance/inbox";
+
+const res = await api.get(reloadUrl);
+setApplications(res.data);
+
+setSelectedIds([]);
+setSelectedAction("");
+setRemarks("");
+
+} catch (err) {
+alert(err.response?.data || "Processing failed");
+}
+
+};
+
+return (
+
+<div className="workflow-container">
+
+{/* TYPE SELECTOR */}
+
+<div className="type-selector">
+
+<label className={appType === "withdrawl" ? "active" : ""}>
+<input
+type="radio"
+value="withdrawl"
+checked={appType === "withdrawl"}
+onChange={() => setAppType("withdrawl")}
+/>
+<span>Withdrawal</span>
+</label>
+
+<label className={appType === "advance" ? "active" : ""}>
+<input
+type="radio"
+value="advance"
+checked={appType === "advance"}
+onChange={() => setAppType("advance")}
+/>
+<span>Advance</span>
+</label>
+
+</div>
+
+<h2>
+{appType === "withdrawl"
+? "Withdrawal Applications"
+: "Advance Applications"}
+</h2>
+
+{/* ================= TABLE ================= */}
+
+<div className="workflow-table-wrapper">
+
+<table className="workflow-table">
+
+<thead>
+
 <tr>
-<th className="col-check">
+<th>
 <input
 type="checkbox"
 onChange={toggleSelectAll}
@@ -155,42 +199,43 @@ selectedIds.length === applications.length
 />
 </th>
 
-<th className="col-id">App ID</th>
-<th className="col-empcode">Emp Code</th>
-<th className="col-name">Name</th>
-<th className="col-designation">Designation</th>
-<th className="col-amount">Amount</th>
-<th className="col-date">Date</th>
-<th className="col-purpose">Purpose</th>
-<th className="col-pending">Pending With</th>
+<th>App ID</th>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Designation</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Purpose</th>
+<th>Pending With</th>
 </tr>
+
 </thead>
 
-          <tbody>
-  {applications.map(app => (
-  <React.Fragment key={app.applicationId}>
+<tbody>
 
-      {/* MAIN ROW */}
-      <tr
-  className={`main-row ${
-    expandedRow === app.applicationId ? "selected-row" : ""
-  }`}
-  onClick={() => toggleExpand(app.applicationId, app.empCode)}
+{applications.map(app => (
+
+<React.Fragment key={app.applicationId}>
+
+<tr
+className={`main-row ${expandedRow === app.applicationId ? "selected-row" : ""}`}
+onClick={() => toggleExpand(app.applicationId, app.empCode)}
 >
-        <td>
-          {app.pendingWithRole !== "Completed" && (
-          <input
-            type="checkbox"
-            checked={selectedIds.includes(app.applicationId)}
-            onChange={(e) => {
-              e.stopPropagation();
-              toggleSelection(app.applicationId)
-            }}
-          />
-          )}
-        </td>
 
-        <td>{app.applicationId}</td>
+<td>
+{app.pendingWithRole !== "Completed" && (
+<input
+type="checkbox"
+checked={selectedIds.includes(app.applicationId)}
+onChange={(e) => {
+e.stopPropagation();
+toggleSelection(app.applicationId)
+}}
+/>
+)}
+</td>
+
+<td>{app.applicationId}</td>
 <td>{app.empCode}</td>
 <td>{app.employeeName}</td>
 <td>{app.designation}</td>
@@ -202,32 +247,33 @@ selectedIds.length === applications.length
 : ""}
 </td>
 
-<td className="purpose-cell">
-{app.purpose}
-</td>
+<td>{app.purpose}</td>
+<td>{app.pendingWithRole}</td>
 
-<td className="pending-role">
-{app.pendingWithRole}
-</td>
-      </tr>
+</tr>
 
-      {/* EXPANDED ROW */}
-     {expandedRow === app.applicationId && (() => {
+{/* ================= EXPANDED ROW ================= */}
 
-  const full = detailsMap[app.applicationId] || {};
-  const master = full.master || {};
-  const details = full.details || {};
+{expandedRow === app.applicationId && (() => {
 
-  return (
-    <tr className="expanded-row">
-      <td colSpan="9">
-        <div className="expanded-content">
+const full = detailsMap[app.applicationId] || {};
+const master = full.master || {};
+const details = full.details || {};
 
-          <div className="left-panel">
+return (
 
-            <h4>Employee Details</h4>
+<tr className="expanded-row">
+<td colSpan="9">
 
-            <div className="details-grid">
+<div className="expanded-content">
+
+{/* LEFT PANEL */}
+
+<div className="left-panel">
+
+<h4>Employee Details</h4>
+
+<div className="details-grid">
 
 <div className="detail-item">
 <span className="label">Employee Code</span>
@@ -271,9 +317,8 @@ selectedIds.length === applications.length
 
 </div>
 
-            
 
-        <h4>GPF Account Summary</h4>
+<h4>GPF Account Summary</h4>
 
 <div className="details-grid">
 
@@ -319,7 +364,10 @@ selectedIds.length === applications.length
 
 </div>
 
-            <h4>Withdrawal Calculation</h4>
+
+{/* COMMON CALCULATION */}
+
+<h4>Balance Calculation</h4>
 
 <div className="details-grid">
 
@@ -345,7 +393,14 @@ selectedIds.length === applications.length
 
 </div>
 
-            <h4>Withdrawal Request</h4>
+
+{/* WITHDRAWAL SECTION */}
+
+{appType === "withdrawl" && (
+
+<>
+
+<h4>Withdrawal Request</h4>
 
 <div className="details-grid">
 
@@ -361,21 +416,18 @@ selectedIds.length === applications.length
 
 <div className="detail-item">
 <span className="label">Withdrawal Rule</span>
-<span className="value">{details.withdrawlrule}</span>
+<span className="value">{details.withdrawlruleText}</span>
 </div>
 
 <div className="detail-item">
 <span className="label">Application Date</span>
-<span className="value">
-{details.dateofapplication
-? new Date(details.dateofapplication).toLocaleDateString()
-: ""}
-</span>
+<span className="value">{details.dateofapplication}</span>
 </div>
 
 </div>
 
-            <h4>Previous Withdrawal Details</h4>
+
+<h4>Previous Withdrawal Details</h4>
 
 <div className="details-grid">
 
@@ -398,79 +450,138 @@ selectedIds.length === applications.length
 
 </div>
 
-          </div>
+</>
 
-          <div className="right-panel">
-
-            <h4>Status Trail</h4>
-
-            {trailMap[app.applicationId]?.length > 0 ? (
-              trailMap[app.applicationId].map((t, i) => (
-                <div key={i} className="trail-box">
-                  <div><strong>Role:</strong> {t.role}</div>
-                  <div><strong>Action:</strong> {t.action}</div>
-                  <div><strong>Date:</strong> {t.time || t.actionAt}</div>
-                  <div className="remarks">{t.remarks}</div>
-                </div>
-              ))
-            ) : (
-              <p>No trail available</p>
-            )}
-
-          </div>
-
-        </div>
-      </td>
-    </tr>
-  );
-
-})()}
+)}
 
 
-    </React.Fragment>
-  ))}
-</tbody>
+{/* ADVANCE SECTION */}
 
+{appType === "advance" && (
 
-        </table>
-      </div>
+<>
 
-      {/* ================= ACTION PANEL ================= */}
-      <div className="workflow-action-bar">
+<h4>Advance Request</h4>
 
-  <select
-    className="action-dropdown"
-    value={selectedAction}
-    onChange={(e) => setSelectedAction(e.target.value)}
-  >
-    <option value="">-- Select Action --</option>
-    {actions.map(action => (
-      <option key={action.actionId} value={action.actionId}>
-        {action.actionDesc}
-      </option>
-    ))}
-  </select>
+<div className="details-grid">
 
-  <input
-    type="text"
-    className="remarks-input"
-    placeholder="Enter remarks..."
-    value={remarks}
-    onChange={(e) => setRemarks(e.target.value)}
-  />
+<div className="detail-item">
+<span className="label">Advance Requested</span>
+<span className="value">₹{details.amountofadvancerequested}</span>
+</div>
 
-  <button
-    className="process-btn"
-    onClick={handleProcess}
-  >
-    Process Selected
-  </button>
+<div className="detail-item">
+<span className="label">Purpose</span>
+<span className="value">{details.purposeofadvance}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Advance Rule</span>
+<span className="value">{details.advanceruleText}</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Installments</span>
+<span className="value">
+{details.noofmonthlyinstallmentsforpaymentofconsolidatedadvance}
+</span>
+</div>
+
+<div className="detail-item">
+<span className="label">Consolidated Advance</span>
+<span className="value">₹{details.amountofconsolidatedadvance}</span>
+</div>
 
 </div>
 
-    </div>
-    
-  );
+</>
+
+)}
+
+</div>
+
+
+{/* RIGHT PANEL */}
+
+<div className="right-panel">
+
+<h4>Status Trail</h4>
+
+{trailMap[app.applicationId]?.length > 0 ? (
+trailMap[app.applicationId].map((t, i) => (
+<div key={i} className="trail-box">
+<div><strong>Role:</strong> {t.role}</div>
+<div><strong>Action:</strong> {t.action}</div>
+<div><strong>Date:</strong> {t.time || t.actionAt}</div>
+<div className="remarks">{t.remarks}</div>
+</div>
+))
+) : (
+<p>No trail available</p>
+)}
+
+</div>
+
+</div>
+
+</td>
+</tr>
+
+);
+
+})()}
+
+</React.Fragment>
+
+))}
+
+</tbody>
+
+</table>
+
+</div>
+
+{/* ================= ACTION BAR ================= */}
+
+<div className="workflow-action-bar">
+
+<select
+className="action-dropdown"
+value={selectedAction}
+onChange={(e) => setSelectedAction(e.target.value)}
+>
+
+<option value="">-- Select Action --</option>
+
+{actions.map(action => (
+<option key={action.actionId} value={action.actionId}>
+{action.actionDesc}
+</option>
+))}
+
+</select>
+
+<input
+type="text"
+className="remarks-input"
+placeholder="Enter remarks..."
+value={remarks}
+onChange={(e) => setRemarks(e.target.value)}
+/>
+
+<button
+className="process-btn"
+onClick={handleProcess}
+>
+Process Selected
+</button>
+
+</div>
+
+</div>
+
+);
+
 };
 
 export default GpfWorkflowPage;

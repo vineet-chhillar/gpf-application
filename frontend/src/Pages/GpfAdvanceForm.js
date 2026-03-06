@@ -18,7 +18,8 @@ const [rules,setRules] = useState([]);
 const [selectedRuleId,setSelectedRuleId] = useState("");
 
 const [errors,setErrors] = useState({});
-
+const [showVerification,setShowVerification] = useState(false);
+const [showSuccess,setShowSuccess] = useState(false);
 const getTodayDate = ()=>{
  const today = new Date();
  return today.toISOString().split("T")[0];
@@ -26,7 +27,6 @@ const getTodayDate = ()=>{
 
 const [userInput,setUserInput] = useState({
 
- concernedofficername:"",
  amountofadvancerequested:"",
  purposeofadvance:"",
  noofmonthlyinstallmentsforpaymentofconsolidatedadvance:"",
@@ -78,7 +78,6 @@ const resetForm = ()=>{
  setSelectedRuleId("");
 
  setUserInput({
-  concernedofficername:"",
   amountofadvancerequested:"",
   purposeofadvance:"",
   noofmonthlyinstallmentsforpaymentofconsolidatedadvance:"",
@@ -87,43 +86,65 @@ const resetForm = ()=>{
 
 };
 
-useEffect(()=>{
+useEffect(() => {
 
- if(!empCodeInput) return;
+  if (!empCodeInput) return;
 
- const timer = setTimeout(async ()=>{
+  const timer = setTimeout(async () => {
 
-  const master = await getMasterByEmpCode(empCodeInput);
-  if(master) setMasterApiData(master);
+    try {
 
- },400);
+      const empCode = empCodeInput.trim().toUpperCase();   // ⭐ normalize
 
- return ()=>clearTimeout(timer);
+      const master = await getMasterByEmpCode(empCode);
 
-},[empCodeInput]);
+      if (master) {
+        setMasterApiData(master);
+      }
 
-useEffect(()=>{
+    } catch (err) {
+      console.error("Master fetch failed", err);
+    }
 
- if(!gpfAccountInput) return;
+  }, 400);
 
- const timer = setTimeout(async ()=>{
+  return () => clearTimeout(timer);
 
-  const details = await getDetailsByAccount(gpfAccountInput);
-  if(details) setDetailsApiData(details);
+}, [empCodeInput]);
 
- },400);
+useEffect(() => {
 
- return ()=>clearTimeout(timer);
+  if (!gpfAccountInput) return;
 
-},[gpfAccountInput]);
+  const timer = setTimeout(async () => {
 
-useEffect(()=>{
+    try {
+
+      const account = gpfAccountInput.trim().toUpperCase();   // ⭐ normalize
+
+      const details = await getDetailsByAccount(account);
+
+      if (details) {
+        setDetailsApiData(details);
+      }
+
+    } catch (err) {
+      console.error("Details fetch failed", err);
+    }
+
+  }, 400);
+
+  return () => clearTimeout(timer);
+
+}, [gpfAccountInput]);
+
+{/*useEffect(()=>{
 
  if(!empCodeInput) return;
 
  setGpfAccountInput(`GPF-NIC-${empCodeInput}`);
 
-},[empCodeInput]);
+},[empCodeInput]);*/}
 
 useEffect(()=>{
 
@@ -212,17 +233,27 @@ const validate = ()=>{
 
 /* ================= SUBMIT ================= */
 
-const handleSubmit = async ()=>{
+const handleSubmit = () => {
 
  if(!validate()) return;
+
+ if(!masterApiData || !detailsApiData){
+  alert("Required data not loaded");
+  return;
+ }
+
+ setShowVerification(true);
+
+};
+const confirmSubmit = async () => {
 
  try{
 
  const payload = {
 
   master:{
-    ...masterApiData,
-    concernedofficername:userInput.concernedofficername
+    ...masterApiData
+    
   },
 
   details:{
@@ -256,17 +287,12 @@ const handleSubmit = async ()=>{
   roleId:28,
   actionId:17
 
-};
-
-
-
- 
-
- console.log("Payload:",payload);
+ };
 
  await api.post("/gpf-advance/save",payload);
 
- alert("Advance submitted");
+ setShowVerification(false);
+ setShowSuccess(true);
 
  resetForm();
 
@@ -278,7 +304,6 @@ const handleSubmit = async ()=>{
  }
 
 };
-
 /* ================= UI ================= */
 
 return (
@@ -403,15 +428,7 @@ onChange={handleChange}
 </div>
 </div>
 <div className="form-row">
-<div className="form-group">
-<label>Concerned Officer</label>
-<input
-className="form-input"
-name="concernedofficername"
-value={userInput.concernedofficername || ""}
-onChange={handleChange}
-/>
-</div>
+
 
 <div className="form-group">
 <label>Purpose</label>
@@ -536,10 +553,89 @@ onChange={handleChange}
 
 <div className="form-row-center">
 
+{showVerification && (
+
+<div className="modal-overlay">
+
+<div className="modal-box">
+
+<h3>Verify Advance Application</h3>
+
+<div className="modal-content">
+
+<div className="modal-row">
+<span>Advance Outstanding</span>
+<strong>₹{advanceOutstanding}</strong>
+</div>
+
+<div className="modal-row">
+<span>Advance Requested</span>
+<strong>₹{requested}</strong>
+</div>
+
+<div className="modal-row highlight">
+<span>Consolidated Advance</span>
+<strong>₹{consolidatedAdvance}</strong>
+</div>
+
+<div className="modal-row">
+<span>Monthly Installment</span>
+<strong>₹{monthlyInstallment}</strong>
+</div>
+
+</div>
+
+<div className="modal-actions">
+
+<button
+className="confirm-btn"
+onClick={confirmSubmit}
+>
+Confirm
+</button>
+
+<button
+className="cancel-btn"
+onClick={()=>setShowVerification(false)}
+>
+Cancel
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
 <button className="process-btn" onClick={handleSubmit}>
 Submit Advance Application
 </button>
 
+
+{showSuccess && (
+
+<div className="modal-overlay">
+
+<div className="modal-box success">
+
+<h3>✅ Advance Submitted Successfully</h3>
+
+<p>Your GPF advance application has been submitted.</p>
+
+<button
+className="confirm-btn"
+onClick={()=>setShowSuccess(false)}
+>
+OK
+</button>
+
+</div>
+
+</div>
+
+)}
 </div>
 
 </div>

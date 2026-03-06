@@ -63,7 +63,7 @@ hr {
    min-width: 250px;
 }
 .form-group select {
-  min-width: 220px;
+  min-width: 250px;
 }
 /* ===== LABEL ===== */
 
@@ -78,7 +78,7 @@ hr {
 
 .form-input {
   min-width: 180px;
-  max-width: 190px;
+  max-width: 250px;
   padding: 7px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -251,4 +251,103 @@ button:hover {
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:12px;
+}
+/* ===== Modal Overlay ===== */
+
+.modal-overlay{
+position: fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background: rgba(0,0,0,0.45);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:1000;
+}
+
+/* ===== Modal Box ===== */
+
+.modal-box{
+background:#fff;
+border-radius:10px;
+padding:25px;
+width:380px;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+animation:modalFade 0.25s ease;
+}
+
+@keyframes modalFade{
+from{
+transform:translateY(-20px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
+.modal-box h3{
+margin-bottom:20px;
+text-align:center;
+}
+
+/* ===== Modal Content ===== */
+
+.modal-content{
+display:flex;
+flex-direction:column;
+gap:10px;
+margin-bottom:20px;
+}
+
+.modal-row{
+display:flex;
+justify-content:space-between;
+font-size:14px;
+padding:6px 0;
+}
+
+.modal-row.highlight{
+font-size:15px;
+color:#1e7e34;
+font-weight:600;
+}
+
+/* ===== Buttons ===== */
+
+.modal-actions{
+display:flex;
+justify-content:space-between;
+gap:10px;
+}
+
+.confirm-btn{
+flex:1;
+background:#28a745;
+color:white;
+border:none;
+padding:8px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.confirm-btn:hover{
+background:#218838;
+}
+
+.cancel-btn{
+flex:1;
+background:#dc3545;
+color:white;
+border:none;
+padding:8px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.cancel-btn:hover{
+background:#c82333;
 }

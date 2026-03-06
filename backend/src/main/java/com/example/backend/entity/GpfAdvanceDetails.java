@@ -41,6 +41,16 @@ private LocalDate withdrawltodate;
 private BigDecimal totalwithdrawlamount;
 private BigDecimal netbalance;
 
+@Transient
+private String advanceruleText;
+
+public String getAdvanceruleText() {
+    return advanceruleText;
+}
+
+public void setAdvanceruleText(String advanceruleText) {
+    this.advanceruleText = advanceruleText;
+}
  @Column(name = "action_id")
 private Long actionId;
 
@@ -49,8 +59,9 @@ private Long actionId;
     @Column(name = "workflow_id")
     private Long workflowId;
 
-    @Column(name = "application_id")
-    private Long applicationId;
+    @ManyToOne
+@JoinColumn(name = "application_id")
+private GpfAdvanceMaster master;
 
     @Column(name = "current_owner_role")
     private Long currentOwnerRole;
@@ -145,7 +156,9 @@ public BigDecimal getNetbalance() {
     //public ActionMaster getAction() {
     //return action;
 //}
-
+public GpfAdvanceMaster getMaster() {
+    return master;
+}
     public LocalDateTime getCreatedat() {
         return createdat;
     }
@@ -154,9 +167,7 @@ public BigDecimal getNetbalance() {
         return workflowId;
     }
 
-    public Long getApplicationId() {
-        return applicationId;
-    }
+   
 
     public Long getCurrentOwnerRole() {
         return currentOwnerRole;
@@ -263,14 +274,14 @@ public void setNetbalance(BigDecimal netbalance) {
         this.workflowId = workflowId;
     }
 
-    public void setApplicationId(Long applicationId) {
-        this.applicationId = applicationId;
-    }
+   
 
     public void setCurrentOwnerRole(Long currentOwnerRole) {
         this.currentOwnerRole = currentOwnerRole;
     }
-
+public void setMaster(GpfAdvanceMaster master) {
+    this.master = master;
+}
     public void setCurrentStep(Integer currentStep) {
         this.currentStep = currentStep;
     }

@@ -64,6 +64,39 @@ export const EMPLOYEES = [
     empemailid: "subodh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP036",
+    empname: "Ramesh Kumar",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543223",
+    empemailid: "ramesh@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP037",
+    empname: "Ramesh Kumar",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543223",
+    empemailid: "ramesh@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
+  },
+  {
+    empcode: "EMP038",
+    empname: "Ram Kumar",
+    designation: "Scientist-D",
+    empdivision: "IT",
+    functionalpost: 12,
+    empmobileno: "9876543223",
+    empemailid: "ramesh@gov.in",
+    dateofjoining: "2018-02-11",
+    dateofsuperannuation: "2036-03-31"
   }
 ];
 
@@ -121,6 +154,36 @@ export const GPF_DETAILS = [
   },
   {
     gpfaccountno: "GPF-NIC-EMP035",
+    basicpay: 62000,
+    outstandingbalance: 700000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 120000,
+    netbalance: 830000,
+    amountofadvanceoutstanding: 45000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP036",
+    basicpay: 62000,
+    outstandingbalance: 700000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 120000,
+    netbalance: 830000,
+    amountofadvanceoutstanding: 45000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP037",
+    basicpay: 62000,
+    outstandingbalance: 700000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 120000,
+    netbalance: 830000,
+    amountofadvanceoutstanding: 45000
+  },
+  {
+    gpfaccountno: "GPF-NIC-EMP038",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,

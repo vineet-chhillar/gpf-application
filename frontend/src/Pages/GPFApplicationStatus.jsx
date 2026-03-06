@@ -8,7 +8,7 @@ function WithdrawlApplicationStatus() {
 
   const [expandedRow, setExpandedRow] = useState(null);
 const [search, setSearch] = useState("");
-
+const [appType, setAppType] = useState("withdrawl");
 
 
   {/*const [application, setApplication] = useState({
@@ -24,22 +24,31 @@ const filteredApps = applications.filter(a =>
 );
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-  const loadData = async () => {
-    try {
-      //const res = await api.get(
-        //`/gpf-withdrawl/status/${HARDCODED_EMPCODE}`
-      //);
-      const res = await api.get("/gpf-withdrawl/status-all");
+ useEffect(() => {
+
+const loadData = async () => {
+try {
+
+const base =
+appType === "withdrawl"
+? "/gpf-withdrawl"
+: "/gpf-advance";
+
+const res = await api.get(`${base}/status-all`);
+
 setApplications(res.data);
-    } catch (err) {
-      console.error("Failed to load workflow status", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  loadData();
-}, []);
+setExpandedRow(null);
+
+} catch (err) {
+console.error("Failed to load workflow status", err);
+} finally {
+setLoading(false);
+}
+};
+
+loadData();
+
+}, [appType]);
 
   const toggleRow = (index) => {
     setExpandedRow(expandedRow === index ? null : index);
@@ -53,8 +62,34 @@ setApplications(res.data);
 
   return (
     <div className="workflow-container">
+<div className="type-selector">
 
-      <h2>GPF Withdrawal Application Status</h2>
+<label className={appType === "withdrawl" ? "active" : ""}>
+<input
+type="radio"
+value="withdrawl"
+checked={appType === "withdrawl"}
+onChange={() => setAppType("withdrawl")}
+/>
+<span>Withdrawal</span>
+</label>
+
+<label className={appType === "advance" ? "active" : ""}>
+<input
+type="radio"
+value="advance"
+checked={appType === "advance"}
+onChange={() => setAppType("advance")}
+/>
+<span>Advance</span>
+</label>
+
+</div>
+      <h2>
+{appType === "withdrawl"
+? "GPF Withdrawal Application Status"
+: "GPF Advance Application Status"}
+</h2>
 
 <div className="dashboard-cards">
 
@@ -245,6 +280,10 @@ return (
 
 
 
+{appType === "withdrawl" ? (
+
+<>
+
 <h4>Withdrawal Request</h4>
 
 <div className="details-grid">
@@ -261,21 +300,63 @@ return (
 
 <div className="detail-item">
 <div className="detail-label">Withdrawal Rule</div>
-<div className="detail-value">{details.withdrawlrule}</div>
+<div className="detail-value">{details.withdrawlruleText}</div>
 </div>
 
 <div className="detail-item">
 <div className="detail-label">Application Date</div>
 <div className="detail-value">
 {details.dateofapplication
-  ? new Date(details.dateofapplication).toLocaleDateString()
-  : ""}
+? new Date(details.dateofapplication).toLocaleDateString()
+: ""}
 </div>
 </div>
 
 </div>
 
+</>
 
+) : (
+
+<>
+
+<h4>Advance Request</h4>
+
+<div className="details-grid">
+
+<div className="detail-item">
+<div className="detail-label">Advance Requested</div>
+<div className="detail-value">₹{details.amountofadvancerequested}</div>
+</div>
+
+<div className="detail-item detail-wide">
+<div className="detail-label">Purpose</div>
+<div className="detail-value">{details.purposeofadvance}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Advance Rule</div>
+<div className="detail-value">{details.advanceruleText}</div>
+</div>
+
+<div className="detail-item">
+<div className="detail-label">Installments</div>
+<div className="detail-value">
+{details.noofmonthlyinstallmentsforpaymentofconsolidatedadvance}
+</div>
+</div>
+
+</div>
+
+</>
+
+)}
+
+
+
+{appType === "withdrawl" && (
+
+<>
 
 <h4>Previous Withdrawal</h4>
 
@@ -299,6 +380,10 @@ return (
 </div>
 
 </div>
+
+</>
+
+)}
 
 </div>
 

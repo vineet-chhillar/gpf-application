@@ -102,6 +102,16 @@ public class GpfWithdrawlDetails {
     @Column(name = "current_owner_role", nullable = false)
     private Long currentOwnerRole;
 
+    @Transient
+private String withdrawlruleText;
+
+public String getWithdrawlruleText() {
+    return withdrawlruleText;
+}
+
+public void setWithdrawlruleText(String withdrawlruleText) {
+    this.withdrawlruleText = withdrawlruleText;
+}
     /* ================= WORKFLOW ================= */
 
 @Column(name = "workflow_id")

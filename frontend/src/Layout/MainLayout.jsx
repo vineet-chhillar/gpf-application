@@ -2,36 +2,32 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
-import WithdrawlApplicationStatus from "../Pages/WithdrawlApplicationStatus";
+import GPFApplicationStatus from "../Pages/GPFApplicationStatus";
 import AdvanceApplicationStatus from "../Pages/AdvanceApplicationStatus";
 import WorkflowViewerPage from "../Pages/WorkflowViewerPage";
 import AppFlowState from "../Pages/AppFlowState";
 import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
 import GpfAdvanceForm from "../Pages/GpfAdvanceForm";
-import WithdrawlRuleMaster from "../Pages/WithdrawlRuleMaster";
-import AdvanceRuleMaster from "../Pages/AdvanceRuleMaster";
+import GpfRuleMaster from "../Pages/GpfRuleMaster";
 import GpfWorkflowPage from "../Pages/GpfWorkflowPage";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
 
   const menus = [
     
-    { menuId: 1, menuName: "Withdrawl Rule Master" },
-    { menuId: 2, menuName: "Advance Rule Master" },
-    { menuId: 3, menuName: "Withdrawl Application Status" },
-    { menuId: 4, menuName: "Advance Application Status" },
-    { menuId: 5, menuName: "App WorkFlow HQ" },
-    { menuId: 6, menuName: "Generate App Flow States" },
-    { menuId: 7, menuName: "WithDrawl" },
-    { menuId: 8, menuName: "Advance" },
-    { menuId: 9, menuName: "WorkFlow/Pending For Action" },
+    { menuId: 1, menuName: "GPF Rule Master" },    
+    { menuId: 2, menuName: "GPF Application Status" },
+    { menuId: 3, menuName: "App WorkFlow HQ" },
+    { menuId: 4, menuName: "Generate App Flow States" },
+    { menuId: 5, menuName: "WithDrawl" },
+    { menuId: 6, menuName: "Advance" },
+    { menuId: 7, menuName: "WorkFlow/Pending For Action" },
     
     
   ];
 const pageMap = {
-  "Withdrawl Rule Master": <WithdrawlRuleMaster />,
-  "Advance Rule Master": <AdvanceRuleMaster />,
-  "Withdrawl Application Status": <WithdrawlApplicationStatus />,
+  "GPF Rule Master": <GpfRuleMaster />,  
+  "GPF Application Status": <GPFApplicationStatus />,
   "Advance Application Status": <AdvanceApplicationStatus />,
   "App WorkFlow HQ": <WorkflowViewerPage />,
   "Generate App Flow States": <AppFlowState />,

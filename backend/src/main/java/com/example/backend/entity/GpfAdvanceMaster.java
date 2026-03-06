@@ -26,7 +26,7 @@ public class GpfAdvanceMaster {
     private LocalDate dateofjoining;
     private LocalDate dateofsuperannuation;
 
-    private String concernedofficername;
+    
 
     private LocalDateTime createdat = LocalDateTime.now();
 
@@ -50,7 +50,7 @@ public class GpfAdvanceMaster {
 
     public LocalDate getDateofsuperannuation() { return dateofsuperannuation; }
 
-    public String getConcernedofficername() { return concernedofficername; }
+    
 
     public LocalDateTime getCreatedat() { return createdat; }
 
@@ -74,7 +74,7 @@ public class GpfAdvanceMaster {
 
     public void setDateofsuperannuation(LocalDate dateofsuperannuation) { this.dateofsuperannuation = dateofsuperannuation; }
 
-    public void setConcernedofficername(String concernedofficername) { this.concernedofficername = concernedofficername; }
+    
 
     public void setCreatedat(LocalDateTime createdat) { this.createdat = createdat; }
 }

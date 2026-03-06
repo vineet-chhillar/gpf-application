@@ -189,3 +189,44 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(20px);
 }
+.type-selector {
+display: flex;
+gap: 10px;
+margin-bottom: 20px;
+margin-top:10px;
+margin-left: 10px;
+}
+
+.type-selector label {
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 8px 18px;
+border-radius: 20px;
+border: 1px solid #d0d0d0;
+cursor: pointer;
+background: #f5f6fa;
+font-weight: 500;
+transition: all 0.25s ease;
+user-select: none;
+}
+
+.type-selector input {
+display: none;
+}
+
+.type-selector label:hover {
+background: #e8efff;
+border-color: #3b82f6;
+}
+
+.type-selector label.active {
+background: #3b82f6;
+color: white;
+border-color: #3b82f6;
+box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.type-selector span {
+pointer-events: none;
+}

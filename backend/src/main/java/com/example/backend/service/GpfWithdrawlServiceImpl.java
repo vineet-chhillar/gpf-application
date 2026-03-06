@@ -7,12 +7,17 @@ import com.example.backend.dto.InboxApplicationDTO;
 import com.example.backend.dto.WorkflowProcessRequestDTO;
 import com.example.backend.entity.GpfWithdrawlDetails;
 import com.example.backend.entity.GpfWithdrawlMaster;
+import com.example.backend.entity.GpfWithdrawlRule;
 import com.example.backend.entity.WorkflowTransition;
 import com.example.backend.entity.ActionMaster;
 import com.example.backend.entity.ApplicationStatusTrail;
 import com.example.backend.repository.GpfWithdrawlDetailsRepository;
 import com.example.backend.repository.GpfWithdrawlMasterRepository;
+import com.example.backend.repository.GpfWithdrawlRuleRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
+
+import jakarta.persistence.Transient;
+
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
 import com.example.backend.repository.FunctionalRoleRepository;
@@ -44,6 +49,9 @@ private FunctionalRoleRepository roleRepo;
 
     @Autowired
     private ApplicationStatusTrailRepository trailRepo;
+@Autowired
+private GpfWithdrawlRuleRepository withdrawlRuleRepo;
+   
 
     @Override
     public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
@@ -281,6 +289,22 @@ public GpfApplicationStatusResponseDTO getApplicationStatus(String empcode) {
             .findByMaster_Empcode(empcode)
             .orElseThrow(() -> new RuntimeException("Details not found"));
 
+    /* ===== CONVERT RULE ID → RULE NAME ===== */
+
+ Long ruleId = details.getWithdrawlrule();
+
+if (ruleId != null) {
+
+    String ruleName = withdrawlRuleRepo
+            .findById(ruleId)
+            .map((GpfWithdrawlRule r) -> r.getWithdrawlReason())
+            .orElse("Rule");
+
+    details.setWithdrawlruleText(ruleName);
+}
+
+    /* ===== TRAIL ===== */
+
     List<ApplicationStatusTrail> trails =
             trailRepo.findByApplicationIdOrderByActionatAsc(master.getId());
 
@@ -361,6 +385,15 @@ public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
         GpfWithdrawlDetails details =
                 detailsRepo.findByMaster_Empcode(master.getEmpcode()).orElse(null);
+
+                if (details != null && details.getWithdrawlrule() != null) {
+
+    withdrawlRuleRepo
+        .findById(details.getWithdrawlrule())
+        .ifPresent(rule ->
+            details.setWithdrawlruleText(rule.getWithdrawlReason())
+        );
+}
 
         List<ApplicationStatusTrail> trails =
                 trailRepo.findByApplicationIdOrderByActionatAsc(master.getId());
@@ -464,5 +497,6 @@ dto.setPurpose(d.getPurposeofwithdrawl());
 
     }).toList();
 }
+
 
 }

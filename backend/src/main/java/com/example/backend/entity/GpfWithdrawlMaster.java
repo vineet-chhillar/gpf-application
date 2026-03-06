@@ -39,8 +39,7 @@ public GpfWithdrawlMaster() {
     @Column(name = "dateofsuperannuation", nullable = false)
     private LocalDate dateofsuperannuation;
 
-    @Column(name = "concernedofficername", length = 100)
-    private String concernedofficername;
+    
 
      
    @Column(name = "createdat",nullable = false,updatable = false,insertable = false)
@@ -82,10 +81,7 @@ public GpfWithdrawlMaster() {
         this.dateofsuperannuation = dateofsuperannuation;
     }
 
-    public String getConcernedofficername() { return concernedofficername; }
-    public void setConcernedofficername(String concernedofficername) {
-        this.concernedofficername = concernedofficername;
-    }
+    
 }
 
 
