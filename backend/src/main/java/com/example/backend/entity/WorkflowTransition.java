@@ -6,8 +6,9 @@ import jakarta.persistence.*;
 @Table(name = "workflow_transition")
 public class WorkflowTransition {
 
-    @Id
+     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transition_id")
     private Long transitionId;
 
     @Column(name = "workflow_id", nullable = false)

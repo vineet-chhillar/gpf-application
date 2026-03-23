@@ -27,4 +27,21 @@ public class WorkflowController {
 
         return workflowService.getWorkflowTransitions(workflowId);
     }
+
+   @GetMapping("/previous-roles/{workflowId}/{currentStep}")
+public List<WorkflowTransitionViewDTO> getPreviousRoles(
+        @PathVariable Long workflowId,
+        @PathVariable Integer currentStep) {
+ System.out.println("🔥 CONTROLLER HIT");
+    return workflowService.getPreviousRoles(workflowId, currentStep);
+}
+
+@GetMapping("/role-by-step/{workflowId}/{step}")
+public WorkflowTransitionViewDTO getRoleByStep(
+        @PathVariable Long workflowId,
+        @PathVariable Integer step) {
+
+    return workflowService.getRoleByStep(workflowId, step);
+}
+    
 }

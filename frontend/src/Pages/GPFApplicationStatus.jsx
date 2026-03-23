@@ -16,7 +16,11 @@ const [appType, setAppType] = useState("withdrawl");
     details: {},
     trail: []
   });*/}
-
+const formatLabel = (key) => {
+  return key
+    .replace(/([A-Z])/g, " $1")  // camelCase → spaced
+    .replace(/^./, str => str.toUpperCase()); // capitalize
+};
 const [applications, setApplications] = useState([]);
 const filteredApps = applications.filter(a =>
   a.master?.empname?.toLowerCase().includes(search.toLowerCase()) ||
@@ -304,6 +308,11 @@ return (
 </div>
 
 <div className="detail-item">
+  <span className="label">Concerned Officer</span>
+  <span className="value">{details.concernedofficername}</span>
+</div>
+
+<div className="detail-item">
 <div className="detail-label">Application Date</div>
 <div className="detail-value">
 {details.dateofapplication
@@ -334,10 +343,38 @@ return (
 <div className="detail-value">{details.purposeofadvance}</div>
 </div>
 
+<div className="detail-item detail-wide">
+  <div className="detail-label">Particulars</div>
+  <div className="detail-value">{details.particulars}</div>
+</div>
+
 <div className="detail-item">
 <div className="detail-label">Advance Rule</div>
 <div className="detail-value">{details.advanceruleText}</div>
 </div>
+
+
+{details.ruleSpecificDataJson && (
+  <>
+    <h4>Rule Specific Details</h4>
+
+    <div className="details-grid">
+
+      {Object.entries(details.ruleSpecificDataJson).map(([key, value]) => (
+        <div className="detail-item" key={key}>
+          <div className="detail-label">
+            {formatLabel(key)}
+          </div>
+          <div className="detail-value">
+            {String(value)}
+          </div>
+        </div>
+      ))}
+
+    </div>
+  </>
+)}
+
 
 <div className="detail-item">
 <div className="detail-label">Installments</div>

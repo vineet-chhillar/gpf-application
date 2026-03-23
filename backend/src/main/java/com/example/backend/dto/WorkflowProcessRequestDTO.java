@@ -9,6 +9,9 @@ public class WorkflowProcessRequestDTO  {
     private Long roleId;
     private String remarks;
 
+    // 🔥 ADD THIS
+    private Long sendToRole;
+
     public List<Long> getApplicationIds() {
         return applicationIds;
     }
@@ -39,5 +42,15 @@ public class WorkflowProcessRequestDTO  {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    // 🔥 NEW GETTER
+    public Long getSendToRole() {
+        return sendToRole;
+    }
+
+    // 🔥 NEW SETTER
+    public void setSendToRole(Long sendToRole) {
+        this.sendToRole = sendToRole;
     }
 }

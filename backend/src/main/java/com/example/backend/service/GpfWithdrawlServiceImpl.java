@@ -54,102 +54,123 @@ private GpfWithdrawlRuleRepository withdrawlRuleRepo;
    
 
     @Override
-    public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
+public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
 
-   
-
-        if (dto == null || dto.getMaster() == null || dto.getDetails() == null) {
-            throw new IllegalArgumentException("Invalid request payload");
-        }
-
-        GpfWithdrawlMaster master = dto.getMaster();
-        GpfWithdrawlDetails details = dto.getDetails();
-
-             System.out.println("Action ID: " + details.getAction().getActionId());
-System.out.println("Current Role: " + details.getCurrentOwnerRole());
-
-        String empcode = master.getEmpcode();
-        if (empcode == null || empcode.isBlank()) {
-            throw new IllegalArgumentException("Empcode is mandatory");
-        }
-
-        if (masterRepo.findByEmpcode(empcode).isPresent()) {
-            throw new IllegalStateException(
-                    "Withdrawal application already exists for this employee");
-        }
-
-        /* ================= BASIC VALIDATION ================= */
-
-        //details.setEmpcode(empcode);
-
-        if (details.getGpfaccountno() == null || details.getGpfaccountno().isBlank()) {
-            throw new IllegalArgumentException("GPF Account No is mandatory");
-        }
-
-        if (details.getDateofapplication() == null) {
-            throw new IllegalArgumentException("Date of application is mandatory");
-        }
-
-        /* ================= ACTION VALIDATION ================= */
-
-        if (details.getAction() == null || details.getAction().getActionId() == null) {
-            throw new IllegalArgumentException("Action is mandatory");
-        }
-
-        ActionMaster action = actionRepo.findById(details.getAction().getActionId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid action id"));
-
-        details.setAction(action);
-
-        /* ================= WORKFLOW DETERMINATION ================= */
-
-        String designation = master.getDesignation();
-
-        Long workflowId = determineWorkflow(designation);
-        details.setWorkflowId(workflowId);
-
-        /* ================= GET FIRST TRANSITION ================= */
-//Long currentRoleId = details.getCurrentOwnerRole();
-Long employeeRoleId = 28L;  // <-- replace with actual EMPLOYEE role_id
-
-      WorkflowTransition transition =
-        workflowTransitionRepo
-                .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
-                        workflowId,
-                        employeeRoleId
-                )
-                .orElseThrow(() ->
-                        new IllegalStateException("Workflow not configured properly"));
-
-
-
-        /* ================= UPDATE CURRENT STATE ================= */
-
-        details.setCurrentOwnerRole(transition.getToRole());
-details.setCurrentStep(transition.getStepOrder());
-        /* ================= SAVE MASTER & DETAILS ================= */
-
-       /* ================= SAVE MASTER & DETAILS ================= */
-
-/* ================= SAVE MASTER & DETAILS ================= */
-
-master = masterRepo.save(master);
-
-details.setMaster(master);
-
-details = detailsRepo.save(details);
-
-/* ================= INSERT STATUS TRAIL ================= */
-
-ApplicationStatusTrail trail = new ApplicationStatusTrail();
-trail.setApplicationId(master.getId());
-trail.setActionId(action.getActionId());
-trail.setActionByRole(employeeRoleId);
-
-trail.setRemarks("Application Submitted");
-
-trailRepo.save(trail);
+    if (dto == null || dto.getMaster() == null || dto.getDetails() == null) {
+        throw new IllegalArgumentException("Invalid request payload");
     }
+
+    GpfWithdrawlMaster master = dto.getMaster();
+    GpfWithdrawlDetails details = dto.getDetails();
+
+    System.out.println("Action ID: " + details.getAction().getActionId());
+    System.out.println("Current Role: " + details.getCurrentOwnerRole());
+
+    String empcode = master.getEmpcode();
+    if (empcode == null || empcode.isBlank()) {
+        throw new IllegalArgumentException("Empcode is mandatory");
+    }
+
+    if (masterRepo.findByEmpcode(empcode).isPresent()) {
+        throw new IllegalStateException(
+                "Withdrawal application already exists for this employee");
+    }
+
+    /* ================= BASIC VALIDATION ================= */
+
+    if (details.getGpfaccountno() == null || details.getGpfaccountno().isBlank()) {
+        throw new IllegalArgumentException("GPF Account No is mandatory");
+    }
+
+    if (details.getDateofapplication() == null) {
+        throw new IllegalArgumentException("Date of application is mandatory");
+    }
+
+    /* ================= ACTION VALIDATION ================= */
+
+    if (details.getAction() == null || details.getAction().getActionId() == null) {
+        throw new IllegalArgumentException("Action is mandatory");
+    }
+
+    ActionMaster action = actionRepo.findById(details.getAction().getActionId())
+            .orElseThrow(() -> new IllegalArgumentException("Invalid action id"));
+
+    details.setAction(action);
+
+    /* ================= WORKFLOW DETERMINATION ================= */
+
+    String designation = master.getDesignation();
+    Long workflowId = determineWorkflow(designation);
+    details.setWorkflowId(workflowId);
+
+    /* ================= FIRST TRANSITION ================= */
+
+    Long employeeRoleId = 28L; // TODO: replace with dynamic role
+
+    WorkflowTransition firstTransition =
+            workflowTransitionRepo
+                    .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
+                            workflowId,
+                            employeeRoleId
+                    )
+                    .orElseThrow(() ->
+                            new IllegalStateException("Workflow not configured properly"));
+
+    /* ================= RESUME / NORMAL FLOW ================= */
+
+    {/*if (details.getIsReturned() != null && details.getIsReturned()) {
+
+        System.out.println("🔥 RESUME FLOW (SAVE)");
+
+        Integer resumeStep = details.getReturnFromStep();
+
+        if (resumeStep == null) {
+            throw new IllegalStateException("Return step missing");
+        }
+
+        // 🔥 MOVE FORWARD (NOT SAME STEP)
+        WorkflowTransition next =
+                workflowTransitionRepo
+                        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+                                workflowId,
+                                resumeStep - 1
+                        )
+                        .orElseThrow(() ->
+                                new IllegalStateException("Next workflow step missing"));
+
+        details.setCurrentOwnerRole(next.getToRole());
+        details.setCurrentStep(next.getStepOrder());
+
+        // ✅ reset flags
+        details.setIsReturned(false);
+        details.setReturnFromStep(null);
+
+    } else {*/}
+
+        // ✅ NORMAL FIRST SUBMIT
+
+        details.setCurrentOwnerRole(firstTransition.getToRole());
+        details.setCurrentStep(firstTransition.getStepOrder());
+    //}
+
+    /* ================= SAVE MASTER & DETAILS ================= */
+
+    master = masterRepo.save(master);
+
+    details.setMaster(master);
+
+    details = detailsRepo.save(details);
+
+    /* ================= INSERT STATUS TRAIL ================= */
+
+    ApplicationStatusTrail trail = new ApplicationStatusTrail();
+    trail.setApplicationId(master.getId());
+    trail.setActionId(action.getActionId());
+    trail.setActionByRole(employeeRoleId);
+    trail.setRemarks("Application Submitted");
+
+    trailRepo.save(trail);
+}
 
     private Long determineWorkflow(String designation) {
 
@@ -202,73 +223,138 @@ public GpfWithdrawlRequestDTO getByEmpcode(String empcode) {
 @Transactional
 public void processApplications(WorkflowProcessRequestDTO request) {
 
-
-    
     if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
         throw new IllegalArgumentException("No applications selected");
     }
 
     if (request.getActionId() == null) {
-    throw new IllegalArgumentException("Action is mandatory");
-}
+        throw new IllegalArgumentException("Action is mandatory");
+    }
 
     ActionMaster action = actionRepo.findById(request.getActionId())
             .orElseThrow(() -> new IllegalArgumentException("Invalid action"));
 
     for (Long appId : request.getApplicationIds()) {
 
-    GpfWithdrawlDetails details = detailsRepo.findByMaster_Id(appId) 
-            .orElseThrow(() ->
-                    new IllegalStateException("Application not found: " + appId));
+        GpfWithdrawlDetails details = detailsRepo.findByMaster_Id(appId)
+                .orElseThrow(() ->
+                        new IllegalStateException("Application not found: " + appId));
 
-    if (details.getCurrentOwnerRole() == 0) {
-        throw new IllegalStateException("Application already completed");
-    }
+        if (details.getCurrentOwnerRole() == 0) {
+            throw new IllegalStateException("Application already completed");
+        }
 
-    Long actingRole = details.getCurrentOwnerRole();
+        Long actingRole = details.getCurrentOwnerRole();
+        Long workflowId = details.getWorkflowId();
 
-    Long workflowId = details.getWorkflowId();
+        // 🔥 RESUME FLOW (HIGHEST PRIORITY)
+        if (details.getIsReturned() != null && details.getIsReturned()) {
 
-    WorkflowTransition transition =
-            workflowTransitionRepo
-                    .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
-                            workflowId,
-                            details.getCurrentStep()
-                    )
-                    .orElseThrow(() ->
-                            new IllegalStateException("Workflow step not found"));
+            System.out.println("🔥 RESUME FLOW IN PROCESS");
 
-    if (transition.getIsFinal()) {
+           Integer resumeStep = details.getReturnFromStep();
 
-        details.setCurrentOwnerRole(0L);
-        details.setAction(action);
+// 🔥 MOVE TO NEXT STEP DIRECTLY
+WorkflowTransition next =
+    workflowTransitionRepo
+        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+            workflowId,
+            resumeStep - 2   // important
+        )
+        .orElseThrow(() -> new IllegalStateException("Next workflow step missing"));
 
-    } else {
+details.setCurrentOwnerRole(next.getToRole());
+details.setCurrentStep(next.getStepOrder());
 
-        WorkflowTransition next =
+            // ✅ RESET FLAGS
+            details.setIsReturned(false);
+            details.setReturnFromStep(null);
+
+            details.setAction(action);
+
+            detailsRepo.save(details);
+
+            // ✅ TRAIL
+            ApplicationStatusTrail trail = new ApplicationStatusTrail();
+            trail.setApplicationId(details.getMaster().getId());
+            trail.setActionId(action.getActionId());
+            trail.setActionByRole(actingRole);
+            trail.setRemarks(request.getRemarks());
+
+            trailRepo.save(trail);
+
+            continue; // 🔥 VERY IMPORTANT (skip normal flow)
+        }
+
+        WorkflowTransition transition =
                 workflowTransitionRepo
-                        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+                        .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
                                 workflowId,
                                 details.getCurrentStep()
                         )
                         .orElseThrow(() ->
-                                new IllegalStateException("Next workflow step missing"));
+                                new IllegalStateException("Workflow step not found"));
 
-        details.setCurrentOwnerRole(next.getToRole());
-        details.setCurrentStep(next.getStepOrder());
-        details.setAction(action);
+        // 🔥 SEND BACK FLOW
+        if (request.getSendToRole() != null) {
+
+            System.out.println("🔥 SEND BACK FLOW");
+
+            // ✅ store ORIGINAL step (corrected earlier)
+            details.setReturnFromStep(details.getCurrentStep() + 1);
+            details.setIsReturned(true);
+
+            Long sendToRole = request.getSendToRole();
+
+            WorkflowTransition target =
+                    workflowTransitionRepo
+                            .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
+                                    workflowId,
+                                    sendToRole
+                            )
+                            .orElseThrow(() ->
+                                    new IllegalStateException("Invalid sendTo role"));
+
+            details.setCurrentOwnerRole(sendToRole);
+            details.setCurrentStep(target.getStepOrder());
+            details.setAction(action);
+
+        } else {
+
+            // ✅ NORMAL FLOW
+
+            if (transition.getIsFinal()) {
+
+                details.setCurrentOwnerRole(0L);
+                details.setAction(action);
+
+            } else {
+
+                WorkflowTransition next =
+                        workflowTransitionRepo
+                                .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+                                        workflowId,
+                                        details.getCurrentStep()
+                                )
+                                .orElseThrow(() ->
+                                        new IllegalStateException("Next workflow step missing"));
+
+                details.setCurrentOwnerRole(next.getToRole());
+                details.setCurrentStep(next.getStepOrder());
+                details.setAction(action);
+            }
+        }
+
+        detailsRepo.save(details);
+
+        ApplicationStatusTrail trail = new ApplicationStatusTrail();
+        trail.setApplicationId(details.getMaster().getId());
+        trail.setActionId(action.getActionId());
+        trail.setActionByRole(actingRole);
+        trail.setRemarks(request.getRemarks());
+
+        trailRepo.save(trail);
     }
-
-    detailsRepo.save(details);
-
-    ApplicationStatusTrail trail = new ApplicationStatusTrail();
-    trail.setApplicationId(details.getMaster().getId());
-    trail.setActionId(action.getActionId());
-    trail.setActionByRole(actingRole);
-    trail.setRemarks(request.getRemarks());
-
-    trailRepo.save(trail);
-}
 }
 @Override
 public List<GpfWithdrawlDetails> getInboxByRole(Long roleId) {
@@ -483,6 +569,7 @@ public List<InboxApplicationDTO> getAllPendingApplications() {
 
        dto.setAmount(d.getAmountofwithdrawlrequested());
 dto.setPurpose(d.getPurposeofwithdrawl());
+dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
         if (d.getDateofapplication() != null) {
             dto.setApplicationDate(d.getDateofapplication().toString());
         }

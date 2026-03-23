@@ -14,7 +14,15 @@ public class InboxApplicationDTO {
     private String pendingWithRole;
     private String designation;
 private String purpose;
+private Long currentOwnerRoleId;
 
+public Long getCurrentOwnerRoleId() {
+    return currentOwnerRoleId;
+}
+
+public void setCurrentOwnerRoleId(Long currentOwnerRoleId) {
+    this.currentOwnerRoleId = currentOwnerRoleId;
+}
 
 public String getDesignation() {
     return designation;

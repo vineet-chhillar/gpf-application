@@ -5,7 +5,7 @@ import "../styles/GpfWorkflowPage.css";
 const GpfWorkflowPage = () => {
 
 const [applications, setApplications] = useState([]);
-const [selectedIds, setSelectedIds] = useState([]);
+const [selectedId, setSelectedId] = useState(null);
 const [actions, setActions] = useState([]);
 const [selectedAction, setSelectedAction] = useState("");
 const [remarks, setRemarks] = useState("");
@@ -13,6 +13,10 @@ const [expandedRow, setExpandedRow] = useState(null);
 const [trailMap, setTrailMap] = useState({});
 const [detailsMap, setDetailsMap] = useState({});
 const [appType, setAppType] = useState("withdrawl");
+const [sendToOptions, setSendToOptions] = useState([]);
+const [selectedSendTo, setSelectedSendTo] = useState("");
+
+const [nextRoleName, setNextRoleName] = useState("");
 
 const toggleExpand = async (applicationId, empCode) => {
 
@@ -50,6 +54,137 @@ console.error("Expand load error", err);
 setExpandedRow(applicationId);
 };
 
+useEffect(() => {
+
+  if (!selectedId) {
+    setNextRoleName("");
+    return;
+  }
+
+  const selectedApp = applications.find(
+    a => Number(a.applicationId) === Number(selectedId)
+  );
+
+  if (!selectedApp) return;
+
+  const details = detailsMap[selectedApp.applicationId]?.details;
+
+  if (!details?.workflowId || !details?.currentStep) return;
+
+  const fetchNextRole = async () => {
+    try {
+
+      const res = await api.get(
+        `/workflow/transitions/${details.workflowId}`
+      );
+
+      const transitions = res.data;
+
+      const next = transitions.find(
+        t => t.stepOrder === details.currentStep + 1
+      );
+
+      if (next) {
+        setNextRoleName(next.toRole);
+      } else {
+        setNextRoleName("Completed");
+      }
+
+    } catch (err) {
+      console.error("Next role fetch failed", err);
+    }
+  };
+
+  fetchNextRole();
+
+}, [selectedId, detailsMap, applications]);
+useEffect(() => {
+  if (!selectedId) return;
+
+  const app = applications.find(
+    a => Number(a.applicationId) === Number(selectedId)
+  );
+
+  if (app) {
+    toggleExpand(app.applicationId, app.empCode);
+  }
+}, [selectedId, applications]); // 🔥 add applications
+console.log("Applications:", applications);
+console.log("Looking for ID:", selectedId);
+useEffect(() => {
+
+if (!selectedId) {
+  {/*setSendToOptions([]);*/}
+   setSendToOptions([]);
+  setSelectedSendTo("");
+  return;
+}
+
+const selectedApp = applications.find(
+  a => Number(a.applicationId) === Number(selectedId)
+);
+
+if (!selectedApp) return;
+
+console.log("Selected App:", selectedApp);
+
+/* ✅ USE ROLE FROM INBOX */
+{/*if (![60, 146].includes(selectedApp.currentOwnerRoleId)) {
+  console.log("Role not eligible");
+  setSendToOptions([]);
+  return;
+}*/}
+
+const fetchSendToRoles = async () => {
+  try {
+
+    const base =
+      appType === "withdrawl"
+        ? "/gpf-withdrawl"
+        : "/gpf-advance";
+
+    const res = await api.get(
+      `${base}/status/${selectedApp.empCode}`
+    );
+
+    const details = res.data.details;
+
+    console.log("DETAILS:", details);
+
+    if (!details?.workflowId || !details?.currentStep) {
+      console.warn("Missing workflow data");
+      return;
+    }
+
+    // 🔥 RETURN CASE (HANDLE FIRST)
+    if (details.isReturned && details.returnFromStep != null) {
+
+      console.log("🔥 RETURN MODE");
+
+      const roleRes = await api.get(
+        `/workflow/role-by-step/${details.workflowId}/${details.returnFromStep}`
+      );
+
+      setSendToOptions([roleRes.data]); // only one role
+
+      return; // ❗ STOP here
+    }
+
+    // ✅ NORMAL FLOW
+    const rolesRes = await api.get(
+      `/workflow/previous-roles/${details.workflowId}/${details.currentStep}`
+    );
+
+    setSendToOptions(rolesRes.data);
+
+  } catch (err) {
+    console.error("SendTo load error", err);
+  }
+};
+
+fetchSendToRoles();
+
+}, [selectedId, applications, appType]);
 /* ================= LOAD INBOX ================= */
 
 useEffect(() => {
@@ -80,27 +215,21 @@ setActions(Array.isArray(res.data) ? res.data : []);
 
 /* ================= CHECKBOX ================= */
 
-const toggleSelection = (id) => {
-setSelectedIds(prev =>
-prev.includes(id)
-? prev.filter(x => x !== id)
-: [...prev, id]
-);
+const handleSelection = (id) => {
+  setSelectedId(id);
 };
 
-const toggleSelectAll = () => {
-if (selectedIds.length === applications.length) {
-setSelectedIds([]);
-} else {
-setSelectedIds(applications.map(app => app.applicationId));
-}
-};
 
+const formatLabel = (key) => {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, str => str.toUpperCase());
+};
 /* ================= PROCESS ================= */
 
 const handleProcess = async () => {
 
-if (selectedIds.length === 0) {
+if (!selectedId) {
 alert("Select at least one application");
 return;
 }
@@ -118,9 +247,10 @@ appType === "withdrawl"
 : "/gpf-advance/process";
 
 await api.post(url, {
-applicationIds: selectedIds,
+applicationIds: [selectedId],
 actionId: selectedAction,
-remarks
+remarks,
+sendToRole: selectedSendTo || null
 });
 
 alert("Processed successfully");
@@ -133,16 +263,70 @@ appType === "withdrawl"
 const res = await api.get(reloadUrl);
 setApplications(res.data);
 
-setSelectedIds([]);
+setTimeout(() => {
+  setSelectedId(null);
+}, 0);
+
+setSelectedId(null);
 setSelectedAction("");
 setRemarks("");
+
+
+setSendToOptions([]);     
+setSelectedSendTo("");    
+setDetailsMap({});        
+setTrailMap({});          
+
 
 } catch (err) {
 alert(err.response?.data || "Processing failed");
 }
 
 };
+const getButtonText = () => {
 
+  // 🔁 If send back selected
+  const isReturnMode =
+  selectedDetails?.isReturned && selectedDetails?.returnFromStep != null;
+
+  if (selectedSendTo || isReturnMode)  {
+
+  const role = sendToOptions.find(
+    r => String(r.roleId) === String(selectedSendTo)
+  );
+
+  return `Send To ${role?.roleName || ""}`;
+}
+
+  // ✅ Normal flow
+  if (nextRoleName) {
+    return `Send To ${nextRoleName}`;
+  }
+
+  return "Process Selected";
+};
+
+const selectedApp = applications.find(
+  a => Number(a.applicationId) === Number(selectedId)
+);
+
+const selectedDetails =
+  selectedApp
+    ? detailsMap[selectedApp.applicationId]?.details
+    : null;
+useEffect(() => {
+
+  if (selectedDetails?.isReturned && sendToOptions.length === 1) {
+
+    console.log("Auto selecting return role");
+
+    setSelectedSendTo(sendToOptions[0].roleId);
+
+  }
+
+}, [sendToOptions, selectedDetails]);
+    console.log("selectedSendTo:", selectedSendTo);
+console.log("sendToOptions:", sendToOptions);
 return (
 
 <div className="workflow-container">
@@ -189,14 +373,7 @@ onChange={() => setAppType("advance")}
 
 <tr>
 <th>
-<input
-type="checkbox"
-onChange={toggleSelectAll}
-checked={
-applications.length > 0 &&
-selectedIds.length === applications.length
-}
-/>
+
 </th>
 
 <th>App ID</th>
@@ -225,11 +402,12 @@ onClick={() => toggleExpand(app.applicationId, app.empCode)}
 <td>
 {app.pendingWithRole !== "Completed" && (
 <input
-type="checkbox"
-checked={selectedIds.includes(app.applicationId)}
+type="radio"
+name="applicationSelect"
+checked={selectedId === app.applicationId}
 onChange={(e) => {
 e.stopPropagation();
-toggleSelection(app.applicationId)
+handleSelection(app.applicationId)
 }}
 />
 )}
@@ -420,6 +598,11 @@ return (
 </div>
 
 <div className="detail-item">
+  <span className="label">Concerned Officer</span>
+  <span className="value">{details.concernedofficername}</span>
+</div>
+
+<div className="detail-item">
 <span className="label">Application Date</span>
 <span className="value">{details.dateofapplication}</span>
 </div>
@@ -476,9 +659,35 @@ return (
 </div>
 
 <div className="detail-item">
+  <span className="label">Particulars</span>
+  <span className="value">{details.particulars}</span>
+</div>
+
+<div className="detail-item">
 <span className="label">Advance Rule</span>
 <span className="value">{details.advanceruleText}</span>
 </div>
+
+{details.ruleSpecificDataJson && (
+  <>
+    <h4>Rule Specific Details</h4>
+
+    <div className="details-grid">
+
+      {Object.entries(details.ruleSpecificDataJson).map(([key, value]) => (
+        <div className="detail-item" key={key}>
+          <span className="label">{formatLabel(key)}</span>
+          <span className="value">
+            {typeof value === "boolean"
+              ? value ? "Yes" : "No"
+              : String(value)}
+          </span>
+        </div>
+      ))}
+
+    </div>
+  </>
+)}
 
 <div className="detail-item">
 <span className="label">Installments</span>
@@ -491,6 +700,8 @@ return (
 <span className="label">Consolidated Advance</span>
 <span className="value">₹{details.amountofconsolidatedadvance}</span>
 </div>
+
+
 
 </div>
 
@@ -550,16 +761,14 @@ className="action-dropdown"
 value={selectedAction}
 onChange={(e) => setSelectedAction(e.target.value)}
 >
-
 <option value="">-- Select Action --</option>
-
 {actions.map(action => (
 <option key={action.actionId} value={action.actionId}>
 {action.actionDesc}
 </option>
 ))}
-
 </select>
+
 
 <input
 type="text"
@@ -568,12 +777,33 @@ placeholder="Enter remarks..."
 value={remarks}
 onChange={(e) => setRemarks(e.target.value)}
 />
+{/* 🔥 NEW SEND TO DROPDOWN */}
+
+{(sendToOptions.length > 0 || selectedDetails?.isReturned) && (
+  <select
+    className="action-dropdown"
+    value={selectedSendTo}
+    onChange={(e) => setSelectedSendTo(e.target.value)}
+    disabled={selectedDetails?.isReturned && sendToOptions.length === 1}
+  >
+    <option value="">-- Send To --</option>
+
+    {sendToOptions.map(role => (
+      <option key={role.roleId} value={role.roleId}>
+        {role.roleName}
+      </option>
+    ))}
+
+  </select>
+)}
+
+
 
 <button
 className="process-btn"
 onClick={handleProcess}
 >
-Process Selected
+{getButtonText()}
 </button>
 
 </div>

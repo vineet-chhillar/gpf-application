@@ -1,53 +1,155 @@
+/* ===== HEADER ===== */
+
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 14px 20px;      /* 🔑 increase vertical padding */
-  min-height: 64px;        /* 🔑 not height */
+  padding: 16px 24px;
+  min-height: 64px;
 
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
 
-  overflow: visible;       /* 🔑 prevent trimming */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
   box-sizing: border-box;
 }
 
+/* ===== TITLE ===== */
 
-
-/* Center container (unchanged logic) */
-.header-center {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Icon */
-.header-icon {
-  font-size: 24px;
-  color: #2563eb;
-}
-
-/* Centered title */
 .header-title {
   font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-
-  line-height: 1.4;        /* 🔑 CRITICAL */
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-weight: 600;
+  color: #1e293b;
+  letter-spacing: 0.3px;
 }
 
+/* Highlight system name */
+.header-title span {
+  color: #616085;
+  font-weight: 700;
+}
 
+/* ===== RIGHT SECTION ===== */
 
-/* Right section */
+/* RIGHT SECTION LAYOUT */
 .header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
+
+/* BACK BUTTON (clean, not bulky) */
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  background: transparent;
+  border: none;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+
+  cursor: pointer;
+  padding: 4px 6px;
+
+  transition: 0.2s;
+}
+
+.back-btn:hover {
+  color: #1d4ed8;
+  transform: translateX(-2px);
+}
+
+/* DIVIDER */
+.divider {
+  width: 1px;
+  height: 28px;
+  background: #e2e8f0;
+}
+
+/* USER BOX (THIS IS THE KEY CHANGE) */
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* AVATAR */
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* TEXT */
+.user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* ===== USER INFO ===== */
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+  background: transparent;
+  border: none;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+
+  transition: all 0.2s ease;
+}
+
+.user-info:hover {
+  background: #f1f5f9;
+}
+
+.user-icon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* ===== BUTTON ===== */
 
 .env-badge-btn {
   display: flex;
@@ -55,62 +157,67 @@
   gap: 6px;
 
   padding: 6px 10px;
-  font-size: 13px;
-  line-height: 1.2;
 
-  background: #4b1885;
+  background: transparent;
+  color: #2563eb;
+
+  border: 1px solid transparent;
   border-radius: 6px;
-  border: 1px solid #cbd5e1;
 
   cursor: pointer;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition: all 0.2s ease;
 }
 
-
-/* Hover */
 .env-badge-btn:hover {
-  background-color: #1e293b;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  background: #eff6ff;
+  border-color: #dbeafe;
 }
 
-/* Active */
 .env-badge-btn:active {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
 }
 
-/* Focus */
-.env-badge-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(51, 65, 85, 0.4);
+/* ===== ICON ===== */
+
+.back-icon {
+  color: #2563eb;
 }
 
-
-.user-info {
+.back-link {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-right: 14px;
-  padding: 6px 10px;
-  border-radius: 16px;
-  cursor: pointer;
-  background-color: #f1f5f9; /* light contrast */
-  transition: background-color 0.2s ease;
-}
 
-.user-info:hover {
-  background-color: #e2e8f0;
-}
-
-.user-icon {
-  font-size: 16px;
-}
-
-.user-name {
   font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 500;
+
+  color: #475569;
+  cursor: pointer;
+
+  padding: 4px 6px;
+  border-radius: 6px;
+
+  transition: all 0.2s ease;
 }
 
-.back-icon {
-  display: block;
+/* Hover effect */
+.back-link:hover {
+  color: #2563eb;
+  background: #f1f5f9;
 }
 
+/* Icon */
+.back-link svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.2s ease;
+}
+
+/* Smooth arrow movement */
+.back-link:hover svg {
+  transform: translateX(-3px);
+}

@@ -1,6 +1,6 @@
 export const EMPLOYEES = [
   {
-    empcode: "EMP030",
+    empcode: "1030",
     empname: "Sunita Verma",
     designation: "Scientist-B",
     empdivision: "Accounts",
@@ -8,10 +8,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543210",
     empemailid: "test.employee@gov.in",
     dateofjoining: "2019-04-01",
-    dateofsuperannuation: "2038-03-31"
+    dateofsuperannuation: "2038-03-31",
+    gpfaccountno: "GPF-NIC-1030",
+    panno: "BFUPK3317L"
   },
   {
-    empcode: "EMP031",
+    empcode: "1031",
     empname: "Rahul Sharma",
     designation: "Scientist-C",
     empdivision: "IT",
@@ -19,10 +21,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543222",
     empemailid: "rahul@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1031",
+    panno: "BFUPK3317M"
   },
   {
-    empcode: "EMP032",
+    empcode: "1032",
     empname: "Pankaj Sharma",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -30,10 +34,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543222",
     empemailid: "pankaj@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1032",
+    panno: "BFUPK3317N"
   },
   {
-    empcode: "EMP033",
+    empcode: "1033",
     empname: "Rajesh Kumar",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -41,10 +47,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543223",
     empemailid: "rajesh@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1033",
+    panno: "BFUPK3317O"
   },
   {
-    empcode: "EMP034",
+    empcode: "1034",
     empname: "Ramesh Kumar",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -52,10 +60,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543223",
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1034",
+    panno: "BFUPK3317P"
   },
   {
-    empcode: "EMP035",
+    empcode: "1035",
     empname: "Subodh Kumar",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -63,10 +73,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543223",
     empemailid: "subodh@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1035",
+    panno: "BFUPK3317Q"
   },
   {
-    empcode: "EMP036",
+    empcode: "1036",
     empname: "Ramesh Kumar",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -74,10 +86,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543223",
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1036",
+    panno: "BFUPK3317R"
   },
   {
-    empcode: "EMP037",
+    empcode: "1037",
     empname: "Ramesh Kumar",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -85,10 +99,12 @@ export const EMPLOYEES = [
     empmobileno: "9876543223",
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1037",
+    panno: "BFUPK3317S"
   },
   {
-    empcode: "EMP038",
+    empcode: "1038",
     empname: "Ram Kumar",
     designation: "Scientist-D",
     empdivision: "IT",
@@ -96,14 +112,16 @@ export const EMPLOYEES = [
     empmobileno: "9876543223",
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
-    dateofsuperannuation: "2036-03-31"
+    dateofsuperannuation: "2036-03-31",
+    gpfaccountno: "GPF-NIC-1038",
+    panno: "BFUPK3317T"
   }
 ];
 
 
 export const GPF_DETAILS = [
   {
-    gpfaccountno: "GPF-NIC-EMP030",
+    panno: "BFUPK3317L",
     basicpay: 45000,
     outstandingbalance: 500000,
     totalcreditamount: 50000,
@@ -113,7 +131,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 50000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP031",
+    panno: "BFUPK3317M",
     basicpay: 52000,
     outstandingbalance: 600000,
     totalcreditamount: 40000,
@@ -123,7 +141,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 40000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP032",
+    panno: "BFUPK3317N",
     basicpay: 52000,
     outstandingbalance: 600000,
     totalcreditamount: 40000,
@@ -133,7 +151,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 25000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP033",
+    panno: "BFUPK3317O",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -143,7 +161,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 60000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP034",
+    panno: "BFUPK3317P",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -153,7 +171,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 45000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP035",
+    panno: "BFUPK3317Q",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -163,7 +181,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 45000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP036",
+    panno: "BFUPK3317R",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -173,7 +191,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 45000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP037",
+    panno: "BFUPK3317S",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -183,7 +201,7 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 45000
   },
   {
-    gpfaccountno: "GPF-NIC-EMP038",
+    panno: "BFUPK3317T",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,

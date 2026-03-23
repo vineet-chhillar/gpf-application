@@ -10,6 +10,15 @@ public class GpfApplicationStatusResponseDTO {
 private String lastRemarks;
 private String lastActionByRole;
 private String currentOwnerRole;
+private Long currentOwnerRoleId;
+
+public Long getCurrentOwnerRoleId() {
+    return currentOwnerRoleId;
+}
+
+public void setCurrentOwnerRoleId(Long currentOwnerRoleId) {
+    this.currentOwnerRoleId = currentOwnerRoleId;
+}
     public Object getMaster() {
         return master;
     }

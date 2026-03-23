@@ -18,7 +18,7 @@ const MainLayout = () => {
     { menuId: 1, menuName: "GPF Rule Master" },    
     { menuId: 2, menuName: "GPF Application Status" },
     { menuId: 3, menuName: "App WorkFlow HQ" },
-    { menuId: 4, menuName: "Generate App Flow States" },
+    { menuId: 4, menuName: "App WorkFlow States" },
     { menuId: 5, menuName: "WithDrawl" },
     { menuId: 6, menuName: "Advance" },
     { menuId: 7, menuName: "WorkFlow/Pending For Action" },
@@ -30,7 +30,7 @@ const pageMap = {
   "GPF Application Status": <GPFApplicationStatus />,
   "Advance Application Status": <AdvanceApplicationStatus />,
   "App WorkFlow HQ": <WorkflowViewerPage />,
-  "Generate App Flow States": <AppFlowState />,
+  "App WorkFlow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
   "Advance": <GpfAdvanceForm />,  
    "WorkFlow/Pending For Action": <GpfWorkflowPage />
@@ -64,7 +64,14 @@ const pageMap = {
         <Header title={activePage} />
 
         {/* CONTENT (TEMP) */}
-        <div style={{ padding: "0px" }}>
+      <div
+  style={{
+    padding: "10px",
+    background:"#f8fafc",
+    height: "100%",
+    overflow: "auto"
+  }}
+>
   {pageMap[activePage] || <h2>No page mapped</h2>}
 </div>
 

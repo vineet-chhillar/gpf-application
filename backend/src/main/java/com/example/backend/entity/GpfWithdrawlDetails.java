@@ -102,6 +102,10 @@ public class GpfWithdrawlDetails {
     @Column(name = "current_owner_role", nullable = false)
     private Long currentOwnerRole;
 
+    @Column(name = "concernedofficername", length = 100)
+private String concernedofficername;
+
+
     @Transient
 private String withdrawlruleText;
 
@@ -124,7 +128,29 @@ private GpfWithdrawlMaster master;
 @Column(name = "current_step")
 private Integer currentStep;
 
+@Column(name = "return_from_step")
+private Integer returnFromStep;
+
+@Column(name = "is_returned")
+private Boolean isReturned = false;
+
     /* ================= GETTERS & SETTERS ================= */
+
+    public Integer getReturnFromStep() {
+    return returnFromStep;
+}
+
+public void setReturnFromStep(Integer returnFromStep) {
+    this.returnFromStep = returnFromStep;
+}
+
+public Boolean getIsReturned() {
+    return isReturned;
+}
+
+public void setIsReturned(Boolean isReturned) {
+    this.isReturned = isReturned;
+}
 
     public Long getCurrentOwnerRole() {
     return currentOwnerRole;
@@ -318,7 +344,9 @@ public void setMaster(GpfWithdrawlMaster master) {
         return createdat;
     }
 
-  
+  public String getConcernedofficername() {
+    return concernedofficername;
+}
 
     
 
@@ -336,5 +364,7 @@ public Integer getCurrentStep() {
 public void setCurrentStep(Integer currentStep) {
     this.currentStep = currentStep;
 }
-
+public void setConcernedofficername(String concernedofficername) {
+    this.concernedofficername = concernedofficername;
+}
 }

@@ -25,6 +25,10 @@ import com.example.backend.repository.GpfAdvanceRuleRepo;
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
 
+import tools.jackson.databind.ObjectMapper;
+
+import java.util.Map;
+
 @Service
 @Transactional
 public class GpfAdvanceService {
@@ -110,6 +114,7 @@ private FunctionalRoleRepository roleRepo;
     public void saveAdvanceApplication(
         GpfAdvanceMaster master,
         GpfAdvanceDetails details,
+        Map<String, Object> ruleSpecificData,
         Long roleId,
         Long actionId) {
 
@@ -156,6 +161,35 @@ System.out.println("===== SERVICE START =====");
         if (installments > 60) {
             throw new IllegalArgumentException("Installments cannot exceed 60");
         }
+     
+
+Map<String, Object> ruleData = ruleSpecificData;
+
+Long ruleId = details.getAdvancerule();
+
+if (ruleId != null && ruleData != null) {
+
+    switch (ruleId.intValue()) {
+
+        case 1: // HOUSE
+            if (ruleData.get("location") == null)
+                throw new IllegalArgumentException("Location required");
+
+            if (ruleData.get("ownershipType") == null)
+                throw new IllegalArgumentException("Ownership type required");
+            break;
+
+        case 2: // EDUCATION
+            if (ruleData.get("childName") == null)
+                throw new IllegalArgumentException("Child name required");
+            break;
+
+        case 3: // MEDICAL
+            if (ruleData.get("patientDetails") == null)
+                throw new IllegalArgumentException("Patient details required");
+            break;
+    }
+}
 System.out.println("Validation passed");
         ActionMaster action = actionRepo.findById(actionId)
                 .orElseThrow(() ->
@@ -190,9 +224,39 @@ System.out.println("Action found: " + action.getActionDesc());
                                 new IllegalStateException("Workflow not configured properly"));
                                 System.out.println("Workflow ID: " + workflowId);
 System.out.println("Transition found: " + transition.getToRole());
-        details.setCurrentOwnerRole(transition.getToRole());
-        details.setCurrentStep(transition.getStepOrder());
+        // 🔥 RESUME AFTER RETURN
+{/*if (details.getIsReturned() != null && details.getIsReturned()) {
 
+    System.out.println("🔥 ADVANCE RESUME FLOW");
+
+    Integer resumeStep = details.getReturnFromStep();
+
+    WorkflowTransition resumeTransition =
+            workflowTransitionRepo
+                    .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
+                            workflowId,
+                            resumeStep
+                    )
+                    .orElseThrow(() ->
+                            new IllegalStateException("Invalid resume step"));
+
+    details.setCurrentOwnerRole(resumeTransition.getFromRole());
+    details.setCurrentStep(resumeStep);
+
+    details.setIsReturned(false); // reset
+
+} else {*/}
+
+    // ✅ NORMAL FLOW
+    details.setCurrentOwnerRole(transition.getToRole());
+    details.setCurrentStep(transition.getStepOrder());
+//}
+if (ruleSpecificData != null) {
+
+    details.setRuleSpecificDataJson(ruleSpecificData);
+
+    System.out.println("Rule JSON Saved: " + ruleSpecificData);
+}
         detailsRepo.save(details);
 
         AdvanceApplicationStatusTrail trail =
@@ -353,6 +417,55 @@ public List<ApplicationTrailDTO> getTrail(Long applicationId) {
             Long actingRole = details.getCurrentOwnerRole();
             Long workflowId = details.getWorkflowId();
 
+            // 🔥 RESUME FLOW (HIGHEST PRIORITY)
+            if (Boolean.TRUE.equals(details.getIsReturned())) {
+
+                System.out.println("🔥 ADVANCE RESUME FLOW");
+
+                
+
+                // ✅ RETURN TO SAME ROLE WHO SENT BACK
+              Integer resumeStep = details.getReturnFromStep();
+
+WorkflowTransition next =
+    workflowTransitionRepo
+        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+            workflowId,
+            resumeStep - 2   // 🔥 SAME FIX AS WITHDRAWAL
+        )
+        .orElseThrow(() -> new IllegalStateException("Next workflow step missing"));
+
+details.setCurrentOwnerRole(next.getToRole());
+details.setCurrentStep(next.getStepOrder());
+
+// reset flags
+details.setIsReturned(false);
+details.setReturnFromStep(null);
+
+details.setActionId(action.getActionId());
+
+                // ✅ RESET FLAGS
+                details.setIsReturned(false);
+                details.setReturnFromStep(null);
+
+                details.setActionId(action.getActionId());
+
+                detailsRepo.save(details);
+
+                AdvanceApplicationStatusTrail trail =
+                        new AdvanceApplicationStatusTrail();
+
+                trail.setApplicationid(details.getMaster().getId());
+                trail.setActionId(action.getActionId());
+                trail.setActionByRole(actingRole);
+                trail.setRemarks(request.getRemarks());
+                trail.setActionat(LocalDateTime.now());
+
+                trailRepo.save(trail);
+
+                continue; // 🔥 VERY IMPORTANT
+            }
+
             WorkflowTransition transition =
                     workflowTransitionRepo
                             .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
@@ -362,25 +475,58 @@ public List<ApplicationTrailDTO> getTrail(Long applicationId) {
                             .orElseThrow(() ->
                                     new IllegalStateException("Workflow step not found"));
 
-            if (transition.getIsFinal()) {
+            // 🔥 SEND BACK FLOW
+            if (request.getSendToRole() != null) {
 
-                details.setCurrentOwnerRole(0L);
+                System.out.println("🔥 ADVANCE SEND BACK FLOW");
+
+                // ✅ FIXED (IMPORTANT)
+                details.setReturnFromStep(details.getCurrentStep() + 1);
+                details.setIsReturned(true);
+
+                Long sendToRole = request.getSendToRole();
+
+                WorkflowTransition target =
+                        workflowTransitionRepo
+                                .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
+                                        workflowId,
+                                        sendToRole
+                                )
+                                .orElseThrow(() ->
+                                        new IllegalStateException("Invalid sendTo role"));
+
+                details.setCurrentOwnerRole(sendToRole);
+                details.setCurrentStep(target.getStepOrder());
                 details.setActionId(action.getActionId());
 
             } else {
 
-                WorkflowTransition next =
-                        workflowTransitionRepo
-                                .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
-                                        workflowId,
-                                        details.getCurrentStep()
-                                )
-                                .orElseThrow(() ->
-                                        new IllegalStateException("Next workflow step missing"));
+                // ✅ NORMAL FLOW
 
-                details.setCurrentOwnerRole(next.getToRole());
-                details.setCurrentStep(next.getStepOrder());
-                details.setActionId(action.getActionId());
+                if (transition.getIsFinal()) {
+
+                    details.setCurrentOwnerRole(0L);
+                    details.setActionId(action.getActionId());
+
+                } else {
+
+                    WorkflowTransition next =
+                            workflowTransitionRepo
+                                    .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+                                            workflowId,
+                                            details.getCurrentStep()
+                                    )
+                                    .orElseThrow(() ->
+                                            new IllegalStateException("Next workflow step missing"));
+
+                    details.setCurrentOwnerRole(next.getToRole());
+                    details.setCurrentStep(next.getStepOrder());
+                    details.setActionId(action.getActionId());
+                }
+
+                // 🔥 SAFETY RESET
+                details.setIsReturned(false);
+                details.setReturnFromStep(null);
             }
 
             detailsRepo.save(details);
@@ -433,6 +579,8 @@ public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 if (details != null) {
 
     response.setDetails(details);
+
+    response.setCurrentOwnerRoleId(details.getCurrentOwnerRole());
 
     if (details.getCurrentOwnerRole() != null && details.getCurrentOwnerRole() != 0) {
         response.setCurrentOwnerRole(

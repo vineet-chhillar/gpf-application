@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,8 @@ import com.example.backend.dto.GpfApplicationStatusResponseDTO;
 import com.example.backend.dto.InboxApplicationDTO;
 import com.example.backend.dto.WorkflowProcessRequestDTO;
 import com.example.backend.service.GpfAdvanceService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/gpf-advance")
@@ -36,29 +39,36 @@ public ResponseEntity<?> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
     try {
 
         System.out.println("===== SAVE ADVANCE API HIT =====");
+
+        if (dto.getDetails() == null) {
+            return ResponseEntity.badRequest().body("Details cannot be null");
+        }
+
         System.out.println("MASTER : " + dto.getMaster());
         System.out.println("DETAILS : " + dto.getDetails());
-        System.out.println("ROLE ID : " + dto.getRoleId());
-        System.out.println("ACTION ID : " + dto.getActionId());
-
-        System.out.println("===== CALLING SERVICE =====");
+        System.out.println("ADVANCE RULE : " + dto.getDetails().getAdvancerule());
+         System.out.println("RULE DATA : " + dto.getRuleSpecificData());
 
         service.saveAdvanceApplication(
                 dto.getMaster(),
                 dto.getDetails(),
+                 dto.getRuleSpecificData(),
                 dto.getRoleId(),
                 dto.getActionId());
 
-        System.out.println("===== SERVICE FINISHED =====");
-
-        return ResponseEntity.ok("Advance application saved");
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", "Advance application saved"
+        ));
 
     } catch (Exception e) {
 
-        System.out.println("===== ERROR SAVING ADVANCE =====");
         e.printStackTrace();
 
-        return ResponseEntity.status(500).body(e.getMessage());
+        return ResponseEntity.status(500).body(Map.of(
+            "status", "error",
+            "message", e.getMessage()
+        ));
     }
 }
  @GetMapping("/inbox")

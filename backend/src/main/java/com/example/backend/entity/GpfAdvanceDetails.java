@@ -4,7 +4,14 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "gpfadvancedetails")
 public class GpfAdvanceDetails {
@@ -41,6 +48,9 @@ private LocalDate withdrawltodate;
 private BigDecimal totalwithdrawlamount;
 private BigDecimal netbalance;
 
+
+
+
 @Transient
 private String advanceruleText;
 
@@ -69,7 +79,37 @@ private GpfAdvanceMaster master;
     @Column(name = "current_step")
     private Integer currentStep;
 
+    @Column(name = "particulars")
+private String particulars;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+@Column(name = "rule_specific_data")
+private Map<String, Object> ruleSpecificDataJson;
+
+@Column(name = "return_from_step")
+private Integer returnFromStep;
+
+@Column(name = "is_returned")
+private Boolean isReturned = false;
+
     // ===== GETTERS =====
+
+    public Integer getReturnFromStep() {
+    return returnFromStep;
+}
+
+public void setReturnFromStep(Integer returnFromStep) {
+    this.returnFromStep = returnFromStep;
+}
+
+public Boolean getIsReturned() {
+    return isReturned;
+}
+
+public void setIsReturned(Boolean isReturned) {
+    this.isReturned = isReturned;
+}
+
 
     public LocalDate getWithdrawlfromdate() {
     return withdrawlfromdate;
@@ -153,6 +193,22 @@ public BigDecimal getNetbalance() {
         return dateofapplication;
     }
 
+   public Map<String, Object> getRuleSpecificDataJson() {
+    return ruleSpecificDataJson;
+}
+
+public void setRuleSpecificDataJson(Map<String, Object> ruleSpecificDataJson) {
+    this.ruleSpecificDataJson = ruleSpecificDataJson;
+}
+
+
+public String getParticulars() {
+    return particulars;
+}
+
+public void setParticulars(String particulars) {
+    this.particulars = particulars;
+}
     //public ActionMaster getAction() {
     //return action;
 //}

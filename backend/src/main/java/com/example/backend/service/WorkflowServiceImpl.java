@@ -60,4 +60,97 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         }).toList();
     }
+
+@Override
+public List<WorkflowTransitionViewDTO> getPreviousRoles(
+        Long workflowId,
+        Integer currentStep) {
+
+    try {
+
+        System.out.println("🔥 SERVICE HIT, workflowId: " + workflowId + ", currentStep: " + currentStep);
+
+        List<WorkflowTransition> transitions =
+                transitionRepo
+                        .findByWorkflowIdAndStepOrderLessThanOrderByStepOrderDesc(
+                                workflowId,
+                                currentStep
+                        );
+
+        return transitions.stream()
+                .map(t -> {
+
+                    WorkflowTransitionViewDTO dto =
+                            new WorkflowTransitionViewDTO();
+
+                    dto.setRoleId(t.getFromRole());
+
+                    String roleName = roleRepo.findById(t.getFromRole())
+                            .map(r -> r.getRoleName())
+                            .orElse("Role");
+
+                    dto.setRoleName(roleName);
+
+                    // 🔥 CRITICAL (FOR RETURN LOGIC)
+
+                    dto.setStepOrder(t.getStepOrder());
+
+                    return dto;
+
+                })
+                // 🔥 DISTINCT BY ROLE (IMPORTANT)
+                .collect(java.util.stream.Collectors.toMap(
+                        WorkflowTransitionViewDTO::getRoleId,
+                        d -> d,
+                        (a, b) -> a
+                ))
+                .values()
+                .stream()
+                .toList();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+    }
+}
+
+@Override
+public WorkflowTransitionViewDTO getRoleByStep(Long workflowId, Integer step) {
+
+    try {
+
+        System.out.println("🔥 getRoleByStep HIT");
+        System.out.println("workflowId: " + workflowId);
+        System.out.println("step: " + step);
+
+        WorkflowTransition t =
+                transitionRepo
+                        .findByWorkflowIdAndStepOrder(workflowId, step)
+                        .orElseThrow(() ->
+                                new RuntimeException("Step not found"));
+
+        System.out.println("Transition: " + t);
+        System.out.println("FromRole: " + t.getFromRole());
+
+        WorkflowTransitionViewDTO dto = new WorkflowTransitionViewDTO();
+
+        dto.setRoleId(t.getFromRole());
+
+        String roleName = roleRepo.findById(t.getFromRole())
+                .map(r -> r.getRoleName())
+                .orElse("Role");
+
+        dto.setRoleName(roleName);
+        dto.setStepOrder(step);
+
+        return dto;
+
+    } catch (Exception e) {
+
+        System.out.println("❌ ERROR IN getRoleByStep");
+        e.printStackTrace();
+
+        throw e;
+    }
+}
 }

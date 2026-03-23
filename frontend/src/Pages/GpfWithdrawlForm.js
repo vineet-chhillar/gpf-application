@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
-import "../styles/GpfWithdrawlForm.css";
+import "../styles/GpfForm.css";
 import { useRef } from "react";
 import {
   getMasterByEmpCode,
-  getDetailsByAccount
+  getDetailsByPan
 } from "../mock/gpfMockApi";
 
 //api.get("/gpf/withdrawal-rules/active")
@@ -13,7 +13,8 @@ import {
 const GpfWithdrawlForm = () => {
 const [empCodeInput, setEmpCodeInput] = useState("");
 const [gpfAccountInput, setGpfAccountInput] = useState("");
-
+const [dropdownOpen, setDropdownOpen] = useState(false);
+const [hoveredRule, setHoveredRule] = useState(null);
   /* ================= API DATA ================= */
   const [masterApiData, setMasterApiData] = useState(null);
   const [detailsApiData, setDetailsApiData] = useState(null);
@@ -31,7 +32,7 @@ const [showSuccess, setShowSuccess] = useState(false);
 
   return `${day}/${month}/${year}`;
 };
-
+const dropdownRef = useRef(null);
   /* ================= USER INPUT ================= */
   const getTodayDate = () => {
   const today = new Date();
@@ -48,6 +49,7 @@ const [errors, setErrors] = useState({});
     const [userInput, setUserInput] = useState({
     amountofwithdrawlrequested: "",
     purposeofwithdrawl: "",
+     concernedofficername: "", 
     ispriorwithdrawlforsamepurpose: false,
     priorwithdrawlamount: "",
     priorwithdrawlfinyear: "",
@@ -77,6 +79,7 @@ const resetForm = () => {
   setUserInput({
     amountofwithdrawlrequested: "",
     purposeofwithdrawl: "",
+    concernedofficername: "",
     ispriorwithdrawlforsamepurpose: false,
     priorwithdrawlamount: "",
     priorwithdrawlfinyear: "",
@@ -120,54 +123,83 @@ const DEFAULT_DETAILS_DATA = {
   netbalance: 650000};*/}
 useEffect(() => {
 
-  if (!empCodeInput) return;
-
-  const timer = setTimeout(async () => {
-
-  try {
-
-    const empCode = empCodeInput.toUpperCase();   // ⭐ normalize
-
-    const master = await getMasterByEmpCode(empCode);
-
-    if (master) {
-      setMasterApiData(master);
-    }
-
-  } catch (err) {
-    console.error("Master fetch failed", err);
+  if (!empCodeInput) {
+    // 🔥 clear everything if input empty
+    setMasterApiData(null);
+    setDetailsApiData(null);
+    setGpfAccountInput("");
+    return;
   }
-
-}, 400);
-
-  return () => clearTimeout(timer);
-
-}, [empCodeInput]);
-useEffect(() => {
-
-  if (!gpfAccountInput) return;
 
   const timer = setTimeout(async () => {
 
     try {
 
-      const account = gpfAccountInput.trim().toUpperCase();   // ⭐ normalize
+      const empCode = empCodeInput.toUpperCase();
 
-      const details = await getDetailsByAccount(account);
+      const master = await getMasterByEmpCode(empCode);
 
-      if (details) {
-        setDetailsApiData(details);
+      if (master) {
+        setMasterApiData(master);
+        setGpfAccountInput(master.gpfaccountno || "");
+      } else {
+        // ❗ API returned null → CLEAR DATA
+        setMasterApiData(null);
+        setDetailsApiData(null);
+        setGpfAccountInput("");
       }
 
     } catch (err) {
-      console.error("Details fetch failed", err);
+
+      console.error("Master fetch failed", err);
+
+      // ❗ API failed → CLEAR DATA
+      setMasterApiData(null);
+      setDetailsApiData(null);
+      setGpfAccountInput("");
+
     }
 
   }, 400);
 
   return () => clearTimeout(timer);
 
-}, [gpfAccountInput]);
+}, [empCodeInput]);
+
+
+useEffect(() => {
+
+  if (!masterApiData?.panno) {
+    setDetailsApiData(null); // 🔥 clear if no PAN
+    return;
+  }
+
+  const timer = setTimeout(async () => {
+
+    try {
+
+      const pan = masterApiData.panno.trim().toUpperCase();
+
+      const details = await getDetailsByPan(pan);
+
+      if (details) {
+        setDetailsApiData(details);
+      } else {
+        setDetailsApiData(null); // ❗ no data
+      }
+
+    } catch (err) {
+
+      console.error("Details fetch failed", err);
+      setDetailsApiData(null); // ❗ API failed
+
+    }
+
+  }, 400);
+
+  return () => clearTimeout(timer);
+
+}, [masterApiData]);
 
 {/*useEffect(() => {
 
@@ -215,7 +247,7 @@ const loadData = async () => {
 
     const master = await getMasterByEmpCode(empCodeInput);
 
-    const details = await getDetailsByAccount(gpfAccountInput);
+    const details = await getDetailsByPan(masterApiData.panno);
 
     if (!master) {
       alert("Employee not found");
@@ -250,21 +282,21 @@ const loadData = async () => {
     }));
   };
 
-  const buildGpfAccountNo = (empcode) => `GPF-NIC-${empcode}`;
+  {/*const buildGpfAccountNo = (empcode) => `GPF-NIC-${empcode}`;*/}
 const ONLY_CHARS_REGEX = /^[A-Za-z ]+$/;
 const validateForm = () => {
   const newErrors = {};
 
   // ---- MASTER ----
-  {/*if (!userInput.concernedofficername.trim()) {
+  if (!userInput.concernedofficername.trim()) {
   newErrors.concernedofficername = "Concerned Officer is required";
 } else if (userInput.concernedofficername.length > 100) {
   newErrors.concernedofficername =
-    "Concerned Officer name cannot exceed 100 characters";
+    "Cannot exceed 100 characters";
 } else if (!ONLY_CHARS_REGEX.test(userInput.concernedofficername)) {
   newErrors.concernedofficername =
-    "Concerned Officer name must contain only alphabets and spaces";
-}*/}
+    "Only alphabets allowed";
+}
 
 
   // ---- DETAILS (USER INPUT) ----
@@ -317,7 +349,20 @@ const validateForm = () => {
   setErrors(newErrors);
   return Object.keys(newErrors).length === 0;
 };
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setDropdownOpen(false);
+      setHoveredRule(null);   // 🔥 IMPORTANT
+    }
+  };
 
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 const confirmSubmit = async () => {
 
   try {
@@ -329,8 +374,9 @@ const confirmSubmit = async () => {
       details: {
         ...detailsApiData,
 
-        gpfaccountno: buildGpfAccountNo(masterApiData.empcode),
-
+       gpfaccountno: masterApiData.gpfaccountno,
+panno: masterApiData.panno,
+concernedofficername: userInput.concernedofficername,
         creditfromdate: getCurrentFinancialYearStartDate(),
         credittodate: getTodayDate(),
         dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
@@ -404,10 +450,17 @@ resetForm();
           <div className="form-group">
             <label className="form-label">Employee Code</label>
             {/*<input className="form-input" value={masterApiData?.empcode || ""} readOnly />*/}
-     <input
+ <input
   className="form-input"
   value={empCodeInput}
-  onChange={(e) => setEmpCodeInput(e.target.value)}
+  onChange={(e) => {
+    setEmpCodeInput(e.target.value);
+
+    // 🔥 clear old data instantly
+    setMasterApiData(null);
+    setDetailsApiData(null);
+    setGpfAccountInput("");
+  }}
 />
           </div>
 
@@ -457,6 +510,45 @@ resetForm();
 <div className="info-value">{formatDate(masterApiData?.dateofsuperannuation)}</div>
 </div>
 
+<div className="info-card">
+<div className="info-label">PAN No</div>
+<div className="info-value">{masterApiData?.panno || "-"}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">GPF Account No</div>
+<div className="info-value">{gpfAccountInput}</div>
+</div>
+
+
+<div className="info-card">
+<div className="info-label">Date of Application</div>
+<div className="info-value">{userInput.dateofapplication}</div>
+</div>
+
+{/*<div className="form-group">
+      <label className="form-label">Date of Application <span className="required">*</span></label>
+      <input
+  className="form-input"
+  type="date"
+  name="dateofapplication"
+  value={userInput.dateofapplication}
+  onChange={handleUserChange}
+  readOnly
+/>
+    </div>*/}
+
+
+{/*<div className="form-group">
+      <label className="form-label">GPF Account No</label>
+      <input
+  className="form-input"
+  value={gpfAccountInput}
+  readOnly
+/>
+    </div>*/}
+
+
 </div>
 
         </div>
@@ -466,22 +558,61 @@ resetForm();
 
       {/* ================= WITHDRAWAL DETAILS ================= */}
       {/* ================= WITHDRAWAL DETAILS ================= */}
-<h3>Withdrawal Details</h3>
+<h3>Withdrawal Request</h3>
 <div className="form-section">
 
   {/* ---- SYSTEM / API DATA (READ ONLY) ---- */}
-  <div className="form-row">
-    <div className="form-group">
-      <label className="form-label">GPF Account No</label>
-      <input
-  className="form-input"
-  value={gpfAccountInput}
-  onChange={(e) => setGpfAccountInput(e.target.value)}
-/>
-    </div>
+  <div className="form-row-compact">
+    
   
     {/* ---- USER INPUT ---- */}
-  
+  <div className="form-group">
+  <label className="form-label">Withdrawal Rule <span className="required">*</span></label>
+  <div className="custom-dropdown" ref={dropdownRef}>
+
+  <div
+    className="dropdown-selected"
+    onClick={() => setDropdownOpen(!dropdownOpen)}
+  >
+    {selectedRule
+      ? selectedRule.withdrawlReason
+      : "-- Select Withdrawal Reason --"}
+  </div>
+
+  {dropdownOpen && (
+    <div className="dropdown-menu">
+      {rules.map(rule => (
+        <div
+          key={rule.ruleId}
+          className="dropdown-item"
+          onClick={() => {
+            setSelectedRuleId(rule.ruleId);
+            setDropdownOpen(false);
+            setHoveredRule(null);  
+          }}
+          onMouseEnter={() => setHoveredRule(rule)}
+          onMouseLeave={() => setHoveredRule(null)}
+        >
+          {rule.withdrawlReason}
+        </div>
+      ))}
+    </div>
+  )}
+
+  {/* 🔥 MODAL HERE (inside dropdown) */}
+  {dropdownOpen && hoveredRule && (
+    <div className="rule-hover-modal">
+      <strong>{hoveredRule.withdrawlReason}</strong>
+      <p>{hoveredRule.ruleDescription}</p>
+    </div>
+  )}
+
+</div>
+
+</div>
+</div>
+<div className="form-row-compact">
+
     <div className="form-group">
      <label className="form-label">
   Amount of Withdrawal Requested <span className="required">*</span>
@@ -495,17 +626,6 @@ resetForm();
     </div>
 
     <div className="form-group">
-      <label className="form-label">Date of Application <span className="required">*</span></label>
-      <input
-        className="form-input"
-        type="date"
-        name="dateofapplication"
-        value={(userInput.dateofapplication)}
-        onChange={handleUserChange}
-      />
-    </div>
-  
-    <div className="form-group">
       <label className="form-label">Purpose of Withdrawal <span className="required">*</span></label>
     <textarea
   className={`form-input ${
@@ -516,24 +636,23 @@ resetForm();
   onChange={handleUserChange}
   placeholder="Enter purpose of withdrawal"
 />    </div>
+
 <div className="form-group">
-  <label className="form-label">Withdrawal Rule <span className="required">*</span></label>
-   <select
-  className="form-input"
-    name="withdrawlrule"
-  value={selectedRuleId}
-  onChange={(e) => setSelectedRuleId(e.target.value)}
->
-  <option value="">-- Select Withdrawal Reason --</option>
+  <label className="form-label">
+    Concerned Officer Name <span className="required">*</span>
+  </label>
 
-  {rules.map(rule => (
-    <option key={rule.ruleId} value={rule.ruleId}>
-      {rule.withdrawlReason}
-    </option>
-  ))}
-</select>
-
+  <input
+    className="form-input"
+    name="concernedofficername"
+    value={userInput.concernedofficername || ""}
+    onChange={handleUserChange}
+    placeholder="Enter officer name"
+  />
 </div>
+  
+    
+
   </div>
 
   <div className="form-row">
@@ -549,7 +668,8 @@ resetForm();
       checked={userInput.ispriorwithdrawlforsamepurpose}
       onChange={handleUserChange}
     />
-    Prior withdrawal for same purpose
+    Whether any withdrawl was taken for the same purpose earlier.
+    If so, indicate the amount and the year.
   </label>
 
   <div className="prior-field">
@@ -577,18 +697,21 @@ resetForm();
 </div>
   </div>
 <div className="info-grid">
+
+  
+
     <div className="info-card">
 <div className="info-label">Basic Pay</div>
 <div className="info-value">₹{detailsApiData?.basicpay || "-"}</div>
 </div>
 
 <div className="info-card">
-<div className="info-label">Outstanding Balance As On</div>
+<div className="info-label">Closing Balance As On</div>
 <div className="info-value">{formatDate(getLastFinancialYearEndDate())}</div>
 </div>
 
 <div className="info-card">
-<div className="info-label">Outstanding Balance</div>
+<div className="info-label">Closing Balance</div>
 <div className="info-value">₹{detailsApiData?.outstandingbalance || "-"}</div>
 </div>
 
@@ -627,12 +750,14 @@ resetForm();
 </div>
 
   
-  {selectedRule && (
+{/*}  {selectedRule && (
   <div className="rule-description-box">
     <strong>Rule Description:</strong>
     <div>{selectedRule.ruleDescription}</div>
   </div>
-)}
+)}*/}
+
+
 </div>
 
 {Object.keys(errors).length > 0 && (
@@ -691,6 +816,14 @@ resetForm();
 
   </div>
 )}
+{/* 🔥 ADD HERE */}
+{/*{hoveredRule && (
+  <div className="rule-hover-modal">
+    <strong>{hoveredRule.withdrawlReason}</strong>
+    <p>{hoveredRule.ruleDescription}</p>
+  </div>
+)}*/}
+
         <button className="process-btn" onClick={handleSubmit}>
           Submit Application
         </button>
@@ -719,6 +852,7 @@ OK
       </div>
     </div>
   );
+  
 };
 
 export default GpfWithdrawlForm;
