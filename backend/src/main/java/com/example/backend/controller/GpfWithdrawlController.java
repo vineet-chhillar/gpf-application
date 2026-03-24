@@ -158,7 +158,20 @@ public ResponseEntity<?> getAllPending() {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
+@PutMapping("/update/{id}")
+public ResponseEntity<?> updateWithdrawal(
+        @PathVariable Long id,
+        @RequestBody GpfWithdrawlRequestDTO dto) {
 
+    try {
+        gpfWithdrawlService.updateWithdrawal(id, dto);
+        return ResponseEntity.ok("Updated successfully");
+
+    } catch (Exception e) {
+        e.printStackTrace();   // 🔥 ADD THIS
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}
 
 }
 

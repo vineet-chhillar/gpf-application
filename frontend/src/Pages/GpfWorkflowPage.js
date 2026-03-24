@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import "../styles/GpfWorkflowPage.css";
-
+import RuleDetailsSection from "./RuleDetailsSection";
 const GpfWorkflowPage = () => {
 
 const [applications, setApplications] = useState([]);
@@ -15,9 +15,26 @@ const [detailsMap, setDetailsMap] = useState({});
 const [appType, setAppType] = useState("withdrawl");
 const [sendToOptions, setSendToOptions] = useState([]);
 const [selectedSendTo, setSelectedSendTo] = useState("");
-
+const [editData, setEditData] = useState({});
 const [nextRoleName, setNextRoleName] = useState("");
+const [advanceRules, setAdvanceRules] = useState([]);
+const [withdrawlRules, setWithdrawlRules] = useState([]);
 
+useEffect(() => {
+  api.get("/gpf/withdrawal-rules/active")
+    .then(res => setWithdrawlRules(res.data))
+    .catch(err => console.error(err));
+}, []);
+
+
+useEffect(() => {
+  api.get("/gpf/advance-rules/active")
+    .then(res => {
+      console.log("RULES:", res.data); // 👈 ADD THIS
+      setAdvanceRules(res.data);
+    })
+    .catch(err => console.error("Rule load error", err));
+}, []);
 const toggleExpand = async (applicationId, empCode) => {
 
 if (expandedRow === applicationId) {
@@ -46,14 +63,76 @@ setDetailsMap(prev => ({
 ...prev,
 [applicationId]: detailsRes.data
 }));
+const details = detailsRes.data.details;
 
+setEditData(prev => ({
+  ...prev,
+  [applicationId]: {
+    ...details,
+    advancerule: Number(details.advanceruleId ?? details.advancerule ?? 0),
+    ruleSpecificDataJson: details.ruleSpecificDataJson || {}
+  }
+}));
 } catch (err) {
 console.error("Expand load error", err);
 }
 
 setExpandedRow(applicationId);
 };
+const handleEditChange = (appId, field, value) => {
 
+  setEditData(prev => {
+
+    const existing = prev[appId] || {};
+
+    // 🔥 RULE CHANGE HANDLING (NO HARDCODING)
+ if (field === "advancerule") {
+  return {
+    ...prev,
+    [appId]: {
+      ...existing,
+      advancerule: value,
+      ruleSpecificDataJson: {}   // reset only
+    }
+  };
+}
+
+    // ✅ NORMAL + JSON MERGE
+    if (field === "ruleSpecificDataJson") {
+      return {
+        ...prev,
+        [appId]: {
+          ...existing,
+          ruleSpecificDataJson: value
+        }
+      };
+    }
+// ✅ define updated FIRST
+    let updated = {
+      ...existing,
+      [field]: value
+    };
+console.log(editData[appId]);
+    // ✅ then use it
+   if (field === "amountofadvancerequested") {
+
+      const requested = Number(value) || 0;
+
+      // ✅ FALLBACK TO EXISTING OR ORIGINAL DATA
+      const outstanding =
+        Number(existing.amountofadvanceoutstanding) ||
+        Number(applications.find(a => a.applicationId === appId)?.amountofadvanceoutstanding) ||
+        0;
+
+      updated.amountofconsolidatedadvance =
+        requested + outstanding;
+    }
+    return {
+      ...prev,
+      [appId]: updated   // ✅ CLEAN
+    };
+  });
+};
 useEffect(() => {
 
   if (!selectedId) {
@@ -267,7 +346,7 @@ setTimeout(() => {
   setSelectedId(null);
 }, 0);
 
-setSelectedId(null);
+
 setSelectedAction("");
 setRemarks("");
 
@@ -325,8 +404,59 @@ useEffect(() => {
   }
 
 }, [sendToOptions, selectedDetails]);
+
+
+  
     console.log("selectedSendTo:", selectedSendTo);
 console.log("sendToOptions:", sendToOptions);
+
+const handleUpdate = async (appId) => {
+
+  try {
+
+    const base =
+      appType === "withdrawl"
+        ? "/gpf-withdrawl"
+        : "/gpf-advance";
+
+    const payload = editData[appId];
+
+    await api.put(`${base}/update/${appId}`, {
+  details: payload,
+  ruleSpecificData: payload.ruleSpecificDataJson   // 🔥 IMPORTANT FOR ADVANCE
+});
+
+    alert("Updated successfully");
+
+    // reload details
+    const app = applications.find(a => a.applicationId === appId);
+    if (app) {
+      toggleExpand(app.applicationId, app.empCode);
+    }
+
+  } catch (err) {
+    alert("Update failed");
+  }
+};
+const handleRuleFieldChange = (appId, field, value) => {
+  setEditData(prev => ({
+    ...prev,
+    [appId]: {
+      ...prev[appId],
+      ruleSpecificDataJson: {
+        ...(prev[appId]?.ruleSpecificDataJson || {}),
+        [field]: value
+      }
+    }
+  }));
+};
+// ================= RULE HELPERS =================
+
+
+
+
+
+
 return (
 
 <div className="workflow-container">
@@ -432,13 +562,23 @@ handleSelection(app.applicationId)
 
 {/* ================= EXPANDED ROW ================= */}
 
-{expandedRow === app.applicationId && (() => {
+{expandedRow === app.applicationId && (
 
-const full = detailsMap[app.applicationId] || {};
-const master = full.master || {};
-const details = full.details || {};
+(() => {
+  const full = detailsMap[app.applicationId] || {};
+  const master = full.master || {};
+  const details = full.details || {};
+  const isRowEditable = details?.isReturned === true;
 
-return (
+  const jsonData = isRowEditable
+    ? editData[app.applicationId]?.ruleSpecificDataJson
+    : details.ruleSpecificDataJson;
+
+  const ruleId =
+    editData[app.applicationId]?.advancerule ??
+    details.advancerule;
+
+  return (
 
 <tr className="expanded-row">
 <td colSpan="9">
@@ -511,12 +651,12 @@ return (
 </div>
 
 <div className="detail-item">
-<span className="label">Outstanding Balance Date</span>
+<span className="label">Closing Balance Date</span>
 <span className="value">{details.dateofoutstandingbalance}</span>
 </div>
 
 <div className="detail-item">
-<span className="label">Outstanding Balance</span>
+<span className="label">Closing Balance</span>
 <span className="value">₹{details.outstandingbalance}</span>
 </div>
 
@@ -584,22 +724,79 @@ return (
 
 <div className="detail-item">
 <span className="label">Requested Amount</span>
-<span className="value">₹{details.amountofwithdrawlrequested}</span>
+{isRowEditable ? (
+  <input
+    value={editData[app.applicationId]?.amountofwithdrawlrequested || ""}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "amountofwithdrawlrequested", e.target.value)
+    }
+  />
+) : (
+  <span className="value">₹{details.amountofwithdrawlrequested}</span>
+)}
 </div>
 
 <div className="detail-item">
 <span className="label">Purpose</span>
-<span className="value">{details.purposeofwithdrawl}</span>
+{isRowEditable ? (
+  <input
+    value={editData[app.applicationId]?.purposeofwithdrawl || ""}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "purposeofwithdrawl", e.target.value)
+    }
+  />
+) : (
+  <span className="value">{details.purposeofwithdrawl}</span>
+)}
 </div>
 
 <div className="detail-item">
-<span className="label">Withdrawal Rule</span>
-<span className="value">{details.withdrawlruleText}</span>
+  <span className="label">Withdrawal Rule</span>
+
+  {isRowEditable ? (
+    <select
+      value={
+        editData[app.applicationId]?.withdrawlrule ??
+        details.withdrawlrule ??
+        ""
+      }
+      onChange={(e) =>
+        handleEditChange(
+          app.applicationId,
+          "withdrawlrule",
+          Number(e.target.value)
+        )
+      }
+    >
+      <option value="">-- Select Rule --</option>
+
+      {withdrawlRules.map(rule => (
+        <option
+          key={rule.ruleId}
+          value={rule.ruleId}
+        >
+          {rule.withdrawlReason}
+        </option>
+      ))}
+    </select>
+
+  ) : (
+    <span className="value">{details.withdrawlruleText}</span>
+  )}
 </div>
 
 <div className="detail-item">
   <span className="label">Concerned Officer</span>
+  {isRowEditable ? (
+  <input
+    value={editData[app.applicationId]?.concernedofficername || ""}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "concernedofficername", e.target.value)
+    }
+  />
+) : (
   <span className="value">{details.concernedofficername}</span>
+)}
 </div>
 
 <div className="detail-item">
@@ -616,20 +813,66 @@ return (
 
 <div className="detail-item">
 <span className="label">Prior Withdrawal</span>
-<span className="value">
-{details.ispriorwithdrawlforsamepurpose ? "Yes" : "No"}
-</span>
+{isRowEditable ? (
+  <input
+    type="checkbox"
+    checked={editData[app.applicationId]?.ispriorwithdrawlforsamepurpose || false}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "ispriorwithdrawlforsamepurpose", e.target.checked)
+    }
+  />
+) : (
+  <span className="value">
+    {details.ispriorwithdrawlforsamepurpose ? "Yes" : "No"}
+  </span>
+)}
 </div>
 
 <div className="detail-item">
-<span className="label">Previous Amount</span>
-<span className="value">₹{details.priorwithdrawlamount}</span>
+
+  <span className="label">Previous Amount</span>
+
+  {isRowEditable &&
+ editData[app.applicationId]?.ispriorwithdrawlforsamepurpose ? (
+    <input
+      type="number"
+      value={editData[app.applicationId]?.priorwithdrawlamount || ""}
+      onChange={(e) =>
+        handleEditChange(
+          app.applicationId,
+          "priorwithdrawlamount",
+          e.target.value
+        )
+      }
+    />
+  ) : (
+    <span className="value">₹{details.priorwithdrawlamount}</span>
+  )}
+
 </div>
 
 <div className="detail-item">
-<span className="label">Financial Year</span>
-<span className="value">{details.priorwithdrawlfinyear}</span>
+
+  <span className="label">Financial Year</span>
+
+  {isRowEditable &&
+ editData[app.applicationId]?.ispriorwithdrawlforsamepurpose ? (
+    <input
+      value={editData[app.applicationId]?.priorwithdrawlfinyear || ""}
+      onChange={(e) =>
+        handleEditChange(
+          app.applicationId,
+          "priorwithdrawlfinyear",
+          e.target.value
+        )
+      }
+      placeholder="e.g. 2023-24"
+    />
+  ) : (
+    <span className="value">{details.priorwithdrawlfinyear}</span>
+  )}
 </div>
+
 
 </div>
 
@@ -650,60 +893,137 @@ return (
 
 <div className="detail-item">
 <span className="label">Advance Requested</span>
-<span className="value">₹{details.amountofadvancerequested}</span>
+{isRowEditable ? (
+<input
+  value={editData[app.applicationId]?.amountofadvancerequested || ""}
+  onChange={(e) =>
+    handleEditChange(app.applicationId, "amountofadvancerequested", e.target.value)
+  }
+/>) : (
+  <span className="value">₹{details.amountofadvancerequested}</span>
+)}
 </div>
 
 <div className="detail-item">
 <span className="label">Purpose</span>
-<span className="value">{details.purposeofadvance}</span>
+
+{isRowEditable ? (
+  <input
+    value={editData[app.applicationId]?.purposeofadvance || ""}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "purposeofadvance", e.target.value)
+    }
+  />
+) : (
+  <span className="value">{details.purposeofadvance}</span>
+)}
 </div>
+
+
 
 <div className="detail-item">
   <span className="label">Particulars</span>
+    {isRowEditable ? (
+  <input
+    value={editData[app.applicationId]?.particulars || ""}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "particulars", e.target.value)
+    }
+  />
+) : (
   <span className="value">{details.particulars}</span>
+)}
 </div>
 
 <div className="detail-item">
-<span className="label">Advance Rule</span>
-<span className="value">{details.advanceruleText}</span>
+  <span className="label">Advance Rule</span>
+
+  {isRowEditable ? (
+    <select
+      value={editData[app.applicationId]?.advancerule || ""}
+      onChange={(e) =>
+        handleEditChange(
+          app.applicationId,
+          "advancerule",
+          Number(e.target.value)
+        )
+      }
+    >
+      <option value="">-- Select Rule --</option>
+
+      {advanceRules.map(rule => (
+        <option key={rule.ruleId} value={rule.ruleId}>
+          {rule.ruleDescription}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <span className="value">
+      {details.advanceruleText || details.ruleName || "-"}
+    </span>
+  )}
+
+</div>
 </div>
 
-{details.ruleSpecificDataJson && (
-  <>
-    <h4>Rule Specific Details</h4>
 
-    <div className="details-grid">
+{/* ================= RULE SPECIFIC DETAILS ================= */}
 
-      {Object.entries(details.ruleSpecificDataJson).map(([key, value]) => (
-        <div className="detail-item" key={key}>
-          <span className="label">{formatLabel(key)}</span>
-          <span className="value">
-            {typeof value === "boolean"
-              ? value ? "Yes" : "No"
-              : String(value)}
-          </span>
-        </div>
-      ))}
 
-    </div>
-  </>
-)}
 
+<RuleDetailsSection
+  appId={app.applicationId}
+  ruleId={
+    editData[app.applicationId]?.advancerule ??
+    details.advancerule
+  }
+  jsonData={
+    isRowEditable
+      ? editData[app.applicationId]?.ruleSpecificDataJson
+      : details.ruleSpecificDataJson
+  }
+  isRowEditable={isRowEditable}
+  editData={editData}
+  handleEditChange={handleRuleFieldChange}   // 🔥 IMPORTANT (use fixed handler)
+/>
+
+<div className="detail-grid">
 <div className="detail-item">
 <span className="label">Installments</span>
-<span className="value">
-{details.noofmonthlyinstallmentsforpaymentofconsolidatedadvance}
-</span>
+{isRowEditable ? (
+  <input
+    value={editData[app.applicationId]?.noofmonthlyinstallmentsforpaymentofconsolidatedadvance || ""}
+    onChange={(e) =>
+      handleEditChange(app.applicationId, "noofmonthlyinstallmentsforpaymentofconsolidatedadvance", e.target.value)
+    }
+  />
+) : (
+  <span className="value">
+    {details.noofmonthlyinstallmentsforpaymentofconsolidatedadvance}
+  </span>
+)}
 </div>
 
 <div className="detail-item">
-<span className="label">Consolidated Advance</span>
-<span className="value">₹{details.amountofconsolidatedadvance}</span>
+<span className="label">Advance Outstanding</span>
+<span className="value">₹{details.amountofadvanceoutstanding}</span>
+</div>
+
+<div className="detail-item">
+  <span className="label">Consolidated Advance</span>
+
+  <span className="value">
+    ₹{
+      editData[app.applicationId]?.amountofconsolidatedadvance ??
+      details.amountofconsolidatedadvance ??
+      0
+    }
+  </span>
+</div>
+
 </div>
 
 
-
-</div>
 
 </>
 
@@ -734,13 +1054,23 @@ trailMap[app.applicationId].map((t, i) => (
 </div>
 
 </div>
-
+{isRowEditable && (
+  <div style={{ marginTop: "15px", textAlign: "right" }}>
+    <button
+      className="process-btn"
+      onClick={() => handleUpdate(app.applicationId)}
+    >
+      Save Changes
+    </button>
+  </div>
+)}
 </td>
 </tr>
 
 );
 
-})()}
+})()
+)}
 
 </React.Fragment>
 

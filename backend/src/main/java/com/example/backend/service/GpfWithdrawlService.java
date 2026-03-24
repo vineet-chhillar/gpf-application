@@ -14,11 +14,19 @@ public interface GpfWithdrawlService {
     GpfWithdrawlRequestDTO getByEmpcode(String empcode);
 
     void processApplications(WorkflowProcessRequestDTO request);
+
     List<GpfWithdrawlDetails> getInboxByRole(Long roleId);
 
-GpfApplicationStatusResponseDTO getApplicationStatus(String empcode);
-List<ApplicationTrailDTO> getTrail(Long applicationId);
-public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus();
-Long getCurrentWorkflowRole();
-List<InboxApplicationDTO> getAllPendingApplications();
+    GpfApplicationStatusResponseDTO getApplicationStatus(String empcode);
+
+    List<ApplicationTrailDTO> getTrail(Long applicationId);
+
+    List<GpfApplicationStatusResponseDTO> getAllApplicationStatus();
+
+    Long getCurrentWorkflowRole();
+
+    List<InboxApplicationDTO> getAllPendingApplications();
+
+    // 🔥 ADD THIS
+    void updateWithdrawal(Long id, GpfWithdrawlRequestDTO dto);
 }

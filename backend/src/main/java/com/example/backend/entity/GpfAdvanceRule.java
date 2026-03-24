@@ -43,6 +43,7 @@ private Boolean active = true;
 
     @Column(name = "createdby", length = 50)
     private String createdby;
+   
 
     @PrePersist
 public void prePersist() {

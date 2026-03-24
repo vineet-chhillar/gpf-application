@@ -396,3 +396,14 @@ h2::after {
   margin-bottom: 5px;
   
 }
+.workflow-table select,
+.workflow-action-bar select {
+  color: #000;
+  background-color: #fff;
+}
+
+.workflow-table select option,
+.workflow-action-bar select option {
+  color: #000;
+  background-color: #fff;
+}

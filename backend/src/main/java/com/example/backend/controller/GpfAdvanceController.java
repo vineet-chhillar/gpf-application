@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -103,4 +104,32 @@ public ResponseEntity<?> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
 
         return service.getTrail(applicationId);
     }
+    @PutMapping("/update/{id}")
+public ResponseEntity<?> updateAdvance(
+        @PathVariable Long id,
+        @RequestBody AdvanceRequestDTO dto) {
+
+    try {
+
+        service.updateAdvanceApplication(
+                id,
+                dto.getDetails(),
+                dto.getRuleSpecificData()
+        );
+
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", "Advance updated successfully"
+        ));
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        return ResponseEntity.status(500).body(Map.of(
+            "status", "error",
+            "message", e.getMessage()
+        ));
+    }
+}
 }

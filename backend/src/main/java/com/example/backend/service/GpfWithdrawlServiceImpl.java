@@ -22,6 +22,7 @@ import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
 import com.example.backend.repository.FunctionalRoleRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -584,6 +585,107 @@ dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
 
     }).toList();
 }
+private void validateWithdrawal(GpfWithdrawlDetails d) {
 
+    /* ================= BASIC ================= */
 
+    if (d.getAmountofwithdrawlrequested() == null ||
+        d.getAmountofwithdrawlrequested().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("Withdrawal amount must be greater than 0");
+    }
+
+    if (d.getPurposeofwithdrawl() == null ||
+        d.getPurposeofwithdrawl().isBlank()) {
+        throw new IllegalArgumentException("Purpose of withdrawal is required");
+    }
+
+    if (d.getWithdrawlrule() == null) {
+        throw new IllegalArgumentException("Withdrawal rule is required");
+    }
+
+    if (d.getConcernedofficername() == null ||
+        d.getConcernedofficername().isBlank()) {
+        throw new IllegalArgumentException("Concerned officer name is required");
+    }
+
+    /* ================= PRIOR WITHDRAWAL ================= */
+
+    if (Boolean.TRUE.equals(d.getIspriorwithdrawlforsamepurpose())) {
+
+        if (d.getPriorwithdrawlamount() == null ||
+            d.getPriorwithdrawlamount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(
+                "Prior withdrawal amount must be provided");
+        }
+
+        if (d.getPriorwithdrawlfinyear() == null ||
+            d.getPriorwithdrawlfinyear().isBlank()) {
+            throw new IllegalArgumentException(
+                "Prior withdrawal financial year is required");
+        }
+
+    }
+
+    /* ================= BUSINESS RULE ================= */
+
+    // Example: amount should not exceed some limit (optional)
+    //if (d.getAmountofwithdrawlrequested() > 1000000) {
+       // throw new IllegalArgumentException("Withdrawal amount exceeds allowed limit");
+   // }
+}
+@Override
+@Transactional
+public void updateWithdrawal(Long id, GpfWithdrawlRequestDTO dto) {
+
+    GpfWithdrawlDetails entity = detailsRepo.findByMaster_Id(id)
+            .orElseThrow(() ->
+                    new IllegalStateException("Application not found: " + id));
+
+    // 🔥 ALLOW EDIT ONLY IN RETURN MODE
+    if (!Boolean.TRUE.equals(entity.getIsReturned())) {
+        throw new IllegalStateException("Editing allowed only for returned applications");
+    }
+
+    GpfWithdrawlDetails payload = dto.getDetails();
+
+    validateWithdrawal(payload);
+
+    if (payload == null) {
+        throw new IllegalArgumentException("Details payload is required");
+    }
+if (payload.getAmountofwithdrawlrequested()
+        .compareTo(entity.getNetbalance()) > 0) {
+
+    throw new IllegalArgumentException("Requested amount exceeds available balance");
+}
+    /* ================= UPDATE EDITABLE FIELDS ================= */
+
+    entity.setAmountofwithdrawlrequested(payload.getAmountofwithdrawlrequested());
+    entity.setPurposeofwithdrawl(payload.getPurposeofwithdrawl());
+    entity.setWithdrawlrule(payload.getWithdrawlrule());
+    entity.setConcernedofficername(payload.getConcernedofficername());
+
+    entity.setIspriorwithdrawlforsamepurpose(payload.getIspriorwithdrawlforsamepurpose());
+
+    if (Boolean.TRUE.equals(payload.getIspriorwithdrawlforsamepurpose())) {
+        entity.setPriorwithdrawlamount(payload.getPriorwithdrawlamount());
+        entity.setPriorwithdrawlfinyear(payload.getPriorwithdrawlfinyear());
+    } else {
+        entity.setPriorwithdrawlamount(null);
+        entity.setPriorwithdrawlfinyear(null);
+    }
+
+    /* ================= DO NOT TOUCH WORKFLOW ================= */
+    // ❌ DO NOT change:
+    // entity.setCurrentOwnerRole(...)
+    // entity.setCurrentStep(...)
+    // entity.setWorkflowId(...)
+
+    /* ================= IMPORTANT ================= */
+
+    // 🔥 DO NOT reset isReturned here
+    // because your processApplications() handles resume logic
+
+    detailsRepo.save(entity);
+}
 }

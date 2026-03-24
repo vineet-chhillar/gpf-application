@@ -25,7 +25,7 @@ import com.example.backend.repository.GpfAdvanceRuleRepo;
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
 
-import tools.jackson.databind.ObjectMapper;
+
 
 import java.util.Map;
 
@@ -378,12 +378,21 @@ public List<ApplicationTrailDTO> getTrail(Long applicationId) {
 
         ApplicationTrailDTO dto = new ApplicationTrailDTO();
 
-        dto.setRole(String.valueOf(t.getActionByRole()));
-        dto.setAction(String.valueOf(t.getActionId()));
+        String roleName = roleRepo.findById(t.getActionByRole())
+                .map(r -> r.getRoleName())
+                .orElse("Role");
+
+        String actionName = actionRepo.findById(t.getActionId())
+                .map(a -> a.getActionDesc())
+                .orElse("Action");
+
+        dto.setRole(roleName);
+        dto.setAction(actionName);
         dto.setRemarks(t.getRemarks());
 
-        if (t.getActionat() != null)
+        if (t.getActionat() != null) {
             dto.setTime(t.getActionat().toString());
+        }
 
         return dto;
 
@@ -644,5 +653,112 @@ private String resolveActionName(Long actionId) {
     return actionRepo.findById(actionId)
             .map(a -> a.getActionDesc())
             .orElse(String.valueOf(actionId));
+}
+
+public void updateAdvanceApplication(
+        Long id,
+        GpfAdvanceDetails payload,
+        Map<String, Object> ruleSpecificData) {
+
+    try {
+
+        GpfAdvanceDetails entity = detailsRepo.findByMaster_Id(id)
+                .orElseThrow(() ->
+                        new IllegalStateException("Application not found: " + id));
+
+        // 🔥 ONLY ALLOW IF RETURNED
+        if (!Boolean.TRUE.equals(entity.getIsReturned())) {
+            throw new IllegalStateException("Editing allowed only for returned applications");
+        }
+
+        if (payload == null) {
+            throw new IllegalArgumentException("Details payload is required");
+        }
+
+        /* ================= BASIC VALIDATION ================= */
+
+        if (payload.getAmountofadvancerequested() == null ||
+            payload.getAmountofadvancerequested().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+
+            throw new IllegalArgumentException("Advance amount must be greater than 0");
+        }
+
+        if (payload.getPurposeofadvance() == null ||
+            payload.getPurposeofadvance().isBlank()) {
+
+            throw new IllegalArgumentException("Purpose is required");
+        }
+
+        if (payload.getAdvancerule() == null) {
+            throw new IllegalArgumentException("Advance rule is required");
+        }
+
+        Integer installments =
+                payload.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance();
+
+        if (installments == null || installments <= 0) {
+            throw new IllegalArgumentException("Installments must be provided");
+        }
+
+        if (installments > 60) {
+            throw new IllegalArgumentException("Installments cannot exceed 60");
+        }
+
+        /* ================= RULE VALIDATION ================= */
+
+        Map<String, Object> ruleData = ruleSpecificData;
+
+        if (payload.getAdvancerule() != null && ruleData != null) {
+
+            switch (payload.getAdvancerule().intValue()) {
+
+                case 1: // HOUSE
+                    if (ruleData.get("location") == null)
+                        throw new IllegalArgumentException("Location required");
+
+                    if (ruleData.get("ownershipType") == null)
+                        throw new IllegalArgumentException("Ownership type required");
+                    break;
+
+                case 2: // EDUCATION
+                    if (ruleData.get("childName") == null)
+                        throw new IllegalArgumentException("Child name required");
+                    break;
+
+                case 3: // MEDICAL
+                    if (ruleData.get("patientDetails") == null)
+                        throw new IllegalArgumentException("Patient details required");
+                    break;
+            }
+        }
+
+        /* ================= UPDATE FIELDS ================= */
+
+        entity.setAmountofadvancerequested(payload.getAmountofadvancerequested());
+        entity.setPurposeofadvance(payload.getPurposeofadvance());
+        entity.setParticulars(payload.getParticulars());
+        entity.setAdvancerule(payload.getAdvancerule());
+
+        entity.setNoofmonthlyinstallmentsforpaymentofconsolidatedadvance(
+                payload.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance()
+        );
+
+        /* ================= JSON ================= */
+
+        if (ruleData != null) {
+            entity.setRuleSpecificDataJson(ruleData);
+        }
+
+        /* ================= IMPORTANT ================= */
+
+    
+
+        detailsRepo.save(entity);
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+        throw new RuntimeException("Failed to update advance: " + e.getMessage());
+    }
 }
 }
