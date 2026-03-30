@@ -9,7 +9,6 @@ export const EMPLOYEES = [
     empemailid: "test.employee@gov.in",
     dateofjoining: "2019-04-01",
     dateofsuperannuation: "2038-03-31",
-    gpfaccountno: "GPF-NIC-1030",
     panno: "BFUPK3317L"
   },
   {
@@ -22,7 +21,6 @@ export const EMPLOYEES = [
     empemailid: "rahul@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1031",
     panno: "BFUPK3317M"
   },
   {
@@ -35,7 +33,6 @@ export const EMPLOYEES = [
     empemailid: "pankaj@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1032",
     panno: "BFUPK3317N"
   },
   {
@@ -48,7 +45,6 @@ export const EMPLOYEES = [
     empemailid: "rajesh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1033",
     panno: "BFUPK3317O"
   },
   {
@@ -61,7 +57,6 @@ export const EMPLOYEES = [
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1034",
     panno: "BFUPK3317P"
   },
   {
@@ -74,7 +69,6 @@ export const EMPLOYEES = [
     empemailid: "subodh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1035",
     panno: "BFUPK3317Q"
   },
   {
@@ -87,7 +81,6 @@ export const EMPLOYEES = [
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1036",
     panno: "BFUPK3317R"
   },
   {
@@ -100,7 +93,6 @@ export const EMPLOYEES = [
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1037",
     panno: "BFUPK3317S"
   },
   {
@@ -113,7 +105,6 @@ export const EMPLOYEES = [
     empemailid: "ramesh@gov.in",
     dateofjoining: "2018-02-11",
     dateofsuperannuation: "2036-03-31",
-    gpfaccountno: "GPF-NIC-1038",
     panno: "BFUPK3317T"
   }
 ];
@@ -121,7 +112,8 @@ export const EMPLOYEES = [
 
 export const GPF_DETAILS = [
   {
-    panno: "BFUPK3317L",
+    panno: "ABMPA1395B",
+    gpfaccountno: "GPF-NIC-1030",
     basicpay: 45000,
     outstandingbalance: 500000,
     totalcreditamount: 50000,
@@ -131,7 +123,19 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 50000
   },
   {
-    panno: "BFUPK3317M",
+    panno: "AIQPA7687M",
+    gpfaccountno: "GPF-NIC-1031",
+    basicpay: 45000,
+    outstandingbalance: 500000,
+    totalcreditamount: 50000,
+    refundafterdateofoutstandingbalance: 200000,
+    totalwithdrawlamount: 100000,
+    netbalance: 650000,
+    amountofadvanceoutstanding: 50000
+  },
+  {
+    panno: "BFUPK3317N",
+    gpfaccountno: "GPF-NIC-1032",
     basicpay: 52000,
     outstandingbalance: 600000,
     totalcreditamount: 40000,
@@ -141,7 +145,8 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 40000
   },
   {
-    panno: "BFUPK3317N",
+    panno: "BFUPK3317O",
+    gpfaccountno: "GPF-NIC-1033",
     basicpay: 52000,
     outstandingbalance: 600000,
     totalcreditamount: 40000,
@@ -151,7 +156,8 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 25000
   },
   {
-    panno: "BFUPK3317O",
+    panno: "BFUPK3317P",
+    gpfaccountno: "GPF-NIC-1034",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -161,17 +167,8 @@ export const GPF_DETAILS = [
     amountofadvanceoutstanding: 60000
   },
   {
-    panno: "BFUPK3317P",
-    basicpay: 62000,
-    outstandingbalance: 700000,
-    totalcreditamount: 50000,
-    refundafterdateofoutstandingbalance: 200000,
-    totalwithdrawlamount: 120000,
-    netbalance: 830000,
-    amountofadvanceoutstanding: 45000
-  },
-  {
     panno: "BFUPK3317Q",
+    gpfaccountno: "GPF-NIC-1035",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -182,6 +179,7 @@ export const GPF_DETAILS = [
   },
   {
     panno: "BFUPK3317R",
+    gpfaccountno: "GPF-NIC-1036",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -192,6 +190,7 @@ export const GPF_DETAILS = [
   },
   {
     panno: "BFUPK3317S",
+    gpfaccountno: "GPF-NIC-1037",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -202,6 +201,7 @@ export const GPF_DETAILS = [
   },
   {
     panno: "BFUPK3317T",
+    gpfaccountno: "GPF-NIC-1038",
     basicpay: 62000,
     outstandingbalance: 700000,
     totalcreditamount: 50000,
@@ -210,4 +210,5 @@ export const GPF_DETAILS = [
     netbalance: 830000,
     amountofadvanceoutstanding: 45000
   }
+  
 ];

@@ -11,6 +11,9 @@ import {
 
 
 const GpfWithdrawlForm = () => {
+
+
+
 const [empCodeInput, setEmpCodeInput] = useState("");
 const [gpfAccountInput, setGpfAccountInput] = useState("");
 const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -121,50 +124,38 @@ const DEFAULT_DETAILS_DATA = {
   refundafterdateofoutstandingbalance: 200000,
   totalwithdrawlamount: 100000,
   netbalance: 650000};*/}
-useEffect(() => {
+  
+const handleEmpCodeBlur = async () => {
 
   if (!empCodeInput) {
-    // 🔥 clear everything if input empty
     setMasterApiData(null);
     setDetailsApiData(null);
     setGpfAccountInput("");
     return;
   }
 
-  const timer = setTimeout(async () => {
+  try {
+    const empCode = empCodeInput.trim().toUpperCase();
 
-    try {
-
-      const empCode = empCodeInput.toUpperCase();
-
-      const master = await getMasterByEmpCode(empCode);
-
-      if (master) {
-        setMasterApiData(master);
-        setGpfAccountInput(master.gpfaccountno || "");
-      } else {
-        // ❗ API returned null → CLEAR DATA
-        setMasterApiData(null);
-        setDetailsApiData(null);
-        setGpfAccountInput("");
-      }
-
-    } catch (err) {
-
-      console.error("Master fetch failed", err);
-
-      // ❗ API failed → CLEAR DATA
+    const master = await getMasterByEmpCode(empCode);
+console.log(masterApiData);
+    if (master) {
+      setMasterApiData(master);
+    } else {
       setMasterApiData(null);
       setDetailsApiData(null);
       setGpfAccountInput("");
-
     }
 
-  }, 400);
+  } catch (err) {
 
-  return () => clearTimeout(timer);
+    console.error("Master fetch failed", err);
 
-}, [empCodeInput]);
+    setMasterApiData(null);
+    setDetailsApiData(null);
+    setGpfAccountInput("");
+  }
+};
 
 
 useEffect(() => {
@@ -183,10 +174,12 @@ useEffect(() => {
       const details = await getDetailsByPan(pan);
 
       if (details) {
-        setDetailsApiData(details);
-      } else {
-        setDetailsApiData(null); // ❗ no data
-      }
+  setDetailsApiData(details);
+  setGpfAccountInput(details.gpfaccountno || ""); // ✅ NEW
+} else {
+  setDetailsApiData(null);
+  setGpfAccountInput(""); // ✅ clear
+}
 
     } catch (err) {
 
@@ -247,7 +240,7 @@ const loadData = async () => {
 
     const master = await getMasterByEmpCode(empCodeInput);
 
-    const details = await getDetailsByPan(masterApiData.panno);
+    const details = await getDetailsByPan(master.panno);
 
     if (!master) {
       alert("Employee not found");
@@ -374,7 +367,7 @@ const confirmSubmit = async () => {
       details: {
         ...detailsApiData,
 
-       gpfaccountno: masterApiData.gpfaccountno,
+       gpfaccountno: detailsApiData.gpfaccountno,
 panno: masterApiData.panno,
 concernedofficername: userInput.concernedofficername,
         creditfromdate: getCurrentFinancialYearStartDate(),
@@ -461,6 +454,10 @@ resetForm();
     setDetailsApiData(null);
     setGpfAccountInput("");
   }}
+  onBlur={handleEmpCodeBlur}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") handleEmpCodeBlur();
+  }}
 />
           </div>
 
@@ -470,11 +467,12 @@ resetForm();
 
           <div className="info-grid">
 
+{false && (
 <div className="info-card">
 <div className="info-label">Employee Code</div>
 <div className="info-value">{masterApiData?.empcode || "-"}</div>
 </div>
-
+)}
 <div className="info-card">
 <div className="info-label">Employee Name</div>
 <div className="info-value">{masterApiData?.empname || "-"}</div>
@@ -485,10 +483,12 @@ resetForm();
 <div className="info-value">{masterApiData?.designation || "-"}</div>
 </div>
 
-<div className="info-card">
-<div className="info-label">Division</div>
-<div className="info-value">{masterApiData?.empdivision || "-"}</div>
-</div>
+{false && (
+  <div className="info-card">
+    <div className="info-label">Division</div>
+    <div className="info-value">{masterApiData?.empdivision || "-"}</div>
+  </div>
+)}
 
 <div className="info-card">
 <div className="info-label">Mobile</div>
@@ -639,7 +639,7 @@ resetForm();
 
 <div className="form-group">
   <label className="form-label">
-    Concerned Officer Name <span className="required">*</span>
+    Name of accounts officer maintaining the PF account <span className="required">*</span>
   </label>
 
   <input

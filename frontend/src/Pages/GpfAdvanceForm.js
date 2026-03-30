@@ -100,55 +100,40 @@ setRuleSpecificData({});
 
 };
 
-useEffect(() => {
+const handleEmpCodeBlur = async () => {
 
   if (!empCodeInput) {
-    // 🔥 clear everything when input empty
     setMasterApiData(null);
     setDetailsApiData(null);
     setGpfAccountInput("");
     return;
   }
 
-  const timer = setTimeout(async () => {
+  try {
+    const empCode = empCodeInput.trim().toUpperCase();
 
-    try {
+    const master = await getMasterByEmpCode(empCode);
 
-      const empCode = empCodeInput.trim().toUpperCase();
-
-      const master = await getMasterByEmpCode(empCode);
-
-      if (master) {
-        setMasterApiData(master);
-        setGpfAccountInput(master.gpfaccountno || "");
-      } else {
-        // ❗ no data → clear
-        setMasterApiData(null);
-        setDetailsApiData(null);
-        setGpfAccountInput("");
-      }
-
-    } catch (err) {
-
-      console.error("Master fetch failed", err);
-
-      // ❗ API error → clear
-      setMasterApiData(null);
-      setDetailsApiData(null);
-      setGpfAccountInput("");
-
+    if (!master) {
+      alert("Employee not found");
+      return;
     }
 
-  }, 400);
+    setMasterApiData(master);
 
-  return () => clearTimeout(timer);
-
-}, [empCodeInput]);
+  } catch (err) {
+    console.error("Master fetch failed", err);
+    setMasterApiData(null);
+    setDetailsApiData(null);
+    setGpfAccountInput("");
+  }
+};
 
 useEffect(() => {
 
   if (!masterApiData?.panno) {
-    setDetailsApiData(null); // 🔥 clear if no PAN
+    setDetailsApiData(null); 
+    setGpfAccountInput("");
     return;
   }
 
@@ -161,10 +146,12 @@ useEffect(() => {
       const details = await getDetailsByPan(pan);
 
       if (details) {
-        setDetailsApiData(details);
-      } else {
-        setDetailsApiData(null); // ❗ no data
-      }
+  setDetailsApiData(details);
+  setGpfAccountInput(details.gpfaccountno || ""); // ✅ NEW
+} else {
+  setDetailsApiData(null);
+  setGpfAccountInput(""); // ✅ clear
+}
 
     } catch (err) {
 
@@ -371,7 +358,7 @@ const confirmSubmit = async () => {
   particulars: userInput.particulars,   
 
   
-    gpfaccountno:gpfAccountInput,
+    gpfaccountno: detailsApiData?.gpfaccountno,
 panno:masterApiData?.panno,
 
     creditfromdate:getCurrentFinancialYearStartDate(),
@@ -456,17 +443,22 @@ return (
     setDetailsApiData(null);
     setGpfAccountInput("");
   }}
+  onBlur={handleEmpCodeBlur}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") handleEmpCodeBlur();
+  }}
 />
 </div>
 
 </div>
 
 <div className="info-grid">
-
+{false && (
 <div className="info-card">
 <div className="info-label">Employee Code</div>
 <div className="info-value">{masterApiData?.empcode || "-"}</div>
 </div>
+)}
 
 <div className="info-card">
 <div className="info-label">Employee Name</div>
@@ -478,10 +470,12 @@ return (
 <div className="info-value">{masterApiData?.designation || "-"}</div>
 </div>
 
+{false && (
 <div className="info-card">
 <div className="info-label">Division</div>
 <div className="info-value">{masterApiData?.empdivision || "-"}</div>
 </div>
+)}
 
 <div className="info-card">
 <div className="info-label">Mobile</div>
