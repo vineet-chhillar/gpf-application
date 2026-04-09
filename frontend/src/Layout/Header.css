@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-
+  position: relative;
   padding: 16px 24px;
   min-height: 64px;
 
@@ -23,6 +23,9 @@
   font-weight: 600;
   color: #1e293b;
   letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Highlight system name */
@@ -31,9 +34,41 @@
   font-weight: 700;
 }
 
+
+.header-title .dynamic-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 600;
+  color: #1c0430;
+  white-space: nowrap;
+  cursor: default;
+}
+
+
+.header-title .dynamic-title::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 60%; /* 🔥 shorter line */
+  height: 2px;
+  background-color: #1c0430;
+  transform: translateX(-50%);
+}
+
+
+.header-title .dynamic-title:hover::after {
+  width: 100%;
+}
+
+/* 🔥 Slight zoom on hover (optional but nice) */
+.header-title .dynamic-title:hover {
+  transform: translateX(-50%) scale(1.05);
+}
+
 /* ===== RIGHT SECTION ===== */
 
-/* RIGHT SECTION LAYOUT */
 .header-right {
   display: flex;
   align-items: center;

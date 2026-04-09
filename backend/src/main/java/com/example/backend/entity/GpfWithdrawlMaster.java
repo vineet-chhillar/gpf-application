@@ -1,9 +1,13 @@
 package com.example.backend.entity;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDate;
 import jakarta.persistence.*;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "gpfwithdrawlmaster")
 

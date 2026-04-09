@@ -1,4 +1,9 @@
 package com.example.backend.service;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
@@ -22,16 +27,35 @@ import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
 import com.example.backend.repository.FunctionalRoleRepository;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
+//import java.net.http.HttpHeaders;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.http.HttpEntity;
+//import org.springframework.http.HttpMethod;
+//import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import java.util.Base64;
 
 @Service
 @Transactional
 public class GpfWithdrawlServiceImpl implements GpfWithdrawlService {
+
+
+    private static final boolean USE_MOCK = true;
 
     @Autowired
 private FunctionalRoleRepository roleRepo;
@@ -54,7 +78,7 @@ private FunctionalRoleRepository roleRepo;
 private GpfWithdrawlRuleRepository withdrawlRuleRepo;
    
 
-    @Override
+@Override
 public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
 
     if (dto == null || dto.getMaster() == null || dto.getDetails() == null) {
@@ -64,10 +88,15 @@ public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
     GpfWithdrawlMaster master = dto.getMaster();
     GpfWithdrawlDetails details = dto.getDetails();
 
+    System.out.println("FULL DTO: " + dto);
+System.out.println("MASTER OBJECT: " + dto.getMaster());
+System.out.println("EMPCODE RAW: " + (dto.getMaster() != null ? dto.getMaster().getEmpcode() : "MASTER NULL"));
+
     System.out.println("Action ID: " + details.getAction().getActionId());
     System.out.println("Current Role: " + details.getCurrentOwnerRole());
 
     String empcode = master.getEmpcode();
+    
     if (empcode == null || empcode.isBlank()) {
         throw new IllegalArgumentException("Empcode is mandatory");
     }
@@ -687,5 +716,131 @@ if (payload.getAmountofwithdrawlrequested()
     // because your processApplications() handles resume logic
 
     detailsRepo.save(entity);
+}
+@Override
+public Map<String, Object> getDetailsByPan(String pan) {
+
+    if (USE_MOCK) {
+        return getMockDetails(pan);
+    }
+
+    try {
+
+        String url = "https://training.gifmis.cga.gov.in/centralEIS/WebServiceSoap/gpf_advance_withdrawl.php";
+
+        String innerXml =
+              "<gpf_advance_withdrawl>"
+            + "<user_name>CCBS</user_name>"
+            + "<password>CCBS@2026</password>"
+            + "<emp_pan_no>" + pan + "</emp_pan_no>"
+            + "</gpf_advance_withdrawl>";
+
+        String encodedPayload = Base64.getEncoder()
+                .encodeToString(innerXml.getBytes());
+
+        String requestXml =
+              "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+            + "<soapenv:Body>"
+            + "<gpf_advance_withdrawl>"
+            + "<arg0>" + encodedPayload + "</arg0>"
+            + "</gpf_advance_withdrawl>"
+            + "</soapenv:Body>"
+            + "</soapenv:Envelope>";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_XML);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestXml, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+        );
+
+        String xmlResponse = response.getBody();
+
+        return parseSoapResponse(xmlResponse);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException("Failed to fetch GPF details");
+    }
+}
+private Map<String, Object> parseSoapResponse(String xml) {
+
+    Map<String, Object> result = new HashMap<>();
+
+    try {
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+
+        InputStream is = new ByteArrayInputStream(xml.getBytes());
+        Document doc = builder.parse(is);
+
+        doc.getDocumentElement().normalize();
+
+        // 🔥 Example extraction (adjust based on actual XML tags)
+
+        result.put("gpfaccountno", getTagValue(doc, "gpfaccountno"));
+        result.put("basicpay", getTagValue(doc, "basicpay"));
+        result.put("closingbalance", getTagValue(doc, "closingbalance"));
+        result.put("totalcreditamount", getTagValue(doc, "totalcreditamount"));
+        result.put("refundafterdateofoutstandingbalance", getTagValue(doc, "refundamount"));
+        result.put("totalwithdrawlamount", getTagValue(doc, "totalwithdrawlamount"));
+        result.put("netbalance", getTagValue(doc, "netbalance"));
+        result.put("outstandingbalance", getTagValue(doc, "outstandingbalance"));
+
+        // 🔥 IMPORTANT FIELDS
+        result.put("nameoftheofficermaintainingthePFAccount",
+                getTagValue(doc, "officername"));
+
+        result.put("ispriorwithdrawalforsamepurpose",
+                getTagValue(doc, "ispriorwithdrawal"));
+
+        result.put("priorwithdrawalamount",
+                getTagValue(doc, "priorwithdrawalamount"));
+
+        result.put("priorwithdrawalfinyear",
+                getTagValue(doc, "priorwithdrawalyear"));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return result;
+}
+private Map<String, Object> getMockDetails(String pan) {
+
+    Map<String, Object> result = new HashMap<>();
+
+    result.put("gpfaccountno", "GPF123456");
+    result.put("basicpay", "75000");
+    result.put("closingbalance", "1250000");
+    result.put("totalcreditamount", "250000");
+    result.put("refundafterdateofoutstandingbalance", "15000");
+    result.put("totalwithdrawlamount", "50000");
+    result.put("netbalance", "1200000");
+    result.put("outstandingbalance", "20000");
+
+    result.put("nameoftheofficermaintainingthePFAccount", "Rajesh Kumar");
+
+    result.put("ispriorwithdrawalforsamepurpose", "Yes");
+    result.put("priorwithdrawalamount", "30000");
+    result.put("priorwithdrawalfinyear", "2022-23");
+
+    // 👇 Dynamic feel (optional)
+    result.put("pan", pan);
+
+    return result;
+}
+private String getTagValue(Document doc, String tagName) {
+    NodeList nodeList = doc.getElementsByTagName(tagName);
+    if (nodeList.getLength() == 0) return null;
+    return nodeList.item(0).getTextContent();
 }
 }

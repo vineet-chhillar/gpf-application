@@ -215,7 +215,7 @@ const handleUserChange = (e) => {
 /* ================= CALCULATIONS ================= */
 
 const advanceOutstanding =
- Number(detailsApiData?.amountofadvanceoutstanding || 0);
+ Number(detailsApiData?.outstandingbalance ?? 0);
 
 const requested =
  Number(userInput.amountofadvancerequested || 0);
@@ -250,8 +250,11 @@ const validate = ()=>{
  if(months > 60)
   newErrors.installments="Maximum 60 installments allowed";
 
- if(consolidatedAdvance > Number(detailsApiData?.netbalance || 0))
-  newErrors.amount="Advance exceeds available balance";
+const netBalance = Number(detailsApiData?.netbalance ?? 0);
+
+if (consolidatedAdvance > netBalance) {
+  newErrors.amount = "Advance exceeds available balance";
+}
 
  if (!userInput.particulars || !userInput.particulars.trim()) {
   newErrors.particulars = "Particulars is required";
@@ -369,7 +372,7 @@ panno:masterApiData?.panno,
     withdrawlfromdate:getCurrentFinancialYearStartDate(),
     withdrawltodate:getTodayDate(),
 
-    totalwithdrawlamount:detailsApiData.totalwithdrawlamount,
+    totalwithdrawlamount: detailsApiData?.totalwithdrawlamount ?? 0,
 
     amountofadvancerequested:userInput.amountofadvancerequested,
     purposeofadvance:userInput.purposeofadvance,
@@ -381,6 +384,8 @@ panno:masterApiData?.panno,
 
     dateofapplication:userInput.dateofapplication,
 
+      closingbalance: detailsApiData?.closingbalance || 0,
+    amountofadvanceoutstanding: detailsApiData?.outstandingbalance || 0,
     amountofconsolidatedadvance:consolidatedAdvance
   },
 ruleSpecificData: ruleSpecificData,   
@@ -421,7 +426,7 @@ return (
 
 <div className="container">
 
-<h2>GPF Advance Application</h2>
+{/*<h2>GPF Advance Application</h2>*/}
 
 <h3>Employee Details</h3>
 
@@ -576,6 +581,7 @@ readOnly
             className="dropdown-item"
             onClick={() => {
                setSelectedRuleId(rule.ruleId ?? null);
+               setRuleSpecificData({});
               setDropdownOpen(false);
               setHoveredRule(null);   // 🔥 ADD THIS
             }}
@@ -793,7 +799,7 @@ onChange={handleChange}
 <div className="info-card">
 <div className="info-label">Closing Balance</div>
 <div className="info-value">
-₹{detailsApiData?.outstandingbalance || "-"}
+₹{detailsApiData?.closingbalance || "-"}
 </div>
 </div>
 
@@ -845,6 +851,15 @@ onChange={handleChange}
 ₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
 </div>
 </div>
+
+{/*<div className="info-card">
+<div className="info-label">Advance Outstanding</div>
+<div className="info-value">
+₹{detailsApiData?.closingbalance || "-"}
+</div>
+</div>*/}
+
+
 
 </div>
 </div>

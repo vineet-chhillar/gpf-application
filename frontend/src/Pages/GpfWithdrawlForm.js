@@ -138,7 +138,9 @@ const handleEmpCodeBlur = async () => {
     const empCode = empCodeInput.trim().toUpperCase();
 
     const master = await getMasterByEmpCode(empCode);
-console.log(masterApiData);
+
+    console.log("MAPPED MASTER FROM API:", master);
+
     if (master) {
       setMasterApiData(master);
     } else {
@@ -157,7 +159,25 @@ console.log(masterApiData);
   }
 };
 
+useEffect(() => {
+  if (!detailsApiData) return;
 
+  setUserInput(prev => ({
+    ...prev,
+    concernedofficername:
+      detailsApiData.concernedofficername || prev.concernedofficername,
+
+    ispriorwithdrawlforsamepurpose:
+      detailsApiData.ispriorwithdrawlforsamepurpose ?? prev.ispriorwithdrawlforsamepurpose,
+
+    priorwithdrawlamount:
+      detailsApiData.priorwithdrawlamount || prev.priorwithdrawlamount,
+
+    priorwithdrawlfinyear:
+      detailsApiData.priorwithdrawlfinyear || prev.priorwithdrawlfinyear
+  }));
+
+}, [detailsApiData]);
 useEffect(() => {
 
   if (!masterApiData?.panno) {
@@ -362,14 +382,14 @@ const confirmSubmit = async () => {
 
     const payload = {
       master: {
-        ...masterApiData        
+         ...masterApiData,
+  empcode: masterApiData.empcode || masterApiData.empCode  
       },
       details: {
         ...detailsApiData,
 
        gpfaccountno: detailsApiData.gpfaccountno,
 panno: masterApiData.panno,
-concernedofficername: userInput.concernedofficername,
         creditfromdate: getCurrentFinancialYearStartDate(),
         credittodate: getTodayDate(),
         dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
@@ -381,18 +401,24 @@ concernedofficername: userInput.concernedofficername,
         purposeofwithdrawl: userInput.purposeofwithdrawl,
         withdrawlrule: Number(selectedRuleId),
 
-        ispriorwithdrawlforsamepurpose:
-          userInput.ispriorwithdrawlforsamepurpose,
+       concernedofficername:
+  detailsApiData?.concernedofficername || userInput.concernedofficername,
 
-        priorwithdrawlamount:
-          userInput.ispriorwithdrawlforsamepurpose
-            ? userInput.priorwithdrawlamount
-            : 0,
+ispriorwithdrawlforsamepurpose:
+  detailsApiData?.ispriorwithdrawlforsamepurpose ??
+  userInput.ispriorwithdrawlforsamepurpose,
 
-        priorwithdrawlfinyear:
-          userInput.ispriorwithdrawlforsamepurpose
-            ? userInput.priorwithdrawlfinyear
-            : "",
+priorwithdrawlamount:
+  detailsApiData?.priorwithdrawlamount ??
+  (userInput.ispriorwithdrawlforsamepurpose
+    ? userInput.priorwithdrawlamount
+    : 0),
+
+priorwithdrawlfinyear:
+  detailsApiData?.priorwithdrawlfinyear ??
+  (userInput.ispriorwithdrawlforsamepurpose
+    ? userInput.priorwithdrawlfinyear
+    : ""),
 
         dateofapplication: userInput.dateofapplication,
 
@@ -401,6 +427,7 @@ concernedofficername: userInput.concernedofficername,
       }
     };
 
+    console.log("FINAL PAYLOAD:", payload);
     await api.post("/gpf-withdrawl/save", payload);
 
     setShowVerification(false);
@@ -417,23 +444,27 @@ resetForm();
 
 };
 
-  const handleSubmit = () => {
+const handleSubmit = () => {
 
   if (!validateForm()) return;
 
-  if (!masterApiData || !detailsApiData) {
-    alert("Required data not loaded");
+  if (!masterApiData || !masterApiData.empcode) {
+    alert("Employee data not loaded properly");
+    return;
+  }
+
+  if (!detailsApiData) {
+    alert("GPF details not loaded");
     return;
   }
 
   setShowVerification(true);
-
 };
 
   /* ================= JSX ================= */
   return (
     <div className="container">
-      <h2>GPF Withdrawal Application</h2>
+      {/*<h2>GPF Withdrawal Application</h2>*/}
 
       {/* ================= EMPLOYEE DETAILS ================= */}
       <h3>Employee Details</h3>
@@ -642,13 +673,14 @@ resetForm();
     Name of accounts officer maintaining the PF account <span className="required">*</span>
   </label>
 
-  <input
-    className="form-input"
-    name="concernedofficername"
-    value={userInput.concernedofficername || ""}
-    onChange={handleUserChange}
-    placeholder="Enter officer name"
-  />
+ <input
+  className="form-input"
+  name="concernedofficername"
+  value={userInput.concernedofficername || ""}
+  onChange={handleUserChange}
+  placeholder="Enter officer name"
+  readOnly={!!detailsApiData?.concernedofficername}
+/>
 </div>
   
     
@@ -663,11 +695,12 @@ resetForm();
 
   <label className="prior-checkbox">
     <input
-      type="checkbox"
-      name="ispriorwithdrawlforsamepurpose"
-      checked={userInput.ispriorwithdrawlforsamepurpose}
-      onChange={handleUserChange}
-    />
+  type="checkbox"
+  name="ispriorwithdrawlforsamepurpose"
+  checked={userInput.ispriorwithdrawlforsamepurpose}
+  onChange={handleUserChange}
+  disabled={detailsApiData?.ispriorwithdrawlforsamepurpose !== undefined}
+/>
     Whether any withdrawl was taken for the same purpose earlier.
     If so, indicate the amount and the year.
   </label>
@@ -675,23 +708,29 @@ resetForm();
   <div className="prior-field">
     <label>Prior Amount</label>
     <input
-      className="form-input"
-      name="priorwithdrawlamount"
-      disabled={!userInput.ispriorwithdrawlforsamepurpose}
-      value={userInput.priorwithdrawlamount}
-      onChange={handleUserChange}
-    />
+  className="form-input"
+  name="priorwithdrawlamount"
+  disabled={
+    !userInput.ispriorwithdrawlforsamepurpose ||
+    detailsApiData?.priorwithdrawlamount
+  }
+  value={userInput.priorwithdrawlamount}
+  onChange={handleUserChange}
+/>
   </div>
 
   <div className="prior-field">
     <label>Financial Year</label>
     <input
-      className="form-input"
-      name="priorwithdrawlfinyear"
-      disabled={!userInput.ispriorwithdrawlforsamepurpose}
-      value={userInput.priorwithdrawlfinyear}
-      onChange={handleUserChange}
-    />
+  className="form-input"
+  name="priorwithdrawlfinyear"
+  disabled={
+    !userInput.ispriorwithdrawlforsamepurpose ||
+    detailsApiData?.priorwithdrawlfinyear
+  }
+  value={userInput.priorwithdrawlfinyear}
+  onChange={handleUserChange}
+/>
   </div>
 
 </div>

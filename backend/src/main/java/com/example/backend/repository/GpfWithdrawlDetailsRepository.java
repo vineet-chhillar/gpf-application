@@ -21,4 +21,5 @@ findFirstByCurrentOwnerRoleNotOrderByCurrentOwnerRoleAsc(Long role);
 
 List<GpfWithdrawlDetails> findByCurrentOwnerRoleNot(Long roleId);
 Optional<GpfWithdrawlDetails> findByMaster_Id(Long id);
+//GpfWithdrawlDetails findTopByMaster_PannoOrderByIdDesc(String panno);
 }

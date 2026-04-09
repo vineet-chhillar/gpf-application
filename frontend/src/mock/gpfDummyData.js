@@ -120,7 +120,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 100000,
     netbalance: 650000,
-    amountofadvanceoutstanding: 50000
+    amountofadvanceoutstanding: 50000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "AIQPA7687M",
@@ -131,7 +135,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 100000,
     netbalance: 650000,
-    amountofadvanceoutstanding: 50000
+    amountofadvanceoutstanding: 50000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317N",
@@ -142,7 +150,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 150000,
     totalwithdrawlamount: 120000,
     netbalance: 670000,
-    amountofadvanceoutstanding: 40000
+    amountofadvanceoutstanding: 40000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317O",
@@ -153,7 +165,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 150000,
     totalwithdrawlamount: 120000,
     netbalance: 670000,
-    amountofadvanceoutstanding: 25000
+    amountofadvanceoutstanding: 25000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317P",
@@ -164,7 +180,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 120000,
     netbalance: 830000,
-    amountofadvanceoutstanding: 60000
+    amountofadvanceoutstanding: 60000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317Q",
@@ -175,7 +195,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 120000,
     netbalance: 830000,
-    amountofadvanceoutstanding: 45000
+    amountofadvanceoutstanding: 45000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317R",
@@ -186,7 +210,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 120000,
     netbalance: 830000,
-    amountofadvanceoutstanding: 45000
+    amountofadvanceoutstanding: 45000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317S",
@@ -197,7 +225,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 120000,
     netbalance: 830000,
-    amountofadvanceoutstanding: 45000
+    amountofadvanceoutstanding: 45000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   },
   {
     panno: "BFUPK3317T",
@@ -208,7 +240,11 @@ export const GPF_DETAILS = [
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 120000,
     netbalance: 830000,
-    amountofadvanceoutstanding: 45000
+    amountofadvanceoutstanding: 45000,
+    nameoftheofficermaintainingthePFAccount: "PAO",
+    ispriorwithdrawalforsamepurpose: "yes",
+    priorwithdrawalamount: 6666,
+    priorwithdrawalfinyear: "2023-2024"
   }
   
 ];

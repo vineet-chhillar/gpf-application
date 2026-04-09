@@ -40,6 +40,16 @@ public class GpfWithdrawlController {
 
 
     }
+@GetMapping("/details/{pan}")
+public ResponseEntity<?> getDetails(@PathVariable String pan) {
+    try {
+        return ResponseEntity.ok(gpfWithdrawlService.getDetailsByPan(pan));
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}
+
 @GetMapping("/master/{empcode}")
 public ResponseEntity<?> getMasterFromNic(@PathVariable String empcode) {
 
@@ -104,6 +114,15 @@ public ResponseEntity<?> getAllStatuses() {
     @PostMapping("/save")
     public ResponseEntity<?> save(@Valid @RequestBody GpfWithdrawlRequestDTO dto) {
         try {
+
+            System.out.println("FULL DTO: " + dto);
+    System.out.println("MASTER: " + dto.getMaster());
+
+    if (dto.getMaster() != null) {
+        System.out.println("EMPCODE IN CONTROLLER: " + dto.getMaster().getEmpcode());
+    }
+
+    
             gpfWithdrawlService.saveWithdrawl(dto);
             return ResponseEntity.ok("GPF Withdrawl Application Saved Successfully");
         } catch (Exception e) {

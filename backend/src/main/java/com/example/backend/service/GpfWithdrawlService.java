@@ -1,5 +1,8 @@
 package com.example.backend.service;
 import java.util.List;
+import java.util.Map;
+
+import org.jspecify.annotations.Nullable;
 
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
@@ -29,4 +32,7 @@ public interface GpfWithdrawlService {
 
     // 🔥 ADD THIS
     void updateWithdrawal(Long id, GpfWithdrawlRequestDTO dto);
+
+    
+    Map<String, Object> getDetailsByPan(String pan);
 }
