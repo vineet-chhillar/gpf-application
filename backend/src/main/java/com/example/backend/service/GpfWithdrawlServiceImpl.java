@@ -88,6 +88,7 @@ public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
     GpfWithdrawlMaster master = dto.getMaster();
     GpfWithdrawlDetails details = dto.getDetails();
 
+    System.out.println("Prior Withdrawal Financial Year: " + details.getPriorwithdrawlfinyear());
     System.out.println("FULL DTO: " + dto);
 System.out.println("MASTER OBJECT: " + dto.getMaster());
 System.out.println("EMPCODE RAW: " + (dto.getMaster() != null ? dto.getMaster().getEmpcode() : "MASTER NULL"));
@@ -96,15 +97,19 @@ System.out.println("EMPCODE RAW: " + (dto.getMaster() != null ? dto.getMaster().
     System.out.println("Current Role: " + details.getCurrentOwnerRole());
 
     String empcode = master.getEmpcode();
-    
+    System.out.println("emp code: " + empcode);
     if (empcode == null || empcode.isBlank()) {
         throw new IllegalArgumentException("Empcode is mandatory");
     }
 
-    if (masterRepo.findByEmpcode(empcode).isPresent()) {
-        throw new IllegalStateException(
-                "Withdrawal application already exists for this employee");
-    }
+    List<GpfWithdrawlDetails> activeApps =
+    detailsRepo.findByMaster_EmpcodeAndCurrentOwnerRoleNot(empcode, 0L);
+
+if (!activeApps.isEmpty()) {
+    throw new IllegalStateException(
+        "An application is already under process for this employee"
+    );
+}
 
     /* ================= BASIC VALIDATION ================= */
 
@@ -148,35 +153,7 @@ System.out.println("EMPCODE RAW: " + (dto.getMaster() != null ? dto.getMaster().
 
     /* ================= RESUME / NORMAL FLOW ================= */
 
-    {/*if (details.getIsReturned() != null && details.getIsReturned()) {
-
-        System.out.println("🔥 RESUME FLOW (SAVE)");
-
-        Integer resumeStep = details.getReturnFromStep();
-
-        if (resumeStep == null) {
-            throw new IllegalStateException("Return step missing");
-        }
-
-        // 🔥 MOVE FORWARD (NOT SAME STEP)
-        WorkflowTransition next =
-                workflowTransitionRepo
-                        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
-                                workflowId,
-                                resumeStep - 1
-                        )
-                        .orElseThrow(() ->
-                                new IllegalStateException("Next workflow step missing"));
-
-        details.setCurrentOwnerRole(next.getToRole());
-        details.setCurrentStep(next.getStepOrder());
-
-        // ✅ reset flags
-        details.setIsReturned(false);
-        details.setReturnFromStep(null);
-
-    } else {*/}
-
+    
         // ✅ NORMAL FIRST SUBMIT
 
         details.setCurrentOwnerRole(firstTransition.getToRole());
@@ -241,10 +218,19 @@ public GpfWithdrawlRequestDTO getByEmpcode(String empcode) {
 
     GpfWithdrawlRequestDTO dto = new GpfWithdrawlRequestDTO();
 
-    masterRepo.findByEmpcode(empcode)
-            .ifPresent(dto::setMaster);
+    // ✅ Step 1: get latest master
+    List<GpfWithdrawlMaster> masters =
+            masterRepo.findByEmpcodeOrderByIdDesc(empcode);
 
-    detailsRepo.findByMaster_Empcode(empcode)
+    if (masters.isEmpty()) {
+        return dto; // or throw exception if required
+    }
+
+    GpfWithdrawlMaster master = masters.get(0);
+    dto.setMaster(master);
+
+    // ✅ Step 2: get details by master ID (NOT empcode)
+    detailsRepo.findByMaster_Id(master.getId())
             .ifPresent(dto::setDetails);
 
     return dto;
@@ -324,7 +310,28 @@ details.setCurrentStep(next.getStepOrder());
                         )
                         .orElseThrow(() ->
                                 new IllegalStateException("Workflow step not found"));
+// 🔥 CANCEL / REJECT FLOW (HIGHEST PRIORITY)
+if (action.getActionId() == 12L) {
 
+    System.out.println("🔥 CANCEL / REJECT IN PROCESS");
+
+    details.setCurrentOwnerRole(0L);  // ✅ completed
+    details.setCurrentStep(0);        // optional cleanup
+    details.setAction(action);
+
+    detailsRepo.save(details);
+
+    // ✅ TRAIL
+    ApplicationStatusTrail trail = new ApplicationStatusTrail();
+    trail.setApplicationId(details.getMaster().getId());
+    trail.setActionId(action.getActionId());
+    trail.setActionByRole(actingRole);
+    trail.setRemarks(request.getRemarks());
+
+    trailRepo.save(trail);
+
+    continue; // 🔥 VERY IMPORTANT
+}
         // 🔥 SEND BACK FLOW
         if (request.getSendToRole() != null) {
 
@@ -398,28 +405,29 @@ public List<GpfWithdrawlDetails> getInboxByRole(Long roleId) {
 @Override
 public GpfApplicationStatusResponseDTO getApplicationStatus(String empcode) {
 
-    GpfWithdrawlMaster master = masterRepo.findByEmpcode(empcode)
-            .orElseThrow(() -> new RuntimeException("Application not found"));
+    List<GpfWithdrawlMaster> masters =
+            masterRepo.findByEmpcodeOrderByIdDesc(empcode);
+
+    if (masters.isEmpty()) {
+        throw new RuntimeException("Application not found");
+    }
+
+    GpfWithdrawlMaster master = masters.get(0); // latest
 
     GpfWithdrawlDetails details = detailsRepo
-            .findByMaster_Empcode(empcode)
+            .findByMaster_Id(master.getId())
             .orElseThrow(() -> new RuntimeException("Details not found"));
 
-    /* ===== CONVERT RULE ID → RULE NAME ===== */
+    Long ruleId = details.getWithdrawlrule();
 
- Long ruleId = details.getWithdrawlrule();
+    if (ruleId != null) {
+        String ruleName = withdrawlRuleRepo
+                .findById(ruleId)
+                .map(r -> r.getWithdrawlReason())
+                .orElse("Rule");
 
-if (ruleId != null) {
-
-    String ruleName = withdrawlRuleRepo
-            .findById(ruleId)
-            .map((GpfWithdrawlRule r) -> r.getWithdrawlReason())
-            .orElse("Rule");
-
-    details.setWithdrawlruleText(ruleName);
-}
-
-    /* ===== TRAIL ===== */
+        details.setWithdrawlruleText(ruleName);
+    }
 
     List<ApplicationStatusTrail> trails =
             trailRepo.findByApplicationIdOrderByActionatAsc(master.getId());
@@ -431,7 +439,9 @@ if (ruleId != null) {
         dto.setRole(resolveRoleName(t.getActionByRole()));
         dto.setAction(resolveActionName(t.getActionId()));
         dto.setRemarks(t.getRemarks());
-        dto.setTime(t.getActionat().toString());
+        dto.setTime(
+            t.getActionat() != null ? t.getActionat().toString() : ""
+        );
 
         return dto;
 
@@ -498,9 +508,13 @@ public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
     List<GpfWithdrawlMaster> masters = masterRepo.findAll();
 
     return masters.stream().map(master -> {
+try {
+        
+                List<GpfWithdrawlDetails> detailsList =
+    detailsRepo.findByMaster_EmpcodeOrderByIdDesc(master.getEmpcode());
 
-        GpfWithdrawlDetails details =
-                detailsRepo.findByMaster_Empcode(master.getEmpcode()).orElse(null);
+GpfWithdrawlDetails details =
+    detailsList.isEmpty() ? null : detailsList.get(0); // latest
 
                 if (details != null && details.getWithdrawlrule() != null) {
 
@@ -519,10 +533,18 @@ public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
                     ApplicationTrailDTO dto = new ApplicationTrailDTO();
 
-                    dto.setRole(resolveRoleName(t.getActionByRole()));
+                    dto.setRole(
+    t.getActionByRole() != null
+        ? resolveRoleName(t.getActionByRole())
+        : "-"
+);
                     dto.setAction(resolveActionName(t.getActionId()));
                     dto.setRemarks(t.getRemarks());
-                    dto.setTime(t.getActionat().toString());
+                    dto.setTime(
+    t.getActionat() != null 
+        ? t.getActionat().toString() 
+        : ""
+);
 
                     return dto;
 
@@ -545,8 +567,22 @@ String currentRoleName = "-";
 
 if (details != null && details.getCurrentOwnerRole() != null) {
 
+    // 🔥 CHECK LAST ACTION
+    Long lastActionId = null;
+
+    if (!trails.isEmpty()) {
+        ApplicationStatusTrail last = trails.get(trails.size() - 1);
+        lastActionId = last.getActionId();
+    }
+
     if (details.getCurrentOwnerRole() == 0) {
-        currentRoleName = "Completed";
+
+        if (lastActionId != null && lastActionId == 12L) {
+            currentRoleName = "Cancelled/Rejected";   // ✅ NEW
+        } else {
+            currentRoleName = "Completed";
+        }
+
     } else {
         currentRoleName = resolveRoleName(details.getCurrentOwnerRole());
     }
@@ -561,13 +597,20 @@ if (details != null && details.getCurrentOwnerRole() != null) {
         res.setLastRemarks(lastRemarks);
         res.setLastActionByRole(lastActionByRole);
         res.setCurrentOwnerRole(currentRoleName);
-        if (details != null) {
+        {/*if (details != null) {
             res.setCurrentOwnerRole(resolveRoleName(details.getCurrentOwnerRole()));
-        }
+        }*/}
 
         return res;
+} catch (Exception e) {
 
-    }).toList();
+        System.out.println("❌ Error for master ID: " + master.getId());
+        e.printStackTrace();
+
+        throw e; // rethrow so you still see 500
+    }
+
+}).toList();
 }
 @Override
 public Long getCurrentWorkflowRole() {

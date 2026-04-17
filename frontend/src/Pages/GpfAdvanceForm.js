@@ -401,12 +401,17 @@ ruleSpecificData: ruleSpecificData,
 
  resetForm();
 
- }catch(err){
+ }catch (err) {
+  console.error(err);
 
- console.error(err);
- alert(err.response?.data || "Save failed");
+  const message =
+    err.response?.data?.message ||   // ✅ if backend sends JSON
+    err.response?.data ||            // ✅ if plain string
+    err.message ||                   // fallback
+    "Save failed";
 
- }
+  alert(message);
+}
 
 };
 
@@ -435,7 +440,7 @@ return (
 <div className="form-row">
 
 <div className="form-group">
-<label className="form-label">Employee Code</label>
+<label className="form-label">Employee Code <span className="required">*</span></label>
 <input
   className="form-input"
   value={empCodeInput}

@@ -12,6 +12,7 @@ body {
   margin: 20px auto;
   padding: 25px;
   background: transparent;
+  overflow-x: hidden;
 }
 
 /* ===== HEADINGS ===== */
@@ -20,15 +21,16 @@ h2 {
   text-align: center;
   margin-bottom: 8px;
   color: #1e293b;
+  margin-bottom: 0px;
 }
 
 h3 {
-  margin-bottom: 10px;
+  margin-bottom: 0px;
   color: #334155;
 }
 
 hr {
-  margin: 12px 0;
+  margin: 2px 0;
   border: none;
   border-top: 1px dashed #cbd5e1;
 }
@@ -38,13 +40,13 @@ hr {
 .form-section {
   background: #ffffff;
   border: 1px solid #dbeafe;
-  border-left: 5px solid #8c95a8;
+  border-left: 5px solid #105499;
   padding: 18px;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 2px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   transition: all 0.2s ease;
-  
+  overflow-x: hidden;
 }
 
 .form-section:hover {
@@ -56,7 +58,7 @@ hr {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 150px 150px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));  /* 🔥 FIX */
   gap: 12px;
   align-items: end;
   margin-bottom: 5px;
@@ -78,8 +80,8 @@ hr {
 .form-label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
   margin-bottom: 4px;
+  color: #475569;
 }
 
 /* ===== INPUT ===== */
@@ -88,8 +90,12 @@ hr {
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+   border: 1px solid #cbd5e1;
+
+  background: #ffffff;          /* 🔥 white instead of dull */
+  font-size: 14px;
+  font-weight: 500;
+
   transition: all 0.2s ease;
    box-sizing: border-box; /* 🔥 prevents overflow */
   max-width: 100%;
@@ -127,7 +133,8 @@ textarea.form-input {
   align-items: center;
   gap: 1px;
   font-weight: 400;
-  width: 500px;
+  width: auto;
+  
 }
 
 /* ===== PRIOR BOX ===== */
@@ -205,35 +212,59 @@ button:hover {
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
   gap: 12px;
-}
+   width: 100%;
+  overflow: hidden;   /* prevents scroll */
+  }
 
 .info-card {
-  background: #ffffff;
+  background: #f8fafc;                 /* same as detail-item */
   border: 1px solid #e2e8f0;
-  border-left: 4px solid #e7e9ec;
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 6px;
+  padding: 8px 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  position: relative;
   transition: all 0.2s ease;
+  min-width: 0; 
+}
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+.info-card.total {
+  border-left: 4px solid #2563eb;
 }
 
-.info-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+.info-card.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.info-card.completed {
+  border-left: 4px solid #16a34a;
 }
 
 .info-label {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
 }
 
 .info-value {
-  font-size: 14px;
+  font-size: 15px;   /* slightly bigger than detail-value */
   font-weight: 600;
-  color: #1f2937;
+  color: #1e293b;
 }
-
+.info-label,
+.info-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;   /* 🔥 prevents expansion */
+}
 /* ===== MOBILE ===== */
 
 @media (max-width: 768px) {
@@ -369,17 +400,15 @@ h2::after {
 }
 /* SMALL */
 .form-group.sm {
-  max-width: 150px;
+  grid-column: span 1;
 }
 
-/* MEDIUM */
 .form-group.md {
-  max-width: 220px;
+  grid-column: span 2;
 }
 
-/* LARGE */
 .form-group.lg {
-  grid-column: span 2;   /* 🔥 takes 2 columns */
+  grid-column: span 3;
 }
 .form-row-auto {
   display: grid;
@@ -389,7 +418,7 @@ h2::after {
 }
 .form-row-compact {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
   flex-wrap: wrap;
   margin-top: 0px;
@@ -406,4 +435,9 @@ h2::after {
 .workflow-action-bar select option {
   color: #000;
   background-color: #fff;
+}
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }

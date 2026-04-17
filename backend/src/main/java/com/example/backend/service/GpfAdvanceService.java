@@ -138,11 +138,14 @@ System.out.println("===== SERVICE START =====");
             throw new IllegalArgumentException("Empcode is mandatory");
         }
 
-        if (masterRepo.findByEmpcode(empcode).isPresent()) {
-            throw new IllegalStateException(
-                    "Advance application already exists for this employee");
-        }
+        List<GpfAdvanceDetails> activeApps =
+    detailsRepo.findByMaster_EmpcodeAndCurrentOwnerRoleNot(empcode, 0L);
 
+if (!activeApps.isEmpty()) {
+    throw new IllegalStateException(
+        "An advance application is already under process for this employee"
+    );
+}
         if (details.getGpfaccountno() == null || details.getGpfaccountno().isBlank()) {
             throw new IllegalArgumentException("GPF Account No is mandatory");
         }
@@ -224,28 +227,8 @@ System.out.println("Action found: " + action.getActionDesc());
                                 new IllegalStateException("Workflow not configured properly"));
                                 System.out.println("Workflow ID: " + workflowId);
 System.out.println("Transition found: " + transition.getToRole());
-        // 🔥 RESUME AFTER RETURN
-{/*if (details.getIsReturned() != null && details.getIsReturned()) {
 
-    System.out.println("🔥 ADVANCE RESUME FLOW");
 
-    Integer resumeStep = details.getReturnFromStep();
-
-    WorkflowTransition resumeTransition =
-            workflowTransitionRepo
-                    .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
-                            workflowId,
-                            resumeStep
-                    )
-                    .orElseThrow(() ->
-                            new IllegalStateException("Invalid resume step"));
-
-    details.setCurrentOwnerRole(resumeTransition.getFromRole());
-    details.setCurrentStep(resumeStep);
-
-    details.setIsReturned(false); // reset
-
-} else {*/}
 
     // ✅ NORMAL FLOW
     details.setCurrentOwnerRole(transition.getToRole());
@@ -315,10 +298,14 @@ dto.setPendingWithRole(roleName);
 }
 public GpfApplicationStatusResponseDTO getApplicationStatus(String empcode) {
 
-    GpfAdvanceMaster master =
-            masterRepo.findByEmpcode(empcode)
-                    .orElseThrow(() ->
-                            new RuntimeException("Application not found"));
+   List<GpfAdvanceMaster> masters =
+        masterRepo.findByEmpcodeOrderByIdDesc(empcode);
+
+if (masters.isEmpty()) {
+    throw new RuntimeException("Application not found");
+}
+
+GpfAdvanceMaster master = masters.get(0); // ✅ latest
 
     GpfAdvanceDetails details =
             detailsRepo.findByMaster_Id(master.getId())
@@ -431,7 +418,8 @@ public List<ApplicationTrailDTO> getTrail(Long applicationId) {
 
                 System.out.println("🔥 ADVANCE RESUME FLOW");
 
-                
+            // 🔥 CANCEL / REJECT FLOW (HIGHEST PRIORITY AFTER RESUME)
+  
 
                 // ✅ RETURN TO SAME ROLE WHO SENT BACK
               Integer resumeStep = details.getReturnFromStep();
@@ -474,7 +462,34 @@ details.setActionId(action.getActionId());
 
                 continue; // 🔥 VERY IMPORTANT
             }
+if (action.getActionId() == 12L) {
 
+    System.out.println("🔥 ADVANCE CANCEL / REJECT");
+
+    details.setCurrentOwnerRole(0L);   // ✅ mark completed
+    details.setCurrentStep(0);         // optional cleanup
+    details.setActionId(action.getActionId());
+
+    // reset flags (important)
+    details.setIsReturned(false);
+    details.setReturnFromStep(null);
+
+    detailsRepo.save(details);
+
+    // ✅ TRAIL
+    AdvanceApplicationStatusTrail trail =
+            new AdvanceApplicationStatusTrail();
+
+    trail.setApplicationid(details.getMaster().getId());
+    trail.setActionId(action.getActionId());
+    trail.setActionByRole(actingRole);
+    trail.setRemarks(request.getRemarks());
+    trail.setActionat(LocalDateTime.now());
+
+    trailRepo.save(trail);
+
+    continue; // 🔥 VERY IMPORTANT
+} 
             WorkflowTransition transition =
                     workflowTransitionRepo
                             .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
@@ -591,18 +606,14 @@ if (details != null) {
 
     response.setCurrentOwnerRoleId(details.getCurrentOwnerRole());
 
-    if (details.getCurrentOwnerRole() != null && details.getCurrentOwnerRole() != 0) {
-        response.setCurrentOwnerRole(
-                resolveRoleName(details.getCurrentOwnerRole())
-        );
-    } else {
-        response.setCurrentOwnerRole("Completed");
-    }
+   
 }
         /* ===== TRAIL ===== */
 
         List<AdvanceApplicationStatusTrail> trails =
                 trailRepo.findByApplicationidOrderByActionatAsc(master.getId());
+
+
 
 if (!trails.isEmpty()) {
 
@@ -615,6 +626,33 @@ if (!trails.isEmpty()) {
 
     response.setLastRemarks(lastTrail.getRemarks());
 }
+String currentRoleName = "-";
+
+if (details != null && details.getCurrentOwnerRole() != null) {
+
+    Long lastActionId = null;
+
+    if (!trails.isEmpty()) {
+        AdvanceApplicationStatusTrail last =
+                trails.get(trails.size() - 1);
+        lastActionId = last.getActionId();
+    }
+
+    if (details.getCurrentOwnerRole() == 0) {
+
+        if (lastActionId != null && lastActionId == 12L) {
+            currentRoleName = "Cancelled/Rejected";   // 🔥 FIX
+        } else {
+            currentRoleName = "Completed";
+        }
+
+    } else {
+        currentRoleName =
+                resolveRoleName(details.getCurrentOwnerRole());
+    }
+}
+
+response.setCurrentOwnerRole(currentRoleName);
 
         List<ApplicationTrailDTO> trailDTOs = trails.stream().map(t -> {
 

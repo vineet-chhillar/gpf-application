@@ -59,71 +59,94 @@ loadData();
   };
 
   if (loading) {
-    return <div className="workflow-container">Loading...</div>;
+    return <div className="status-container">Loading...</div>;
   }
 
   //const { master, details, trail } = application;
 
   return (
-    <div className="workflow-container">
-<div className="type-selector">
+    <div className="status-container">
+<div className="top-bar">
 
-<label className={appType === "withdrawl" ? "active" : ""}>
-<input
-type="radio"
-value="withdrawl"
-checked={appType === "withdrawl"}
-onChange={() => setAppType("withdrawl")}
-/>
-<span>Withdrawal</span>
-</label>
+  <div className="type-selector">
+    <label className={appType === "withdrawl" ? "active" : ""}>
+      <input
+        type="radio"
+        value="withdrawl"
+        checked={appType === "withdrawl"}
+        onChange={() => setAppType("withdrawl")}
+      />
+      <span>Withdrawal</span>
+    </label>
 
-<label className={appType === "advance" ? "active" : ""}>
-<input
-type="radio"
-value="advance"
-checked={appType === "advance"}
-onChange={() => setAppType("advance")}
-/>
-<span>Advance</span>
-</label>
+    <label className={appType === "advance" ? "active" : ""}>
+      <input
+        type="radio"
+        value="advance"
+        checked={appType === "advance"}
+        onChange={() => setAppType("advance")}
+      />
+      <span>Advance</span>
+    </label>
+  </div>
+
+ <div className="dashboard-cards">
+
+  <div className="card">
+    <h3>Total Applications</h3>
+    <p>{applications.length}</p>
+  </div>
+
+  <div className="card">
+    <h3>Pending</h3>
+    <p>
+      {
+        applications.filter(
+          a =>
+            a.currentOwnerRole !== "Completed" &&
+            a.currentOwnerRole !== "Cancelled/Rejected"
+        ).length
+      }
+    </p>
+  </div>
+
+  <div className="card">
+    <h3>Completed</h3>
+    <p>
+      {
+        applications.filter(
+          a => a.currentOwnerRole === "Completed"
+        ).length
+      }
+    </p>
+  </div>
+
+  {/* 🔥 NEW CARD */}
+  <div className="card">
+    <h3>Cancelled / Rejected</h3>
+    <p>
+      {
+        applications.filter(
+          a => a.currentOwnerRole === "Cancelled/Rejected"
+        ).length
+      }
+    </p>
+  </div>
 
 </div>
-      <h2>
-{appType === "withdrawl"
-? "GPF Withdrawal Application Status"
-: "GPF Advance Application Status"}
-</h2>
-
-<div className="dashboard-cards">
-
-<div className="card">
-<h3>Total Applications</h3>
-<p>{applications.length}</p>
+ <div className="search-container">
+    <input
+      type="text"
+      className="search-input"
+      placeholder="Search..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+    />
+  </div>
 </div>
 
-<div className="card">
-<h3>Pending</h3>
-<p>{applications.filter(a => a.currentOwnerRole !== "Completed").length}</p>
-</div>
-
-<div className="card">
-<h3>Completed</h3>
-<p>{applications.filter(a => a.currentOwnerRole === "Completed").length}</p>
-</div>
-
-</div>
-<div className="search-container">
-  <input
-    type="text"
-    className="search-input"
-    placeholder="Search by name or employee code..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-  />
-</div>
-      <div className="workflow-table-wrapper">
-        <table className="workflow-table">
+      <div className="status-table-wrapper">
+        <table className="status-table">
 
          <thead>
 <tr>
@@ -152,7 +175,7 @@ return (
 <React.Fragment key={index}>
 
 <tr
-  className={`main-row ${expandedRow === index ? "selected-row" : ""}`}
+  className={`main-row ${expandedRow === index ? "status-selected-row" : ""}`}
   onClick={() => toggleRow(index)}
 >
   <td>{master.empcode}</td>
@@ -162,14 +185,28 @@ return (
   <td>{details.basicpay}</td>
   <td>{details.netbalance}</td>
 
-  <td>
-<span className={
-  app.currentOwnerRole === "Completed"
-    ? "status-complete"
-    : "status-pending"
-}>
-  {app.currentOwnerRole === "Completed" ? "Completed" : "Pending"}
-</span>
+<td>
+  {(() => {
+    const isRejected =
+      app.currentOwnerRole === "Cancelled/Rejected";
+
+    const isCompleted =
+      app.currentOwnerRole === "Completed";
+
+    return (
+      <span
+        className={
+          isRejected
+            ? "status-reject"
+            : isCompleted
+            ? "status-complete"
+            : "status-pending"
+        }
+      >
+        {app.currentOwnerRole}
+      </span>
+    );
+  })()}
 </td>
 
 <td><span className="pending-role">{app.currentOwnerRole}</span></td>
@@ -181,31 +218,31 @@ return (
 <tr className="expanded-row">
 <td colSpan="10">
 
-<div className="expanded-content">
+<div className="status-expanded-content">
 
 {/* LEFT PANEL */}
-<div className="left-panel">
+<div className="status-left-panel">
 
 <h4>Employee Information</h4>
 
 <div className="details-grid">
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Mobile</div>
 <div className="detail-value">{master.empmobileno}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Email</div>
 <div className="detail-value">{master.empemailid}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Date of Joining</div>
 <div className="detail-value">{master.dateofjoining}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Retirement</div>
 <div className="detail-value">{master.dateofsuperannuation}</div>
 </div>
@@ -218,37 +255,37 @@ return (
 
 <div className="details-grid">
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Basic Pay</div>
 <div className="detail-value">₹{details.basicpay}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Outstanding Balance Date</div>
 <div className="detail-value">{details.dateofoutstandingbalance}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Outstanding Balance</div>
 <div className="detail-value">₹{details.outstandingbalance}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Credit From</div>
 <div className="detail-value">{details.creditfromdate}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Credit To</div>
 <div className="detail-value">{details.credittodate}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Total Credit Amount</div>
 <div className="detail-value">₹{details.totalcreditamount}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Refund After Balance Date</div>
 <div className="detail-value">₹{details.refundafterdateofoutstandingbalance}</div>
 </div>
@@ -260,22 +297,22 @@ return (
 
 <div className="details-grid">
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Withdraw From</div>
 <div className="detail-value">{details.withdrawlfromdate}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Withdraw To</div>
 <div className="detail-value">{details.withdrawltodate}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Total Withdrawal Amount</div>
 <div className="detail-value">₹{details.totalwithdrawlamount}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item highlight">
 <div className="detail-label">Net Balance</div>
 <div className="detail-value">₹{details.netbalance}</div>
 </div>
@@ -292,27 +329,27 @@ return (
 
 <div className="details-grid">
 
-<div className="detail-item">
+<div className="status-detail-item highlight">
 <div className="detail-label">Requested Amount</div>
 <div className="detail-value">₹{details.amountofwithdrawlrequested}</div>
 </div>
 
-<div className="detail-item detail-wide">
+<div className="status-detail-item detail-wide">
 <div className="detail-label">Purpose</div>
 <div className="detail-value">{details.purposeofwithdrawl}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item highlight">
 <div className="detail-label">Withdrawal Rule</div>
 <div className="detail-value">{details.withdrawlruleText}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
   <span className="label">Concerned Officer</span>
   <span className="value">{details.concernedofficername}</span>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Application Date</div>
 <div className="detail-value">
 {details.dateofapplication
@@ -333,22 +370,22 @@ return (
 
 <div className="details-grid">
 
-<div className="detail-item">
+<div className="status-detail-item highlight">
 <div className="detail-label">Advance Requested</div>
 <div className="detail-value">₹{details.amountofadvancerequested}</div>
 </div>
 
-<div className="detail-item detail-wide">
+<div className="status-detail-item detail-wide">
 <div className="detail-label">Purpose</div>
 <div className="detail-value">{details.purposeofadvance}</div>
 </div>
 
-<div className="detail-item detail-wide">
+<div className="status-detail-item detail-wide">
   <div className="detail-label">Particulars</div>
   <div className="detail-value">{details.particulars}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item highlight">
 <div className="detail-label">Advance Rule</div>
 <div className="detail-value">{details.advanceruleText}</div>
 </div>
@@ -361,7 +398,7 @@ return (
     <div className="details-grid">
 
       {Object.entries(details.ruleSpecificDataJson).map(([key, value]) => (
-        <div className="detail-item" key={key}>
+        <div className="status-detail-item" key={key}>
           <div className="detail-label">
             {formatLabel(key)}
           </div>
@@ -376,7 +413,7 @@ return (
 )}
 
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Installments</div>
 <div className="detail-value">
 {details.noofmonthlyinstallmentsforpaymentofconsolidatedadvance}
@@ -399,19 +436,19 @@ return (
 
 <div className="details-grid">
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Prior Withdrawal For Same Purpose</div>
 <div className="detail-value">
 {details.ispriorwithdrawlforsamepurpose ? "Yes" : "No"}
 </div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Previous Withdrawal Amount</div>
 <div className="detail-value">₹{details.priorwithdrawlamount}</div>
 </div>
 
-<div className="detail-item">
+<div className="status-detail-item">
 <div className="detail-label">Previous Financial Year</div>
 <div className="detail-value">{details.priorwithdrawlfinyear}</div>
 </div>
@@ -425,7 +462,7 @@ return (
 </div>
 
 {/* RIGHT PANEL */}
-<div className="right-panel">
+<div className="status-right-panel">
 
 <h3>Application Progress</h3>
 

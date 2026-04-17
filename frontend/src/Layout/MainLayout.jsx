@@ -10,6 +10,7 @@ import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
 import GpfAdvanceForm from "../Pages/GpfAdvanceForm";
 import GpfRuleMaster from "../Pages/GpfRuleMaster";
 import GpfWorkflowPage from "../Pages/GpfWorkflowPage";
+import GpfWorkflowPageNew from "../Pages/GpfWorkflowPageNew";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
 
@@ -21,7 +22,8 @@ const MainLayout = () => {
     { menuId: 4, menuName: "App WorkFlow States" },
     { menuId: 5, menuName: "WithDrawl" },
     { menuId: 6, menuName: "Advance" },
-    { menuId: 7, menuName: "WorkFlow/Pending For Action" },
+    { menuId: 7, menuName: "Pending For Action" },
+    { menuId: 8, menuName: "Pending For Action New" },
     
     
   ];
@@ -33,7 +35,8 @@ const pageMap = {
   "App WorkFlow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
   "Advance": <GpfAdvanceForm />,  
-   "WorkFlow/Pending For Action": <GpfWorkflowPage />
+   "Pending For Action": <GpfWorkflowPage />,
+   "Pending For Action New": <GpfWorkflowPageNew />
 ,
   
 };
@@ -58,7 +61,7 @@ const pageMap = {
       />
 
       {/* RIGHT SIDE */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         
         {/* HEADER */}
         <Header title={activePage} />
@@ -69,7 +72,9 @@ const pageMap = {
     padding: "10px",
     background:"#f8fafc",
     height: "100%",
-    overflow: "auto"
+    overflowY: "auto",   
+    overflowX: "auto"  ,
+    width: "100%"  
   }}
 >
   {pageMap[activePage] || <h2>No page mapped</h2>}

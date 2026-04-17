@@ -77,7 +77,7 @@ setEditData(prev => ({
 console.error("Expand load error", err);
 }
 
-setExpandedRow(applicationId);
+setExpandedRow(prev => prev === applicationId ? null : applicationId);
 };
 const handleEditChange = (appId, field, value) => {
 
@@ -187,7 +187,9 @@ useEffect(() => {
   if (app) {
     toggleExpand(app.applicationId, app.empCode);
   }
-}, [selectedId, applications]); // 🔥 add applications
+}, [selectedId, applications]);
+
+// 🔥 add applications
 console.log("Applications:", applications);
 console.log("Looking for ID:", selectedId);
 useEffect(() => {
@@ -525,8 +527,12 @@ onChange={() => setAppType("advance")}
 <React.Fragment key={app.applicationId}>
 
 <tr
-className={`main-row ${expandedRow === app.applicationId ? "selected-row" : ""}`}
-onClick={() => toggleExpand(app.applicationId, app.empCode)}
+  className={`main-row ${expandedRow === app.applicationId ? "selected-row" : ""}`}
+  onClick={(e) => {
+    // prevent click from input/select inside row
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+    toggleExpand(app.applicationId, app.empCode);
+  }}
 >
 
 <td>
@@ -536,8 +542,9 @@ type="radio"
 name="applicationSelect"
 checked={selectedId === app.applicationId}
 onChange={(e) => {
-e.stopPropagation();
-handleSelection(app.applicationId)
+  e.stopPropagation();
+  handleSelection(app.applicationId);
+  toggleExpand(app.applicationId, app.empCode); // auto open
 }}
 />
 )}
@@ -581,17 +588,17 @@ handleSelection(app.applicationId)
   return (
 
 <tr className="expanded-row">
-<td colSpan="9">
+<td colSpan="100%">
 
-<div className="expanded-content">
+<div className="expanded-content" style={{ width: "100%" }}>
 
 {/* LEFT PANEL */}
 
-<div className="left-panel">
+<div className="left-panel" style={{ minWidth: 0 }}>
 
 <h4>Employee Details</h4>
 
-<div className="details-grid">
+<div className="details-grid" style={{ width: "100%" }}>
 
 <div className="detail-item">
 <span className="label">Employee Code</span>
@@ -638,7 +645,7 @@ handleSelection(app.applicationId)
 
 <h4>GPF Account Summary</h4>
 
-<div className="details-grid">
+<div className="details-grid" style={{ width: "100%" }}>
 
 <div className="detail-item">
 <span className="label">GPF Account No</span>
@@ -687,7 +694,7 @@ handleSelection(app.applicationId)
 
 <h4>Balance Calculation</h4>
 
-<div className="details-grid">
+<div className="details-grid" style={{ width: "100%" }}>
 
 <div className="detail-item">
 <span className="label">Withdraw From</span>
@@ -720,7 +727,7 @@ handleSelection(app.applicationId)
 
 <h4>Withdrawal Request</h4>
 
-<div className="details-grid">
+<div className="details-grid" style={{ width: "100%" }}>
 
 <div className="detail-item">
 <span className="label">Requested Amount</span>
@@ -809,7 +816,7 @@ handleSelection(app.applicationId)
 
 <h4>Previous Withdrawal Details</h4>
 
-<div className="details-grid">
+<div className="details-grid" style={{ width: "100%" }}>
 
 <div className="detail-item">
 <span className="label">Prior Withdrawal</span>
@@ -889,7 +896,7 @@ handleSelection(app.applicationId)
 
 <h4>Advance Request</h4>
 
-<div className="details-grid">
+<div className="details-grid" style={{ width: "100%" }}>
 
 <div className="detail-item">
 <span className="label">Advance Requested</span>
@@ -970,7 +977,7 @@ handleSelection(app.applicationId)
 {/* ================= RULE SPECIFIC DETAILS ================= */}
 
 
-
+<div style={{ width: "100%", overflowX: "auto" }}>
 <RuleDetailsSection
   appId={app.applicationId}
   ruleId={
@@ -986,7 +993,7 @@ handleSelection(app.applicationId)
   editData={editData}
   handleEditChange={handleRuleFieldChange}   // 🔥 IMPORTANT (use fixed handler)
 />
-
+</div>
 <div className="detail-grid">
 <div className="detail-item">
 <span className="label">Installments</span>
@@ -1034,7 +1041,7 @@ handleSelection(app.applicationId)
 
 {/* RIGHT PANEL */}
 
-<div className="right-panel">
+<div className="right-panel" style={{ minWidth: "260px" }}>
 
 <h4>Status Trail</h4>
 

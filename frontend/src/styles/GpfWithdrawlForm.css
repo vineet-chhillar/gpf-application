@@ -47,7 +47,7 @@ hr {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(200, 200, 255, 0.4);
-  border-left: 5px solid #2563eb;
+  border-left: 5px solid #105499;
   padding: 16px 18px;
   border-radius: 12px;
   margin-bottom: 18px;
@@ -225,7 +225,7 @@ button:hover {
 
 .info-card {
   background: linear-gradient(135deg, #f8fafc, #eef2ff);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #105499;
   border-radius: 10px;
   padding: 12px;
   transition: all 0.25s ease;
@@ -239,6 +239,7 @@ button:hover {
 .info-label {
   font-size: 12px;
   color: #6b7280;
+  font-weight: 600;
 }
 
 .info-value {

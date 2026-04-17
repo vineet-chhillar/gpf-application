@@ -7,8 +7,7 @@ import java.util.List;
 public interface GpfWithdrawlDetailsRepository
         extends JpaRepository<GpfWithdrawlDetails, Long> {
 
-    Optional<GpfWithdrawlDetails> 
-findByMaster_Empcode(String empcode);
+    List<GpfWithdrawlDetails> findByMaster_EmpcodeOrderByIdDesc(String empcode);
 
 
     List<GpfWithdrawlDetails>
@@ -22,4 +21,9 @@ findFirstByCurrentOwnerRoleNotOrderByCurrentOwnerRoleAsc(Long role);
 List<GpfWithdrawlDetails> findByCurrentOwnerRoleNot(Long roleId);
 Optional<GpfWithdrawlDetails> findByMaster_Id(Long id);
 //GpfWithdrawlDetails findTopByMaster_PannoOrderByIdDesc(String panno);
+
+List<GpfWithdrawlDetails> findByMaster_EmpcodeAndCurrentOwnerRoleNot(
+    String empcode, Long roleId
+);
+
 }

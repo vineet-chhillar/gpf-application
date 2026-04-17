@@ -30,7 +30,7 @@
 
 /* Highlight system name */
 .header-title span {
-  color: #616085;
+  color: #105499;
   font-weight: 700;
 }
 
@@ -140,13 +140,13 @@
 
 .user-label {
   font-size: 11px;
-  color: #64748b;
+  color: #105499;
 }
 
 .user-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #105499;
 }
 
 /* ===== USER INFO ===== */
@@ -165,7 +165,7 @@
 
   font-size: 13px;
   font-weight: 500;
-  color: #475569;
+  color: #105499;
 
   transition: all 0.2s ease;
 }
@@ -181,7 +181,7 @@
 
 .user-name {
   font-weight: 600;
-  color: #1e293b;
+  color: #105499;
 }
 
 /* ===== BUTTON ===== */
@@ -219,7 +219,7 @@
 /* ===== ICON ===== */
 
 .back-icon {
-  color: #2563eb;
+  color: #105499;
 }
 
 .back-link {
@@ -230,7 +230,7 @@
   font-size: 13px;
   font-weight: 500;
 
-  color: #475569;
+  color: #105499;
   cursor: pointer;
 
   padding: 4px 6px;

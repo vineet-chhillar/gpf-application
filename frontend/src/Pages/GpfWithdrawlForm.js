@@ -472,7 +472,7 @@ const handleSubmit = () => {
 
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Employee Code</label>
+            <label className="form-label">Employee Code <span className="required">*</span></label>
             {/*<input className="form-input" value={masterApiData?.empcode || ""} readOnly />*/}
  <input
   className="form-input"

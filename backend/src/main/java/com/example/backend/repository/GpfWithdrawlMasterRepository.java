@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface GpfWithdrawlMasterRepository
         extends JpaRepository<GpfWithdrawlMaster, Long> {
 
-    Optional<GpfWithdrawlMaster> findByEmpcode(String empcode);
+  List<GpfWithdrawlMaster> findByEmpcodeOrderByIdDesc(String empcode);
 
  
 

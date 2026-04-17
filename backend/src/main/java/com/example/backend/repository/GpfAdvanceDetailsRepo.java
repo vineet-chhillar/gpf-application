@@ -13,8 +13,13 @@ import com.example.backend.entity.GpfAdvanceDetails;
 public interface GpfAdvanceDetailsRepo
         extends JpaRepository<GpfAdvanceDetails, Long> {
 
+                
 
     Optional<GpfAdvanceDetails> findByMaster_Id(Long id);
 
 List<GpfAdvanceDetails> findByCurrentOwnerRoleNot(Long role);
+List<GpfAdvanceDetails> findByMaster_EmpcodeAndCurrentOwnerRoleNot(
+    String empcode, Long roleId
+);
 }
+
