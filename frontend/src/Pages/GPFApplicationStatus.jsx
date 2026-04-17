@@ -10,7 +10,7 @@ function WithdrawlApplicationStatus() {
 const [search, setSearch] = useState("");
 const [appType, setAppType] = useState("withdrawl");
 
-
+const [roleFilter, setRoleFilter] = useState("");
   {/*const [application, setApplication] = useState({
     master: {},
     details: {},
@@ -23,8 +23,12 @@ const formatLabel = (key) => {
 };
 const [applications, setApplications] = useState([]);
 const filteredApps = applications.filter(a =>
-  a.master?.empname?.toLowerCase().includes(search.toLowerCase()) ||
-  a.master?.empcode?.toLowerCase().includes(search.toLowerCase())
+  (!roleFilter || a.currentOwnerRole === roleFilter) &&
+
+  (
+    a.master?.empname?.toLowerCase().includes(search.toLowerCase()) ||
+    a.master?.empcode?.toLowerCase().includes(search.toLowerCase())
+  )
 );
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +65,28 @@ loadData();
   if (loading) {
     return <div className="status-container">Loading...</div>;
   }
+const pendingApps = applications.filter(
+  a =>
+    a.currentOwnerRole !== "Completed" &&
+    a.currentOwnerRole !== "Cancelled/Rejected"
+);
 
+const pendingByRole = applications
+  .filter(
+    a =>
+      a.currentOwnerRole !== "Completed" &&
+      a.currentOwnerRole !== "Cancelled/Rejected"
+  )
+  .reduce((acc, app) => {
+    const role = app.currentOwnerRole || "Unknown";
+
+    if (!acc[role]) {
+      acc[role] = 0;
+    }
+
+    acc[role]++;
+    return acc;
+  }, {});
   //const { master, details, trail } = application;
 
   return (
@@ -90,6 +115,7 @@ loadData();
     </label>
   </div>
 
+
  <div className="dashboard-cards">
 
   <div className="card">
@@ -109,6 +135,22 @@ loadData();
       }
     </p>
   </div>
+  {/*<div className="card pending-role-card">
+  <h3>Pending by Role</h3>
+
+  {Object.keys(pendingByRole).length === 0 ? (
+    <p>No pending</p>
+  ) : (
+    <div className="role-list">
+      {Object.entries(pendingByRole).map(([role, count]) => (
+        <div key={role} className="role-item">
+          <span>{role}</span>
+          <b>{count}</b>
+        </div>
+      ))}
+    </div>
+  )}
+</div>*/}
 
   <div className="card">
     <h3>Completed</h3>
@@ -134,6 +176,8 @@ loadData();
   </div>
 
 </div>
+
+
  <div className="search-container">
     <input
       type="text"
@@ -143,8 +187,45 @@ loadData();
       onChange={(e) => setSearch(e.target.value)}
     />
   </div>
+  
+</div>
+<div className="pending-role-row">
+  
+  <div className="pending-role-header">
+
+  <span className="pending-role-title">
+    Pending by Role →
+  </span>
+
+  {roleFilter && (
+    <span
+      className="clear-filter"
+      onClick={() => setRoleFilter("")}
+    >
+      ✖
+    </span>
+  )}
+
 </div>
 
+  <div className="pending-role-inline">
+    {Object.entries(pendingByRole).map(([role, count], index) => (
+      <span
+  key={role}
+  className="role-inline-item"
+  onClick={() => setRoleFilter(role)}
+>
+        <span className="role-name">{role}:</span>
+        <span className="role-count">{count}</span>
+
+        {index !== Object.entries(pendingByRole).length - 1 && (
+          <span className="role-separator">|</span>
+        )}
+      </span>
+    ))}
+  </div>
+
+</div>
       <div className="status-table-wrapper">
         <table className="status-table">
 

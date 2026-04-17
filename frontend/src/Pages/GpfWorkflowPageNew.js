@@ -159,7 +159,8 @@ useEffect(() => {
       const next = transitions.find(
         t => t.stepOrder === details.currentStep + 1
       );
-
+  console.log("👉 Expected Next Step:", Number(details.currentStep) + 1);
+    console.log("👉 Found Next:", next);
       if (next) {
         setNextRoleName(next.toRole);
       } else {
@@ -175,7 +176,7 @@ useEffect(() => {
 
 }, [selectedId, detailsMap, applications]);
 
-{/*useEffect(() => {
+useEffect(() => {
   if (!selectedId) return;
 
   const app = applications.find(
@@ -185,7 +186,7 @@ useEffect(() => {
   if (app) {
     toggleExpand(app.applicationId, app.empCode);
   }
-}, [selectedId, applications]);*/}
+}, [selectedId, applications]);
 
 // 🔥 add applications
 console.log("Applications:", applications);
@@ -362,18 +363,21 @@ alert(err.response?.data || "Processing failed");
 }
 
 };
+useEffect(() => {
+  setSelectedSendTo("");
+  setSendToOptions([]);
+}, [selectedId]);
 const getButtonText = () => {
 
-  // 🔥 NEW: Cancel / Reject case
   if (String(selectedAction) === "12") {
     return "Cancel (Reject)";
   }
 
-  // 🔁 Return mode
   const isReturnMode =
     selectedDetails?.isReturned && selectedDetails?.returnFromStep != null;
 
-  if (selectedSendTo || isReturnMode) {
+  // 🔁 RETURN MODE → use previous roles
+  if (isReturnMode && sendToOptions.length > 0) {
     const role = sendToOptions.find(
       r => String(r.roleId) === String(selectedSendTo)
     );
@@ -381,12 +385,12 @@ const getButtonText = () => {
     return `Send To ${role?.roleName || ""}`;
   }
 
-  // ✅ Normal flow
+  // ✅ NORMAL FLOW → use NEXT ROLE
   if (nextRoleName) {
     return `Send To ${nextRoleName}`;
   }
 
-  return "Process Selected";
+  return "Loading...";
 };
 
 const selectedApp = applications.find(
@@ -965,6 +969,10 @@ return (
   <button
     className="process-btn"
     onClick={handleProcess}
+   disabled={
+  !selectedId ||
+  (!nextRoleName && sendToOptions.length === 0)
+}
   >
     {getButtonText()}
   </button>

@@ -124,7 +124,7 @@ const AdvanceRuleMaster = () => {
 
       <hr />
 
-      <table className="rule-table">
+      <table className="status-table">
 
         <thead>
           <tr>

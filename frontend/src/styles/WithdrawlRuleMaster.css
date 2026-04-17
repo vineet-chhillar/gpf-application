@@ -83,7 +83,7 @@
   letter-spacing: 0.3px;
   text-align: center;
 
-  background: linear-gradient(135deg, #536caf, #3f51b5);
+  background: linear-gradient(135deg, #105499, #105499);
   color: #ffffff;
 
   border: none;
@@ -131,7 +131,7 @@
 }
 
 .rule-table th {
-  background-color: #5c6c97;
+  background-color: #105499;
   font-weight: 600;
   color: #f6f8f6;
 }

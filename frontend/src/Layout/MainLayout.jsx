@@ -9,7 +9,6 @@ import AppFlowState from "../Pages/AppFlowState";
 import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
 import GpfAdvanceForm from "../Pages/GpfAdvanceForm";
 import GpfRuleMaster from "../Pages/GpfRuleMaster";
-import GpfWorkflowPage from "../Pages/GpfWorkflowPage";
 import GpfWorkflowPageNew from "../Pages/GpfWorkflowPageNew";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
@@ -22,8 +21,7 @@ const MainLayout = () => {
     { menuId: 4, menuName: "App WorkFlow States" },
     { menuId: 5, menuName: "WithDrawl" },
     { menuId: 6, menuName: "Advance" },
-    { menuId: 7, menuName: "Pending For Action" },
-    { menuId: 8, menuName: "Pending For Action New" },
+    { menuId: 7, menuName: "Pending For Action New" },
     
     
   ];
@@ -35,7 +33,6 @@ const pageMap = {
   "App WorkFlow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
   "Advance": <GpfAdvanceForm />,  
-   "Pending For Action": <GpfWorkflowPage />,
    "Pending For Action New": <GpfWorkflowPageNew />
 ,
   

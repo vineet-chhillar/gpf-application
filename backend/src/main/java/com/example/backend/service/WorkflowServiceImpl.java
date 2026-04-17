@@ -42,6 +42,16 @@ public class WorkflowServiceImpl implements WorkflowService {
             dto.setTransitionId(t.getTransitionId());
             dto.setStepOrder(t.getStepOrder());
 
+System.out.println("WorkflowId: " + workflowId);
+System.out.println("Transitions count: " + transitions.size());
+for (WorkflowTransition tt : transitions) {
+    System.out.println(
+        "Step: " + tt.getStepOrder() +
+        " From: " + tt.getFromRole() +
+        " To: " + tt.getToRole() +
+        " Final: " + tt.getIsFinal()
+    );
+}
             dto.setFromRole(
                     roleRepo.findById(t.getFromRole())
                             .map(r -> r.getRoleName())

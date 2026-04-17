@@ -427,3 +427,104 @@ pointer-events: none;
     justify-self: end;
   }
 }
+/* ROW CONTAINER */
+.pending-role-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 4px;
+}
+
+/* TITLE */
+.pending-role-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #444;
+  flex-shrink: 0;
+}
+
+/* INLINE STRIP */
+.pending-role-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* EACH ITEM */
+.role-inline-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/* ROLE TEXT */
+.role-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* COUNT BADGE */
+.role-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #971971;
+  margin-left: 4px;
+  padding-bottom: 1px;
+  }
+
+/* SEPARATOR */
+.role-separator {
+  margin: 0 8px;
+  color: #ccc;
+}
+
+/* 🔥 HOVER EFFECT */
+.role-inline-item:hover {
+  background: #f1f5ff;
+  transform: translateY(-1px);
+}
+.clear-filter {
+  cursor: pointer;
+  margin-left: 8px;
+  color: red;
+  font-weight: bold;
+}
+.pending-role-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* clear button */
+.clear-filter {
+  cursor: pointer;
+  color: #999;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.clear-filter:hover {
+  color: red;
+}
+/* ACTIVE */
+.active-role {
+  background: #007bff;
+  color: white;
+}
+
+.active-role .role-name {
+  color: white;
+}
+
+.active-role .role-count {
+  background: white;
+  color: #007bff;
+}
