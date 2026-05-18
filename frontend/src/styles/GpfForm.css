@@ -40,13 +40,13 @@ hr {
 .form-section {
   background: #ffffff;
   border: 1px solid #dbeafe;
-  border-left: 5px solid #105499;
+  border-left: 0px solid #105499;
   padding: 18px;
-  border-radius: 12px;
+  border-radius: 0px;
   margin-bottom: 2px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   transition: all 0.2s ease;
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 
 .form-section:hover {
@@ -218,52 +218,120 @@ button:hover {
   overflow: hidden;   /* prevents scroll */
   }
 
-.info-card {
-  background: #f8fafc;                 /* same as detail-item */
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 8px 12px;
+/* =========================
+   INFO CARD
+========================= */
 
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.info-card{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
 
-  position: relative;
-  transition: all 0.2s ease;
-  min-width: 0; 
-}
-.info-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-}
-.info-card.total {
-  border-left: 4px solid #2563eb;
-}
+  border:1px solid #dbe3ee;
 
-.info-card.pending {
-  border-left: 4px solid #f59e0b;
-}
+  border-radius:3px;
 
-.info-card.completed {
-  border-left: 4px solid #16a34a;
-}
+  padding:8px 10px;
 
-.info-label {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 600;
+  display:flex;
+  flex-direction:column;
+
+  gap:3px;
+
+  min-width:0;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.info-value {
-  font-size: 15px;   /* slightly bigger than detail-value */
-  font-weight: 600;
-  color: #1e293b;
+/* HOVER */
+
+.info-card:hover{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f1f5f9 100%
+    );
+
+  border-color:#cbd5e1;
+
+  box-shadow:
+    0 2px 6px rgba(15,23,42,0.05);
 }
-.info-label,
-.info-value {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;   /* 🔥 prevents expansion */
+
+/* OPTIONAL STATUS VARIANTS */
+
+.info-card.total{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fbff 100%
+    );
+}
+
+.info-card.pending{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fffaf0 100%
+    );
+}
+
+.info-card.completed{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f7fcf8 100%
+    );
+}
+
+/* =========================
+   LABEL
+========================= */
+
+.info-label{
+  font-size:13px;
+
+  font-weight:600;
+
+  color:#64748b;
+
+  letter-spacing:0.2px;
+
+  white-space:normal;
+
+  overflow:visible;
+
+  word-break:break-word;
+}
+
+/* =========================
+   VALUE
+========================= */
+
+.info-value{
+  font-size:15px;
+
+  font-weight:600;
+
+  color:#1e293b;
+
+  line-height:1.4;
+
+  white-space:normal;
+
+  overflow:visible;
+
+  word-break:break-word;
 }
 /* ===== MOBILE ===== */
 
@@ -336,8 +404,8 @@ h2::after {
   color: white;
 }
 .custom-dropdown {
-     width: 100%;  
-     
+     width: 95%;  
+   
 }
 
 .dropdown-selected {
@@ -384,7 +452,7 @@ h2::after {
   position: fixed;
   right: 20px;
   bottom: 105%;   /* 🔥 puts it just above dropdown */
-  width: 300px;
+  width: 500px;
   
   background: #fff;
   border: 1px solid #ccc;
@@ -440,4 +508,84 @@ h2::after {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+/* =========================
+   SECTION HEADER
+========================= */
+
+/* =========================
+   SECTION HEADER
+========================= */
+
+.section-header{
+  display:flex;
+  align-items:center;
+
+  gap:10px;
+
+  margin-bottom:12px;
+
+  padding:7px 10px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+
+  border:1px solid #e2e8f0;
+
+  border-radius:4px;
+}
+
+/* ICON */
+
+.section-header-icon{
+  width:30px;
+  height:30px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#eff6ff;
+
+  border:1px solid #dbeafe;
+
+  color:#2563eb;
+
+  border-radius:4px;
+
+  flex-shrink:0;
+}
+
+/* TEXT AREA */
+
+.section-header-text{
+  display:flex;
+  flex-direction:column;
+
+  line-height:1.1;
+}
+
+/* TITLE */
+
+.section-header-text h3{
+  margin:0;
+
+  font-size:15px;
+  font-weight:700;
+
+  color:#0f172a;
+}
+
+/* SUBTITLE */
+
+.section-header-text span{
+  margin-top:1px;
+
+  font-size:11px;
+
+  color:#64748b;
 }

@@ -433,7 +433,39 @@ return (
 
 {/*<h2>GPF Advance Application</h2>*/}
 
-<h3>Employee Details</h3>
+ <div className="section-header">
+
+  <div className="section-header-icon">
+
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 21a8 8 0 0 0-16 0"/>
+      <circle cx="12" cy="8" r="4"/>
+    </svg>
+
+  </div>
+
+  <div className="section-header-text">
+
+    <h3>
+      Employee Details
+    </h3>
+
+    <span>
+      Employee and service information
+    </span>
+
+  </div>
+
+</div>
 
 <div className="form-section">
 
@@ -552,14 +584,48 @@ readOnly
 
 <hr/>
 
-<h3>Advance Rule Details</h3>
+<div className="section-header">
+
+  <div className="section-header-icon">
+
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2"/>
+      <line x1="7" y1="8" x2="17" y2="8"/>
+      <line x1="7" y1="12" x2="17" y2="12"/>
+      <line x1="7" y1="16" x2="13" y2="16"/>
+    </svg>
+
+  </div>
+
+  <div className="section-header-text">
+
+    <h3>
+      Advance Rule Details
+    </h3>
+
+    <span>
+      Advance eligibility and rule configuration
+    </span>
+
+  </div>
+
+</div>
 
 <div className="form-section">
 
   {/* ===== RULE DROPDOWN ===== */}
   <div className="form-row-compact">
 
-    <div className="form-group ">
+    <div className="form-group">
   <label className="form-label">Advance Rule<span className="required">*</span></label>
 
   <div className="custom-dropdown" ref={dropdownRef}>
@@ -716,7 +782,40 @@ readOnly
 </div>
   </div>
 
-<h3>Advance Request</h3>
+<div className="section-header">
+
+  <div className="section-header-icon">
+
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 7v10"/>
+      <path d="M8 11h8"/>
+    </svg>
+
+  </div>
+
+  <div className="section-header-text">
+
+    <h3>
+      Advance Request
+    </h3>
+
+    <span>
+      GPF advance application details
+    </span>
+
+  </div>
+
+</div>
 
 <div className="form-section">
 
@@ -868,7 +967,35 @@ onChange={handleChange}
 
 </div>
 </div>
-<h3>Advance Liability</h3>
+<div className="section-header">
+
+  <div className="section-header-icon">
+
+    <span
+      style={{
+        fontSize: "18px",
+        fontWeight: "700",
+        lineHeight: 1
+      }}
+    >
+      ₹
+    </span>
+
+  </div>
+
+  <div className="section-header-text">
+
+    <h3>
+      Advance Liability
+    </h3>
+
+    <span>
+      Outstanding advance and repayment details
+    </span>
+
+  </div>
+
+</div>
 
 <div className="info-grid">
 

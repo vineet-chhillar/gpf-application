@@ -1,0 +1,258 @@
+/* ===== HEADER ===== */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 16px 24px;
+  min-height: 64px;
+
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
+  box-sizing: border-box;
+}
+
+/* ===== TITLE ===== */
+
+.header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Highlight system name */
+.header-title span {
+  color: #105499;
+  font-weight: 700;
+}
+
+
+.header-title .dynamic-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 600;
+  color: #1c0430;
+  white-space: nowrap;
+  cursor: default;
+}
+
+
+.header-title .dynamic-title::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 60%; /* 🔥 shorter line */
+  height: 2px;
+  background-color: #1c0430;
+  transform: translateX(-50%);
+}
+
+
+.header-title .dynamic-title:hover::after {
+  width: 100%;
+}
+
+/* 🔥 Slight zoom on hover (optional but nice) */
+.header-title .dynamic-title:hover {
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* ===== RIGHT SECTION ===== */
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* BACK BUTTON (clean, not bulky) */
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  background: transparent;
+  border: none;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+
+  cursor: pointer;
+  padding: 4px 6px;
+
+  transition: 0.2s;
+}
+
+.back-btn:hover {
+  color: #1d4ed8;
+  transform: translateX(-2px);
+}
+
+/* DIVIDER */
+.divider {
+  width: 1px;
+  height: 28px;
+  background: #e2e8f0;
+}
+
+/* USER BOX (THIS IS THE KEY CHANGE) */
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* AVATAR */
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* TEXT */
+.user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-label {
+  font-size: 11px;
+  color: #105499;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #105499;
+}
+
+/* ===== USER INFO ===== */
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+  background: transparent;
+  border: none;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #105499;
+
+  transition: all 0.2s ease;
+}
+
+.user-info:hover {
+  background: #f1f5f9;
+}
+
+.user-icon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #105499;
+}
+
+/* ===== BUTTON ===== */
+
+.env-badge-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  background: transparent;
+  color: #2563eb;
+
+  border: 1px solid transparent;
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition: all 0.2s ease;
+}
+
+.env-badge-btn:hover {
+  background: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.env-badge-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== ICON ===== */
+
+.back-icon {
+  color: #105499;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  color: #105499;
+  cursor: pointer;
+
+  padding: 4px 6px;
+  border-radius: 6px;
+
+  transition: all 0.2s ease;
+}
+
+/* Hover effect */
+.back-link:hover {
+  color: #2563eb;
+  background: #f1f5f9;
+}
+
+/* Icon */
+.back-link svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.2s ease;
+}
+
+/* Smooth arrow movement */
+.back-link:hover svg {
+  transform: translateX(-3px);
+}

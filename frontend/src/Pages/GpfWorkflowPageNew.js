@@ -19,6 +19,9 @@ const [editData, setEditData] = useState({});
 const [nextRoleName, setNextRoleName] = useState("");
 const [advanceRules, setAdvanceRules] = useState([]);
 const [withdrawlRules, setWithdrawlRules] = useState([]);
+const [showVerifyModal, setShowVerifyModal] = useState(false);
+const [verifyMessage, setVerifyMessage] = useState("");
+const [pendingUpdate, setPendingUpdate] = useState(null);
 
 useEffect(() => {
   api.get("/gpf/withdrawal-rules/active")
@@ -306,61 +309,130 @@ const formatLabel = (key) => {
     .replace(/^./, str => str.toUpperCase());
 };
 /* ================= PROCESS ================= */
+const processApplication = async () => {
 
+  try {
+
+    const url =
+      appType === "withdrawl"
+        ? "/gpf-withdrawl/process"
+        : "/gpf-advance/process";
+
+    await api.post(url, {
+      applicationIds: [selectedId],
+      actionId: selectedAction,
+      remarks,
+      sendToRole: selectedSendTo || null
+    });
+
+    setVerifyMessage({
+      title: "Processed Successfully",
+      subtitle: "The application has been processed successfully.",
+      type: "success"
+    });
+
+    setShowVerifyModal(true);
+
+    const reloadUrl =
+      appType === "withdrawl"
+        ? "/gpf-withdrawl/inbox"
+        : "/gpf-advance/inbox";
+
+    const res = await api.get(reloadUrl);
+
+    setApplications(res.data);
+
+    setTimeout(() => {
+      setSelectedId(null);
+    }, 0);
+
+    setSelectedAction("");
+    setRemarks("");
+
+    setSendToOptions([]);
+    setSelectedSendTo("");
+    setDetailsMap({});
+    setTrailMap({});
+
+  } catch (err) {
+
+    setVerifyMessage({
+      title: "Processing Failed",
+      subtitle:
+        err.response?.data ||
+        "Unable to process the application.",
+      type: "error"
+    });
+
+    setShowVerifyModal(true);
+  }
+};
 const handleProcess = async () => {
 
 if (!selectedId) {
-alert("Select at least one application");
-return;
+
+  setVerifyMessage({
+    title: "No Application Selected",
+    subtitle: "Please select an application before processing.",
+    type: "warning"
+  });
+
+  setShowVerifyModal(true);
+
+  return;
 }
 
 if (!selectedAction) {
-alert("Select action");
-return;
+
+  const requested =
+    appType === "withdrawl"
+      ? details?.amountofwithdrawlrequested
+      : details?.amountofadvancerequested;
+
+  const rule =
+    appType === "withdrawl"
+      ? details?.withdrawlruleText
+      : details?.advanceruleText;
+
+  setVerifyMessage({
+    netBalance: details?.netbalance,
+    requestedAmount: requested,
+    rule: rule
+  });
+
+  setShowVerifyModal(true);
+
+  return;
 }
 
-try {
 
-const url =
-appType === "withdrawl"
-? "/gpf-withdrawl/process"
-: "/gpf-advance/process";
+  const requested =
+    appType === "withdrawl"
+      ? details?.amountofwithdrawlrequested
+      : details?.amountofadvancerequested;
 
-await api.post(url, {
-applicationIds: [selectedId],
-actionId: selectedAction,
-remarks,
-sendToRole: selectedSendTo || null
-});
+  const rule =
+    appType === "withdrawl"
+      ? details?.withdrawlruleText
+      : details?.advanceruleText;
 
-alert("Processed successfully");
+  setVerifyMessage({
+    title: "Verify Application",
+    subtitle: "Please verify details before processing.",
 
-const reloadUrl =
-appType === "withdrawl"
-? "/gpf-withdrawl/inbox"
-: "/gpf-advance/inbox";
+    netBalance: details?.netbalance,
+    requestedAmount: requested,
+    rule: rule,
 
-const res = await api.get(reloadUrl);
-setApplications(res.data);
+    type: "confirm",
+    
+  });
 
-setTimeout(() => {
-  setSelectedId(null);
-}, 0);
+  setShowVerifyModal(true);
 
+  return;
 
-setSelectedAction("");
-setRemarks("");
-
-
-setSendToOptions([]);     
-setSelectedSendTo("");    
-setDetailsMap({});        
-setTrailMap({});          
-
-
-} catch (err) {
-alert(err.response?.data || "Processing failed");
-}
+setShowVerifyModal(true);
 
 };
 useEffect(() => {
@@ -443,7 +515,25 @@ const handleUpdate = async (appId) => {
   ruleSpecificData: payload.ruleSpecificDataJson   // 🔥 IMPORTANT FOR ADVANCE
 });
 
-    alert("Updated successfully");
+  const requested =
+  appType === "withdrawl"
+    ? details?.amountofwithdrawlrequested
+    : details?.amountofadvancerequested;
+
+const rule =
+  appType === "withdrawl"
+    ? details?.withdrawlruleText
+    : details?.advanceruleText;
+
+setVerifyMessage({
+  title: "Updated Successfully",
+  subtitle: "Application details have been updated successfully.",
+
+  type: "success",
+  
+});
+
+setShowVerifyModal(true);
 
     // reload details
     const app = applications.find(a => a.applicationId === appId);
@@ -451,9 +541,18 @@ const handleUpdate = async (appId) => {
       toggleExpand(app.applicationId, app.empCode);
     }
 
-  } catch (err) {
-    alert("Update failed");
-  }
+          } catch (err) {
+
+  setVerifyMessage({
+    title: "Update Failed",
+    subtitle:
+      err.response?.data ||
+      "Unable to update application details.",
+    type: "error"
+  });
+
+  setShowVerifyModal(true);
+}
 };
 const handleRuleFieldChange = (appId, field, value) => {
   setEditData(prev => ({
@@ -907,7 +1006,18 @@ return (
   <div style={{ marginTop: "15px", textAlign: "right" }}>
     <button
       className="process-btn"
-      onClick={() => handleUpdate(selectedId)}
+      onClick={() => {
+
+  setPendingUpdate(selectedId);
+
+  setVerifyMessage({
+    title: "Confirm Update",
+    subtitle: "Do you want to save the modified application details?",
+    type: "update-confirm"
+  });
+
+  setShowVerifyModal(true);
+}}
     >
       Save Changes
     </button>
@@ -979,6 +1089,98 @@ return (
 
 </div>
 </div>
+{showVerifyModal && (
+
+  <div className="modal-overlay">
+
+    <div className="modal-box">
+
+      <h3>
+        {verifyMessage?.title || "Verify Application"}
+      </h3>
+
+     {(
+  verifyMessage?.type === "confirm" ||
+  verifyMessage?.type === "update-confirm"
+) && (
+
+  <div className="modal-content simple-confirm-text">
+
+    <p>
+      {verifyMessage?.subtitle}
+    </p>
+
+  </div>
+
+)}
+      <div className="modal-actions">
+
+  {/* VERIFY BUTTON */}
+
+  {(
+  verifyMessage?.type === "confirm" ||
+  verifyMessage?.type === "update-confirm"
+) && (
+
+    <button
+      className="confirm-btn"
+      onClick={async () => {
+
+        setShowVerifyModal(false);
+
+        if (verifyMessage?.type === "confirm") {
+
+ await processApplication();
+
+}
+
+if (verifyMessage?.type === "update-confirm") {
+
+  await handleUpdate(pendingUpdate);
+
+  setPendingUpdate(null);
+}
+      }}
+    >
+      Submit
+    </button>
+
+  )}
+
+  {/* SUCCESS / ERROR / INFO */}
+
+  {verifyMessage?.type !== "confirm" && (
+
+    <button
+      className="confirm-btn"
+      onClick={() => setShowVerifyModal(false)}
+    >
+      OK
+    </button>
+
+  )}
+
+  {/* CANCEL */}
+
+  <button
+    className="cancel-btn"
+    onClick={() => {
+
+  setShowVerifyModal(false);
+
+  
+}}
+  >
+    Cancel
+  </button>
+
+</div>
+
+    </div>
+
+  </div>
+
+)}
 </div>
 );
 };

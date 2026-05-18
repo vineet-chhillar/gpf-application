@@ -4,13 +4,34 @@ import "./Sidebar.css";
 const Sidebar = ({ menus, activePage, onMenuClick }) => {
   return (
     <div className="sidebar">
+
+      {/* HEADER */}
       <div className="sidebar-header">
-        <span className="sidebar-header-icon">📂</span>
-        <span className="sidebar-title">MENU</span>
+
+        <div className="sidebar-logo">
+          GPF
+        </div>
+
+        <div>
+          <div className="sidebar-title">
+            GPF Portal
+          </div>
+
+          <div className="sidebar-subtitle">
+            Office Automation Division
+          </div>
+        </div>
+
       </div>
 
+      {/* SECTION */}
+      
+
+      {/* MENU */}
       <ul className="menu-list">
+
         {menus.map((menu) => (
+
           <li
             key={menu.menuId}
             className={
@@ -20,11 +41,26 @@ const Sidebar = ({ menus, activePage, onMenuClick }) => {
             }
             onClick={() => onMenuClick(menu.menuName)}
           >
-            <span className="menu-icon">▸</span>
-            <span className="menu-text">{menu.menuName}</span>
+
+            <span className="menu-icon">
+              •
+            </span>
+
+            <span className="menu-text">
+              {menu.menuName}
+            </span>
+
           </li>
+
         ))}
+
       </ul>
+
+      {/* FOOTER */}
+      <div className="sidebar-footer">
+        GPF Management System v1.0
+      </div>
+
     </div>
   );
 };

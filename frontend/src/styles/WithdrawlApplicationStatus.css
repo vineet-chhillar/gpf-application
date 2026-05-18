@@ -232,41 +232,154 @@ body {
   border-radius: 6px;
   font-weight: 600;
 }
-.dashboard-cards {
-  display: flex;
-  gap: 12px;
-  justify-self: center;
-   flex-wrap: wrap; 
+/* =========================
+   DASHBOARD CARDS
+========================= */
+
+/* =========================
+   DASHBOARD CARDS
+========================= */
+
+/* =========================
+   DASHBOARD CARDS
+========================= */
+
+.dashboard-cards{
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:14px;
+
+  margin-bottom:14px;
 }
 
-.card {
-  background: white;
-  border-radius: 8px;
-  padding: 10px 14px;   /* 🔥 reduced */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  min-width: 140px;     /* 🔥 compact width */
-  text-align: center;
-}
-.card h3 {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
-  font-weight: 700;
+/* =========================
+   CARD
+========================= */
+
+.card{
+  min-width:170px;
+
+  padding:14px 16px;
+
+  border:none;
+
+  box-shadow:
+    0 2px 8px rgba(15,23,42,0.10);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  position:relative;
+
+  overflow:hidden;
+  
 }
 
-.card p {
-  font-size: 18px;
-  font-weight: 700;
-  margin: 2px 0 0 0;
-  color: #1e293b;
+/* HOVER */
+
+.card:hover{
+  transform:translateY(-2px);
+
+  box-shadow:
+    0 6px 18px rgba(15,23,42,0.18);
 }
-.card:nth-child(1) { border-top: 3px solid #105499; }
-.card:nth-child(2) { border-top: 3px solid #105499; }
-.card:nth-child(3) { border-top: 3px solid #105499; }
-.card:nth-child(4) { border-top: 3px solid #105499; }
-.pending-role {
-  font-weight: 600;
-  color: #2c3e50;
+
+/* =========================
+   TITLE
+========================= */
+
+.card h3{
+  margin:0;
+
+  font-size:12px;
+
+  font-weight:700;
+
+  text-transform:uppercase;
+
+  letter-spacing:0.5px;
+
+  color:rgba(255,255,255,0.92);
+}
+
+/* =========================
+   VALUE
+========================= */
+
+.card p{
+  margin:8px 0 0 0;
+
+  font-size:26px;
+
+  font-weight:700;
+
+  line-height:1;
+
+  color:#ffffff;
+  
+}
+
+/* =========================
+   FILLED COLORS
+========================= */
+
+/* TOTAL */
+
+/* TOTAL */
+
+.card.total{
+  background:#dbeafe;   /* light blue */
+}
+
+.card.total h3,
+.card.total p{
+  color:#1d4ed8;
+}
+
+/* PENDING */
+
+.card.pending{
+  background:#fee2e2;   /* light red */
+}
+
+.card.pending h3,
+.card.pending p{
+  color:#dc2626;
+}
+
+/* COMPLETED */
+
+.card.completed{
+  background:#dcfce7;   /* light green */
+}
+
+.card.completed h3,
+.card.completed p{
+  color:#16a34a;
+}
+
+/* REJECTED */
+
+.card.rejected{
+  background:#ffedd5;   /* light orange */
+}
+
+.card.rejected h3,
+.card.rejected p{
+  color:#ea580c;
+}
+
+/* =========================
+   ROLE TEXT
+========================= */
+
+.pending-roles{
+  font-weight:600;
+
+  color:#ffffff;
 }
 /* Search Bar Container */
 .search-container {

@@ -1,6 +1,6 @@
 
 .workflow-container {
-  margin-top: -20px;
+  margin-top: 10px;
 }
 
 .workflow-table-wrapper {
@@ -265,7 +265,7 @@ h1, h2, h3, h4 {
   width: 100%;
 }
 .container {
-  width: 100%;
+  width: 95%;
   max-width: 100%;
   overflow: visible;   /* 🔥 important */
 }

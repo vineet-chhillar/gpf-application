@@ -118,12 +118,12 @@ const pendingByRole = applications
 
  <div className="dashboard-cards">
 
-  <div className="card">
+  <div className="card total">
     <h3>Total Applications</h3>
     <p>{applications.length}</p>
   </div>
 
-  <div className="card">
+  <div className="card pending">
     <h3>Pending</h3>
     <p>
       {
@@ -152,7 +152,7 @@ const pendingByRole = applications
   )}
 </div>*/}
 
-  <div className="card">
+  <div className="card completed">
     <h3>Completed</h3>
     <p>
       {
@@ -164,7 +164,7 @@ const pendingByRole = applications
   </div>
 
   {/* 🔥 NEW CARD */}
-  <div className="card">
+  <div className="card rejected">
     <h3>Cancelled / Rejected</h3>
     <p>
       {
