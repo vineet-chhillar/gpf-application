@@ -23,7 +23,26 @@ const [hoveredRule, setHoveredRule] = useState(null);
   const [detailsApiData, setDetailsApiData] = useState(null);
 
   const [showVerification, setShowVerification] = useState(false);
-const [showSuccess, setShowSuccess] = useState(false);
+{/*const [showSuccess, setShowSuccess] = useState(false);*/}
+const [messageModal, setMessageModal] = useState({
+  open: false,
+  type: "success", // success | error | warning
+  title: "",
+  message: ""
+});
+const openMessageModal = ({
+  type = "success",
+  title,
+  message
+}) => {
+
+  setMessageModal({
+    open: true,
+    type,
+    title,
+    message
+  });
+};
   const formatDate = (dateString) => {
   if (!dateString) return "";
 
@@ -147,6 +166,12 @@ const handleEmpCodeBlur = async () => {
       setMasterApiData(null);
       setDetailsApiData(null);
       setGpfAccountInput("");
+       openMessageModal({
+    type: "warning",
+    title: "Employee Not Found",
+    message:
+      "No employee exists for the entered employee code."
+  });
     }
 
   } catch (err) {
@@ -167,14 +192,7 @@ useEffect(() => {
     concernedofficername:
       detailsApiData.concernedofficername || prev.concernedofficername,
 
-    ispriorwithdrawlforsamepurpose:
-      detailsApiData.ispriorwithdrawlforsamepurpose ?? prev.ispriorwithdrawlforsamepurpose,
-
-    priorwithdrawlamount:
-      detailsApiData.priorwithdrawlamount || prev.priorwithdrawlamount,
-
-    priorwithdrawlfinyear:
-      detailsApiData.priorwithdrawlfinyear || prev.priorwithdrawlfinyear
+    
   }));
 
 }, [detailsApiData]);
@@ -192,7 +210,7 @@ useEffect(() => {
       const pan = masterApiData.panno.trim().toUpperCase();
 
       const details = await getDetailsByPan(pan);
-
+console.log("DETAILS FROM FRONTEND API:", details);
       if (details) {
   setDetailsApiData(details);
   setGpfAccountInput(details.gpfaccountno || ""); // ✅ NEW
@@ -249,12 +267,22 @@ const loadData = async () => {
   try {
 
     if (!empCodeInput) {
-      alert("Enter Employee Code");
+      
+      openMessageModal({
+  type: "warning",
+  title: "Enter Employee Code",
+  message: "Enter Employee Code to fetch details."
+});
       return;
     }
 
     if (!gpfAccountInput) {
-      alert("Enter GPF Account No");
+      
+      openMessageModal({
+  type: "warning",
+  title: "Enter GPF Account No",
+  message: "Enter GPF Account No to fetch details."
+});
       return;
     }
 
@@ -263,12 +291,22 @@ const loadData = async () => {
     const details = await getDetailsByPan(master.panno);
 
     if (!master) {
-      alert("Employee not found");
+      
+      openMessageModal({
+  type: "warning",
+  title: "Employee Not Found",
+  message: "No employee exists for the entered employee code."
+});
       return;
     }
 
     if (!details) {
-      alert("GPF account not found");
+      
+      openMessageModal({
+  type: "warning",
+  title: "GPF account not found",
+  message: "GPF account not found for the employee's PAN."
+});
       return;
     }
 
@@ -277,7 +315,12 @@ const loadData = async () => {
 
   } catch (err) {
     console.error(err);
-    alert("Failed to load employee data");
+    
+    openMessageModal({
+  type: "warning",
+  title: "Failed to load employee data",
+  message: "Failed to load employee data. Please try again."
+});
   }
 
 };
@@ -294,7 +337,160 @@ const loadData = async () => {
       [name]: type === "checkbox" ? checked : value
     }));
   };
+{/*end for withdrawal rule calculation*/}
 
+const calculateWithdrawalEligibility = ({
+  basicPay,
+  balanceAmount,
+  requestedAmount,
+  dateOfJoining,
+  retirementDate,
+  selectedRule
+}) => {
+
+  if (!selectedRule) {
+    return {
+      isValid: false,
+      eligibleAmount: 0,
+      message: "Withdrawal rule not selected"
+    };
+  }
+
+  // 1. Rule active
+  if (!selectedRule.isActive) {
+    return {
+      isValid: false,
+      eligibleAmount: 0,
+      message: "Selected withdrawal rule is inactive"
+    };
+  }
+
+  const today = new Date();
+
+  // 2. Service years
+  const joiningDate = new Date(dateOfJoining);
+
+  let serviceYears =
+    today.getFullYear() - joiningDate.getFullYear();
+
+  const joiningMonthDiff =
+    today.getMonth() - joiningDate.getMonth();
+
+  if (
+    joiningMonthDiff < 0 ||
+    (
+      joiningMonthDiff === 0 &&
+      today.getDate() < joiningDate.getDate()
+    )
+  ) {
+    serviceYears--;
+  }
+
+  if (
+    selectedRule.minServiceYears &&
+    serviceYears < selectedRule.minServiceYears
+  ) {
+    return {
+      isValid: false,
+      eligibleAmount: 0,
+      message:
+        `Minimum ${selectedRule.minServiceYears} years service required`
+    };
+  }
+
+  // 3. Retirement window rule
+  if (selectedRule.retirementWindowYrs) {
+
+    const retirement = new Date(retirementDate);
+
+    let yearsLeft =
+      retirement.getFullYear() - today.getFullYear();
+
+    const retirementMonthDiff =
+      retirement.getMonth() - today.getMonth();
+
+    if (
+      retirementMonthDiff < 0 ||
+      (
+        retirementMonthDiff === 0 &&
+        retirement.getDate() < today.getDate()
+      )
+    ) {
+      yearsLeft--;
+    }
+
+    if (yearsLeft <= selectedRule.retirementWindowYrs) {
+
+      const eligibleAmount =
+        (Number(balanceAmount) * 90) / 100;
+
+      return {
+        isValid:
+          Number(requestedAmount) <= eligibleAmount,
+        eligibleAmount,
+        message:
+          Number(requestedAmount) <= eligibleAmount
+            ? ""
+            : `Maximum eligible amount is ₹${eligibleAmount.toFixed(2)}`
+      };
+    }
+  }
+
+  // 4. Percentage calculation
+  let percentageAmount = Infinity;
+
+  if (selectedRule.maxPercentage) {
+    percentageAmount =
+      (Number(balanceAmount) *
+        Number(selectedRule.maxPercentage)) / 100;
+  }
+
+  // 5. Months pay calculation
+  let monthsPayAmount = Infinity;
+
+  if (selectedRule.maxMonthsPay) {
+    monthsPayAmount =
+      Number(basicPay) *
+      Number(selectedRule.maxMonthsPay);
+  }
+
+  // 6. Final eligible amount
+  const eligibleAmount = Math.min(
+    percentageAmount,
+    monthsPayAmount
+  );
+
+  return {
+    isValid:
+      Number(requestedAmount) <= eligibleAmount,
+    eligibleAmount,
+    message:
+      Number(requestedAmount) <= eligibleAmount
+        ? ""
+        : `Maximum eligible amount is ₹${eligibleAmount.toFixed(2)}`
+  };
+};
+
+{/*end for withdrawal rule calculation*/}
+const eligibilityResult =
+  selectedRule &&
+  detailsApiData &&
+  masterApiData
+    ? calculateWithdrawalEligibility({
+        basicPay: detailsApiData.basicpay,
+        balanceAmount: detailsApiData.closingbalance,
+        requestedAmount:
+          userInput.amountofwithdrawlrequested || 0,
+
+        dateOfJoining:
+          masterApiData.dateofjoining,
+
+        retirementDate:
+          masterApiData.dateofsuperannuation,
+
+        selectedRule
+      })
+    : null;
   {/*const buildGpfAccountNo = (empcode) => `GPF-NIC-${empcode}`;*/}
 const ONLY_CHARS_REGEX = /^[A-Za-z ]+$/;
 const validateForm = () => {
@@ -306,22 +502,51 @@ const validateForm = () => {
 } else if (userInput.concernedofficername.length > 100) {
   newErrors.concernedofficername =
     "Cannot exceed 100 characters";
-} else if (!ONLY_CHARS_REGEX.test(userInput.concernedofficername)) {
+} {/*else if (!ONLY_CHARS_REGEX.test(userInput.concernedofficername)) {
   newErrors.concernedofficername =
     "Only alphabets allowed";
-}
+}*/}
 
 
   // ---- DETAILS (USER INPUT) ----
   const amount = Number(userInput.amountofwithdrawlrequested);
 
   if (!amount || amount <= 0) {
+
+  newErrors.amountofwithdrawlrequested =
+    "Withdrawal amount must be greater than 0";
+
+} else {
+
+  const validation =
+    calculateWithdrawalEligibility({
+
+      basicPay: detailsApiData.basicpay,
+      balanceAmount: detailsApiData.closingbalance,
+      requestedAmount: amount,
+
+      dateOfJoining:
+        masterApiData.dateofjoining,
+
+      retirementDate:
+        masterApiData.dateofsuperannuation,
+
+      selectedRule
+    });
+
+  if (!validation.isValid) {
+
+    newErrors.amountofwithdrawlrequested =
+      validation.message;
+  }
+}
+  {/*if (!amount || amount <= 0) {
     newErrors.amountofwithdrawlrequested =
       "Withdrawal amount must be greater than 0";
   } else if (amount > Number(detailsApiData.netbalance)) {
     newErrors.amountofwithdrawlrequested =
       "Withdrawal amount cannot exceed net balance";
-  }
+  }*/}
 
   if (!userInput.purposeofwithdrawl.trim()) {
     newErrors.purposeofwithdrawl = "Purpose of withdrawal is required";
@@ -358,7 +583,23 @@ const validateForm = () => {
     newErrors.dateofapplication =
       "Date of application cannot be in the future";
   }
+if (userInput.ispriorwithdrawlforsamepurpose) {
 
+  if (
+    !userInput.priorwithdrawlamount ||
+    Number(userInput.priorwithdrawlamount) <= 0
+  ) {
+
+    newErrors.priorwithdrawlamount =
+      "Prior withdrawal amount is required";
+  }
+
+  if (!userInput.priorwithdrawlfinyear) {
+
+    newErrors.priorwithdrawlfinyear =
+      "Financial year is required";
+  }
+}
   setErrors(newErrors);
   return Object.keys(newErrors).length === 0;
 };
@@ -405,20 +646,17 @@ panno: masterApiData.panno,
   detailsApiData?.concernedofficername || userInput.concernedofficername,
 
 ispriorwithdrawlforsamepurpose:
-  detailsApiData?.ispriorwithdrawlforsamepurpose ??
   userInput.ispriorwithdrawlforsamepurpose,
 
 priorwithdrawlamount:
-  detailsApiData?.priorwithdrawlamount ??
-  (userInput.ispriorwithdrawlforsamepurpose
+  userInput.ispriorwithdrawlforsamepurpose
     ? userInput.priorwithdrawlamount
-    : 0),
+    : 0,
 
 priorwithdrawlfinyear:
-  detailsApiData?.priorwithdrawlfinyear ??
-  (userInput.ispriorwithdrawlforsamepurpose
+  userInput.ispriorwithdrawlforsamepurpose
     ? userInput.priorwithdrawlfinyear
-    : ""),
+    : "",
 
         dateofapplication: userInput.dateofapplication,
 
@@ -432,14 +670,23 @@ priorwithdrawlfinyear:
 
     setShowVerification(false);
 
-    setShowSuccess(true);
+    openMessageModal({
+  type: "success",
+  title: "Withdrawal Submitted Successfully",
+  message:
+    "Your GPF withdrawal application has been submitted."
+});
 resetForm();
 
   } catch (err) {
 
     console.error(err);
-    alert(err.response?.data || "Error while saving");
-
+    
+openMessageModal({
+  type: "warning",
+  title: err.response?.data || "Error while saving",
+  message: err.response?.data || "Error while saving"
+});
   }
 
 };
@@ -449,12 +696,22 @@ const handleSubmit = () => {
   if (!validateForm()) return;
 
   if (!masterApiData || !masterApiData.empcode) {
-    alert("Employee data not loaded properly");
+    
+    openMessageModal({
+  type: "warning",
+  title: "Employee data not loaded properly",
+  message: "Employee data not loaded properly. Please check employee code and try again."
+});
     return;
   }
 
   if (!detailsApiData) {
-    alert("GPF details not loaded");
+    
+    openMessageModal({
+  type: "warning",
+  title: "GPF account not found",
+  message: "GPF account not found for the employee's PAN."
+});
     return;
   }
 
@@ -708,6 +965,30 @@ const handleSubmit = () => {
 
 </div>
 </div>
+{eligibilityResult && (
+  <div className="eligibility-box">
+
+    <span className="eligibility-label">
+      Eligible Amount:
+    </span>
+
+    <span className="eligibility-value">
+      ₹{Number(
+        eligibilityResult.eligibleAmount || 0
+      ).toLocaleString("en-IN", {
+        maximumFractionDigits: 2
+      })}
+    </span>
+
+    {!eligibilityResult.isValid &&
+      userInput.amountofwithdrawlrequested && (
+        <span className="eligibility-warning">
+          {eligibilityResult.message}
+        </span>
+      )}
+
+  </div>
+)}
 <div className="form-row-compact">
 
     <div className="form-group">
@@ -765,39 +1046,71 @@ const handleSubmit = () => {
   name="ispriorwithdrawlforsamepurpose"
   checked={userInput.ispriorwithdrawlforsamepurpose}
   onChange={handleUserChange}
-  disabled={detailsApiData?.ispriorwithdrawlforsamepurpose !== undefined}
+  
 />
     Whether any withdrawl was taken for the same purpose earlier.
     If so, indicate the amount and the year.
   </label>
 
   <div className="prior-field">
-    <label>Prior Amount</label>
+   <label>
+  Prior Amount
+  {userInput.ispriorwithdrawlforsamepurpose && (
+    <span className="required">*</span>
+  )}
+</label>
     <input
   className="form-input"
   name="priorwithdrawlamount"
-  disabled={
-    !userInput.ispriorwithdrawlforsamepurpose ||
-    detailsApiData?.priorwithdrawlamount
-  }
+  disabled={!userInput.ispriorwithdrawlforsamepurpose}
   value={userInput.priorwithdrawlamount}
   onChange={handleUserChange}
 />
   </div>
 
   <div className="prior-field">
-    <label>Financial Year</label>
-    <input
-  className="form-input"
-  name="priorwithdrawlfinyear"
-  disabled={
-    !userInput.ispriorwithdrawlforsamepurpose ||
-    detailsApiData?.priorwithdrawlfinyear
-  }
-  value={userInput.priorwithdrawlfinyear}
-  onChange={handleUserChange}
-/>
-  </div>
+
+  <label>
+  Financial Year
+  {userInput.ispriorwithdrawlforsamepurpose && (
+    <span className="required">*</span>
+  )}
+</label>
+
+  <select
+    className="form-input"
+    name="priorwithdrawlfinyear"
+    disabled={!userInput.ispriorwithdrawlforsamepurpose}
+    value={userInput.priorwithdrawlfinyear}
+    onChange={handleUserChange}
+  >
+
+    <option value="">
+      Select Financial Year
+    </option>
+
+    {Array.from(
+      { length: 2025 - 1980 + 1 },
+      (_, index) => {
+
+        const startYear = 2025 - index;
+        const endYear =
+          String(startYear + 1).slice(-2);
+
+        const fy =
+          `${startYear}-${endYear}`;
+
+        return (
+          <option key={fy} value={fy}>
+            {fy}
+          </option>
+        );
+      }
+    )}
+
+  </select>
+
+</div>
 
 </div>
   </div>
@@ -817,7 +1130,7 @@ const handleSubmit = () => {
 
 <div className="info-card">
 <div className="info-label">Closing Balance</div>
-<div className="info-value">₹{detailsApiData?.outstandingbalance || "-"}</div>
+<div className="info-value">₹{detailsApiData?.closingbalance || "-"}</div>
 </div>
 
 <div className="info-card">
@@ -841,6 +1154,17 @@ const handleSubmit = () => {
 ₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
 </div>
 </div>
+
+<div className="info-card">
+<div className="info-label">Withdrawal From</div>
+<div className="info-value">{formatDate(getCurrentFinancialYearStartDate())}</div>
+</div>
+
+<div className="info-card">
+<div className="info-label">Withdrawal To</div>
+<div className="info-value">{formatDate(getTodayDate())}</div>
+</div>
+
 
 <div className="info-card">
 <div className="info-label">Total Withdrawal Amount</div>
@@ -921,6 +1245,7 @@ const handleSubmit = () => {
 
   </div>
 )}
+
 {/* 🔥 ADD HERE */}
 {/*{hoveredRule && (
   <div className="rule-hover-modal">
@@ -932,7 +1257,7 @@ const handleSubmit = () => {
         <button className="process-btn" onClick={handleSubmit}>
           Submit Application
         </button>
-        {showSuccess && (
+        {/*{showSuccess && (
 
 <div className="modal-overlay">
 
@@ -953,9 +1278,45 @@ OK
 
 </div>
 
-)}
+)}*/}
       </div>
+      {messageModal.open && (
+
+<div className="modal-overlay">
+
+  <div className={`modal-box ${messageModal.type}`}>
+
+    <h3>
+
+      {messageModal.type === "success" && "✅ "}
+      {messageModal.type === "error" && "❌ "}
+      {messageModal.type === "warning" && "⚠️ "}
+
+      {messageModal.title}
+
+    </h3>
+
+    <p>{messageModal.message}</p>
+
+    <button
+      className="confirm-btn"
+      onClick={() =>
+        setMessageModal(prev => ({
+          ...prev,
+          open: false
+        }))
+      }
+    >
+      OK
+    </button>
+
+  </div>
+
+</div>
+
+)}
     </div>
+    
   );
   
 };

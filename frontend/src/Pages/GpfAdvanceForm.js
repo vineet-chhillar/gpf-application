@@ -23,7 +23,26 @@ const [selectedRuleId,setSelectedRuleId] = useState(null);
 
 const [errors,setErrors] = useState({});
 const [showVerification,setShowVerification] = useState(false);
-const [showSuccess,setShowSuccess] = useState(false);
+
+const [messageModal, setMessageModal] = useState({
+  open: false,
+  type: "success",
+  title: "",
+  message: ""
+});
+const openMessageModal = ({
+  type = "success",
+  title,
+  message
+}) => {
+
+  setMessageModal({
+    open: true,
+    type,
+    title,
+    message
+  });
+};
 const getTodayDate = ()=>{
  const today = new Date();
  return today.toISOString().split("T")[0];
@@ -115,9 +134,16 @@ const handleEmpCodeBlur = async () => {
     const master = await getMasterByEmpCode(empCode);
 
     if (!master) {
-      alert("Employee not found");
-      return;
-    }
+
+  openMessageModal({
+    type: "warning",
+    title: "Employee Not Found",
+    message:
+      "No employee exists for the entered employee code."
+  });
+
+  return;
+}
 
     setMasterApiData(master);
 
@@ -157,7 +183,14 @@ useEffect(() => {
 
       console.error("Details fetch failed", err);
       setDetailsApiData(null); // ❗ API error
-
+openMessageModal({
+    type: "error",
+    title: "GPF Details Fetch Failed",
+    message:
+      err.response?.data?.message ||
+      err.response?.data ||
+      "Unable to fetch GPF account details."
+  });
     }
 
   }, 400);
@@ -229,6 +262,66 @@ const months =
 const monthlyInstallment =
  months ? Math.ceil(consolidatedAdvance / months) : 0;
 
+ const calculateAdvanceEligibility = ({
+  basicPay,
+  balanceAmount,
+  requestedAmount,
+  selectedRule
+}) => {
+
+  if (!selectedRule) {
+    return {
+      isValid: false,
+      eligibleAmount: 0,
+      message: "Advance rule not selected"
+    };
+  }
+
+  // Rule active check
+  if (!selectedRule.isActive) {
+    return {
+      isValid: false,
+      eligibleAmount: 0,
+      message: "Selected advance rule is inactive"
+    };
+  }
+
+  let percentageAmount = Infinity;
+
+  if (selectedRule.maxPercentage) {
+
+    percentageAmount =
+      (Number(balanceAmount) *
+        Number(selectedRule.maxPercentage)) / 100;
+  }
+
+  let monthsPayAmount = Infinity;
+
+  if (selectedRule.maxMonthsPay) {
+
+    monthsPayAmount =
+      Number(basicPay) *
+      Number(selectedRule.maxMonthsPay);
+  }
+
+  // Final eligibility
+  const eligibleAmount = Math.min(
+    percentageAmount,
+    monthsPayAmount
+  );
+
+  return {
+    isValid:
+      Number(requestedAmount) <= eligibleAmount,
+
+    eligibleAmount,
+
+    message:
+      Number(requestedAmount) <= eligibleAmount
+        ? ""
+        : `Maximum eligible advance is ₹${eligibleAmount.toFixed(2)}`
+  };
+};
 /* ================= VALIDATION ================= */
 
 const validate = ()=>{
@@ -252,8 +345,14 @@ const validate = ()=>{
 
 const netBalance = Number(detailsApiData?.netbalance ?? 0);
 
-if (consolidatedAdvance > netBalance) {
+{/*if (consolidatedAdvance > netBalance) {
   newErrors.amount = "Advance exceeds available balance";
+}*/}
+if (advanceEligibilityResult &&
+    !advanceEligibilityResult.isValid) {
+
+  newErrors.amount =
+    advanceEligibilityResult.message;
 }
 
  if (!userInput.particulars || !userInput.particulars.trim()) {
@@ -336,10 +435,17 @@ const handleSubmit = () => {
 
  if(!validate()) return;
 
- if(!masterApiData || !detailsApiData){
-  alert("Required data not loaded");
+ if (!masterApiData || !detailsApiData) {
+
+  openMessageModal({
+    type: "warning",
+    title: "Required Data Missing",
+    message:
+      "Employee or GPF details are not loaded properly."
+  });
+
   return;
- }
+}
 
  setShowVerification(true);
 
@@ -385,7 +491,7 @@ panno:masterApiData?.panno,
     dateofapplication:userInput.dateofapplication,
 
       closingbalance: detailsApiData?.closingbalance || 0,
-    amountofadvanceoutstanding: detailsApiData?.outstandingbalance || 0,
+    amountofadvanceoutstanding: detailsApiData?.advanceOutstanding || 0,
     amountofconsolidatedadvance:consolidatedAdvance
   },
 ruleSpecificData: ruleSpecificData,   
@@ -397,7 +503,12 @@ ruleSpecificData: ruleSpecificData,
  await api.post("/gpf-advance/save",payload);
 
  setShowVerification(false);
- setShowSuccess(true);
+ openMessageModal({
+  type: "success",
+  title: "Advance Submitted Successfully",
+  message:
+    "Your GPF advance application has been submitted."
+});
 
  resetForm();
 
@@ -410,7 +521,11 @@ ruleSpecificData: ruleSpecificData,
     err.message ||                   // fallback
     "Save failed";
 
-  alert(message);
+openMessageModal({
+  type: "error",
+  title: "Save Failed",
+  message
+});
 }
 
 };
@@ -419,7 +534,23 @@ ruleSpecificData: ruleSpecificData,
 const selectedRule = rules.find(
   r => r.ruleId === selectedRuleId
 );
+const advanceEligibilityResult =
+  selectedRule &&
+  detailsApiData
+    ? calculateAdvanceEligibility({
 
+        basicPay:
+          detailsApiData.basicpay,
+
+        balanceAmount:
+          detailsApiData.closingbalance,
+
+        requestedAmount:
+          userInput.amountofadvancerequested || 0,
+
+        selectedRule
+      })
+    : null;
 const selectedRuleText =
   selectedRuleId === null
     ? "Select Rule"
@@ -676,7 +807,30 @@ readOnly
   
 </div>
 </div>
+{advanceEligibilityResult && (
+  <div className="eligibility-box">
 
+    <span className="eligibility-label">
+      Eligible Advance:
+    </span>
+
+    <span className="eligibility-value">
+      ₹{Number(
+        advanceEligibilityResult.eligibleAmount || 0
+      ).toLocaleString("en-IN", {
+        maximumFractionDigits: 2
+      })}
+    </span>
+
+    {!advanceEligibilityResult.isValid &&
+      userInput.amountofadvancerequested && (
+        <span className="eligibility-warning">
+          {advanceEligibilityResult.message}
+        </span>
+      )}
+
+  </div>
+)}
   </div>
   <div className="form-row-compact">
 {/* ================= RULE BASED FIELDS ================= */}
@@ -929,6 +1083,13 @@ onChange={handleChange}
 </div>
 
 <div className="info-card">
+<div className="info-label">Refund After Outstanding</div>
+<div className="info-value">
+₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
+</div>
+</div>
+
+<div className="info-card">
 <div className="info-label">Withdraw From</div>
 <div className="info-value">
 {formatDate(getCurrentFinancialYearStartDate())}
@@ -949,12 +1110,14 @@ onChange={handleChange}
 </div>
 </div>
 
+
 <div className="info-card">
-<div className="info-label">Refund After Outstanding</div>
+<div className="info-label">Net Balance</div>
 <div className="info-value">
-₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
+₹{detailsApiData?.netbalance || "-"}
 </div>
 </div>
+
 
 {/*<div className="info-card">
 <div className="info-label">Advance Outstanding</div>
@@ -1094,7 +1257,7 @@ Submit Advance Application
 </button>
 
 
-{showSuccess && (
+{/*{showSuccess && (
 
 <div className="modal-overlay">
 
@@ -1115,9 +1278,43 @@ OK
 
 </div>
 
-)}
+)}*/}
+</div>
+{messageModal.open && (
+
+<div className="modal-overlay">
+
+  <div className={`modal-box ${messageModal.type}`}>
+
+    <h3>
+
+      {messageModal.type === "success" && "✅ "}
+      {messageModal.type === "error" && "❌ "}
+      {messageModal.type === "warning" && "⚠️ "}
+
+      {messageModal.title}
+
+    </h3>
+
+    <p>{messageModal.message}</p>
+
+    <button
+      className="confirm-btn"
+      onClick={() =>
+        setMessageModal(prev => ({
+          ...prev,
+          open: false
+        }))
+      }
+    >
+      OK
+    </button>
+
+  </div>
+
 </div>
 
+)}
 </div>
 
 );

@@ -20,6 +20,8 @@ import com.example.backend.repository.GpfWithdrawlDetailsRepository;
 import com.example.backend.repository.GpfWithdrawlMasterRepository;
 import com.example.backend.repository.GpfWithdrawlRuleRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.Transient;
 
@@ -30,6 +32,8 @@ import com.example.backend.repository.FunctionalRoleRepository;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 //import java.net.http.HttpHeaders;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +59,7 @@ import java.util.Base64;
 public class GpfWithdrawlServiceImpl implements GpfWithdrawlService {
 
 
-    private static final boolean USE_MOCK = true;
+    private static final boolean USE_MOCK = false;
 
     @Autowired
 private FunctionalRoleRepository roleRepo;
@@ -760,58 +764,86 @@ if (payload.getAmountofwithdrawlrequested()
 
     detailsRepo.save(entity);
 }
+
+
 @Override
 public Map<String, Object> getDetailsByPan(String pan) {
 
-    if (USE_MOCK) {
-        return getMockDetails(pan);
-    }
-
     try {
 
-        String url = "https://training.gifmis.cga.gov.in/centralEIS/WebServiceSoap/gpf_advance_withdrawl.php";
+        System.out.println("STEP 1");
 
-        String innerXml =
-              "<gpf_advance_withdrawl>"
-            + "<user_name>CCBS</user_name>"
-            + "<password>CCBS@2026</password>"
-            + "<emp_pan_no>" + pan + "</emp_pan_no>"
-            + "</gpf_advance_withdrawl>";
+String innerXml =
+          "<gpf_advance_withdrawl>"
+        + "<user_name>CCBS</user_name>"
+        + "<password>CCBS@2026</password>"
+        + "<emp_pan_no>" + pan + "</emp_pan_no>"
+        + "</gpf_advance_withdrawl>";
 
-        String encodedPayload = Base64.getEncoder()
-                .encodeToString(innerXml.getBytes());
+System.out.println("STEP 2");
 
-        String requestXml =
-              "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-            + "<soapenv:Body>"
-            + "<gpf_advance_withdrawl>"
-            + "<arg0>" + encodedPayload + "</arg0>"
-            + "</gpf_advance_withdrawl>"
-            + "</soapenv:Body>"
-            + "</soapenv:Envelope>";
+String encodedPayload = Base64.getEncoder()
+        .encodeToString(innerXml.getBytes("UTF-8"));
 
-        RestTemplate restTemplate = new RestTemplate();
+System.out.println("STEP 3");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_XML);
+String url =
+        "https://training.gifmis.cga.gov.in/centralEIS/WebServiceSOAP/gpf_advance_withdrawal.php"
+        + "?arg0="
+        + URLEncoder.encode(encodedPayload, "UTF-8");
 
-        HttpEntity<String> entity = new HttpEntity<>(requestXml, headers);
+System.out.println("STEP 4");
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                String.class
+RestTemplate restTemplate = new RestTemplate();
+
+System.out.println("STEP 5");
+
+ResponseEntity<String> response =
+        restTemplate.getForEntity(url, String.class);
+
+System.out.println("STEP 6");
+
+        System.out.println("RAW RESPONSE:");
+        System.out.println(response.getBody());
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        Map<String, Object> apiResponse = mapper.readValue(
+                response.getBody(),
+                new TypeReference<Map<String, Object>>() {}
         );
 
-        String xmlResponse = response.getBody();
+        Object dataObj = apiResponse.get("data");
 
-        return parseSoapResponse(xmlResponse);
+        if (!(dataObj instanceof List<?> outerList)
+                || outerList.isEmpty()) {
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        throw new RuntimeException("Failed to fetch GPF details");
-    }
+            throw new RuntimeException("Invalid API response: outer list missing");
+        }
+
+        Object innerObj = outerList.get(0);
+
+        if (!(innerObj instanceof List<?> innerList)
+                || innerList.isEmpty()) {
+
+            throw new RuntimeException("Invalid API response: inner list missing");
+        }
+
+        Object detailObj = innerList.get(0);
+
+        if (!(detailObj instanceof Map<?, ?>)) {
+
+            throw new RuntimeException("Invalid API response: detail object missing");
+        }
+
+        return (Map<String, Object>) detailObj;
+
+   } catch (Exception e) {
+
+    e.printStackTrace();
+
+    throw new RuntimeException(e);
+}
 }
 private Map<String, Object> parseSoapResponse(String xml) {
 
@@ -837,19 +869,16 @@ private Map<String, Object> parseSoapResponse(String xml) {
         result.put("totalwithdrawlamount", getTagValue(doc, "totalwithdrawlamount"));
         result.put("netbalance", getTagValue(doc, "netbalance"));
         result.put("outstandingbalance", getTagValue(doc, "outstandingbalance"));
+        result.put("nameoftheofficermaintainingthePFAccount",getTagValue(doc, "officername"));
 
-        // 🔥 IMPORTANT FIELDS
-        result.put("nameoftheofficermaintainingthePFAccount",
-                getTagValue(doc, "officername"));
-
-        result.put("ispriorwithdrawalforsamepurpose",
+        {/*result.put("ispriorwithdrawalforsamepurpose",
                 getTagValue(doc, "ispriorwithdrawal"));
 
         result.put("priorwithdrawalamount",
                 getTagValue(doc, "priorwithdrawalamount"));
 
         result.put("priorwithdrawalfinyear",
-                getTagValue(doc, "priorwithdrawalyear"));
+    getTagValue(doc, "priorwithdrawalyear"));*/}
 
     } catch (Exception e) {
         e.printStackTrace();
@@ -867,8 +896,8 @@ private Map<String, Object> getMockDetails(String pan) {
     result.put("totalcreditamount", "250000");
     result.put("refundafterdateofoutstandingbalance", "15000");
     result.put("totalwithdrawlamount", "50000");
-    result.put("netbalance", "1200000");
-    result.put("outstandingbalance", "20000");
+    result.put("netbalance", "1465000");
+    result.put("outstandingbalance", "22000");
 
     result.put("nameoftheofficermaintainingthePFAccount", "Rajesh Kumar");
 

@@ -33,7 +33,7 @@ public class GpfWithdrawlDetails {
     private LocalDate dateofoutstandingbalance;
 
     @Column(name = "outstandingbalance", precision = 15, scale = 2)
-    private BigDecimal outstandingbalance;
+    private BigDecimal closingbalance;
 
     /* ================= CREDIT PERIOD ================= */
 
@@ -207,11 +207,11 @@ public void setMaster(GpfWithdrawlMaster master) {
     }
 
     public BigDecimal getOutstandingbalance() {
-        return outstandingbalance;
+        return closingbalance;
     }
 
     public void setOutstandingbalance(BigDecimal outstandingbalance) {
-        this.outstandingbalance = outstandingbalance;
+        this.closingbalance = outstandingbalance;
     }
 
     public LocalDate getCreditfromdate() {

@@ -56,19 +56,39 @@ const mapMasterApi = (data) => {
 
   return GPF_DETAILS.find(d => d.panno === panNo);
 };*/}
-export const getDetailsByPan = async (panNo) => {
-  try {
-    const res = await api.get(`/gpf-withdrawl/details/${panNo}`);
+export const getDetailsByPan = async (pan) => {
+try{
+  const response = await api.get(`/gpf-withdrawl/details/${pan}`);
 
-    console.log("RAW DETAILS:", res.data);
+  console.log("FULL AXIOS RESPONSE:", response);
 
-    return mapDetailsApi(res.data); 
+  const data = response.data;
 
-  } catch (error) {
-    console.error("Details API Error:", error);
-    return null;
-  }
+  console.log("ACTUAL DATA:", data);
+
+  return {
+    basicpay: data.basicpay,
+    closingbalance: data.closingbalance,
+    outstandingbalance: data.outstandingbalance,
+    totalcreditamount: data.totalcreditamount,
+    refundafterdateofoutstandingbalance:
+      data.refundafterdateofoutstandingbalance,
+    totalwithdrawlamount: data.totalwithdrawlamount,
+    gpfaccountno: data.gpfaccountno,
+    concernedofficername:
+      data.nameoftheofficermaintainingthePFAccount,
+    netbalance: data.netbalance
+
+        
+  };
+} catch (error) {
+   console.error("DETAIL API ERROR:", error);
+
+    console.error("ERROR RESPONSE:", error.response);
+
+    throw error;
 };
+}
 const mapDetailsApi = (data) => {
   if (!data) return null;
 
@@ -77,15 +97,20 @@ const mapDetailsApi = (data) => {
     gpfaccountno: data.gpfaccountno,
 
     basicpay: data.basicpay,
+
     outstandingbalance: data.outstandingbalance,
+
     closingbalance: data.closingbalance,
+
     totalcreditamount: data.totalcreditamount,
+
     refundafterdateofoutstandingbalance:
       data.refundafterdateofoutstandingbalance,
+
     totalwithdrawlamount: data.totalwithdrawlamount,
+
     netbalance: data.netbalance,
 
-    // 🔥 FIXED FIELD NAMES
     concernedofficername:
       data.nameoftheofficermaintainingthePFAccount || "",
 
@@ -95,9 +120,8 @@ const mapDetailsApi = (data) => {
     priorwithdrawlamount:
       data.priorwithdrawalamount || "",
 
-    priorwithdrawlfinyear: formatFinancialYear(
-      data.priorwithdrawalfinyear
-    )
+    priorwithdrawlfinyear:
+      formatFinancialYear(data.priorwithdrawalfinyear)
   };
 };
 const formatFinancialYear = (fy) => {

@@ -182,7 +182,7 @@ const pendingByRole = applications
     <input
       type="text"
       className="search-input"
-      placeholder="Search..."
+      placeholder="Search by name or empcode..."
       value={search}
       onChange={(e) => setSearch(e.target.value)}
     />
@@ -342,12 +342,12 @@ return (
 </div>
 
 <div className="status-detail-item">
-<div className="detail-label">Outstanding Balance Date</div>
+<div className="detail-label">Closing Balance Date</div>
 <div className="detail-value">{details.dateofoutstandingbalance}</div>
 </div>
 
 <div className="status-detail-item">
-<div className="detail-label">Outstanding Balance</div>
+<div className="detail-label">Closing Balance</div>
 <div className="detail-value">₹{details.outstandingbalance}</div>
 </div>
 

@@ -358,7 +358,8 @@ cursor: pointer;
    background: transparent;
   border: none;
   font-size: 12px;
-  white-space: nowrap;
+  white-space: normal;      /* ✅ allow wrapping */
+  word-break: break-word;  
    width: auto;           /* 🔥 IMPORTANT */
   flex: 0 0 auto;        /* 🔥 CRITICAL FIX */
 
@@ -610,7 +611,7 @@ pointer-events: none;
   padding-right: 20px;
   background: #fafafa;
   min-width: 0;
-  width: 100%;          /* 🔥 IMPORTANT */
+  width: 90%;          /* 🔥 IMPORTANT */
   max-width: 100%;      /* 🔥 prevent overflow */
   overflow: hidden;     /* 🔥 clip child overflow */
   
