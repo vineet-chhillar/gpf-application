@@ -24,7 +24,12 @@ const AdvanceRuleMaster = () => {
     const res = await api.get("/gpf/advance-rules");
     setRules(res.data);
   };
-
+const [messageBox, setMessageBox] = useState({
+  open: false,
+  title: "",
+  message: "",
+  onConfirm: null
+});
   const handleChange = (e) => {
 
     const { name, value, type, checked } = e.target;
@@ -58,15 +63,33 @@ const AdvanceRuleMaster = () => {
 
   };
 
-  const toggleRule = async (ruleId) => {
+  const toggleRule = (ruleId, ruleCode, isActive) => {
 
-    await api.patch(`/gpf/advance-rules/${ruleId}/toggle`);
+  const action = isActive ? "Deactivate" : "Activate";
 
-    loadRules();
+  setMessageBox({
+    open: true,
+    title: `${action} Rule`,
+    message: `Do you want to ${action.toLowerCase()} Rule Code '${ruleCode}'?`,
+    onConfirm: async () => {
 
-  };
+      await api.patch(
+        `/gpf/advance-rules/${ruleId}/toggle`
+      );
+
+      loadRules();
+
+      setMessageBox(prev => ({
+        ...prev,
+        open: false
+      }));
+    }
+  });
+
+};
 
   return (
+    <>
     <div className="container">
 
       <h2>Advance Rule Master</h2>
@@ -160,7 +183,13 @@ const AdvanceRuleMaster = () => {
                   <input
                     type="checkbox"
                     checked={r.isActive}
-                    onChange={() => toggleRule(r.ruleId)}
+                    onChange={() =>
+  toggleRule(
+    r.ruleId,
+    r.ruleCode,
+    r.isActive
+  )
+}
                   />
                   <span className="slider"></span>
                 </label>
@@ -183,6 +212,45 @@ const AdvanceRuleMaster = () => {
       </table>
 
     </div>
+    {messageBox.open && (
+  <div className="modal-overlay">
+    <div className="message-modal">
+
+      <div className="message-modal-header">
+        {messageBox.title}
+      </div>
+
+      <div className="message-modal-body">
+        {messageBox.message}
+      </div>
+
+      <div className="message-modal-footer">
+
+        <button
+          className="btn-cancel"
+          onClick={() =>
+            setMessageBox(prev => ({
+              ...prev,
+              open: false
+            }))
+          }
+        >
+          No
+        </button>
+
+        <button
+          className="btn-confirm"
+          onClick={messageBox.onConfirm}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
+    </>
   );
 };
 

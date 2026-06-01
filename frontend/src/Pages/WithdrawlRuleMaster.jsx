@@ -24,7 +24,12 @@ const WithdrawlRuleMaster = () => {
     const res = await api.get("/gpf/withdrawal-rules");
     setRules(res.data);
   };
-
+const [messageBox, setMessageBox] = useState({
+  open: false,
+  title: "",
+  message: "",
+  onConfirm: null
+});
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm(prev => ({
@@ -47,12 +52,32 @@ const WithdrawlRuleMaster = () => {
   }
 };
 
-const toggleRule = async (ruleId) => {
-  await api.patch(`/gpf/withdrawal-rules/${ruleId}/toggle`);
-  loadRules(); // refresh list
+const toggleRule = (ruleId, ruleCode, isActive) => {
+
+  const action = isActive ? "Deactivate" : "Activate";
+
+  setMessageBox({
+    open: true,
+    title: `${action} Rule`,
+    message: `Do you want to ${action.toLowerCase()} Rule Code '${ruleCode}'?`,
+    onConfirm: async () => {
+
+      await api.patch(
+        `/gpf/withdrawal-rules/${ruleId}/toggle`
+      );
+
+      loadRules();
+
+      setMessageBox(prev => ({
+        ...prev,
+        open: false
+      }));
+    }
+  });
 };
 
   return (
+    <>
     <div className="container">
       <h2>Withdrawal Rule Master</h2>
 
@@ -191,7 +216,11 @@ const toggleRule = async (ruleId) => {
     <input
       type="checkbox"
       checked={r.isActive}
-      onChange={() => toggleRule(r.ruleId)}
+      onChange={() => toggleRule(
+      r.ruleId,
+      r.ruleCode,
+      r.isActive
+    )}
     />
     <span className="slider"></span>
   </label>
@@ -210,6 +239,45 @@ const toggleRule = async (ruleId) => {
 </table>
 
     </div>
+    {messageBox.open && (
+  <div className="modal-overlay">
+    <div className="message-modal">
+
+      <div className="message-modal-header">
+        {messageBox.title}
+      </div>
+
+      <div className="message-modal-body">
+        {messageBox.message}
+      </div>
+
+      <div className="message-modal-footer">
+
+        <button
+          className="btn-cancel"
+          onClick={() =>
+            setMessageBox(prev => ({
+              ...prev,
+              open: false
+            }))
+          }
+        >
+          No
+        </button>
+
+        <button
+          className="btn-confirm"
+          onClick={messageBox.onConfirm}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
+</>
   );
 };
 

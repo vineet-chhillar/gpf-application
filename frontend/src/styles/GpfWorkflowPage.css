@@ -13,11 +13,10 @@
   min-width: 1200px;     /* ✅ forces horizontal scroll */
   width: max-content;    /* ✅ allows overflow */
   border-collapse: collapse;
-  
+   margin: 0 auto;
 }
 .workflow-table thead {
   display: table-header-group !important;
-  
 }
 .workflow-table th,
 .workflow-table td {

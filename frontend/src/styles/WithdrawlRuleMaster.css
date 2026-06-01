@@ -230,3 +230,43 @@ box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 .type-selector span {
 pointer-events: none;
 }
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.message-modal {
+    width: 420px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.message-modal-header {
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.message-modal-body {
+    padding: 20px;
+    color: #333;
+    font-size: 14px;
+    min-height: 60px;
+}
+
+.message-modal-footer {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e5e5e5;
+}

@@ -55,6 +55,7 @@ const pageMap = {
         menus={menus}
         activePage={activePage}
         onMenuClick={setActivePage}
+        
       />
 
       {/* RIGHT SIDE */}

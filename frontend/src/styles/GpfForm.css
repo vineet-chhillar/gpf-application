@@ -363,7 +363,7 @@ h2::after {
   justify-content: center;
   align-items: center;
 
-  z-index: 9999; /* 🔥 VERY IMPORTANT */
+  z-index: 9999; 
 }
 
 .modal-box {
@@ -372,7 +372,7 @@ h2::after {
   border-radius: 10px;
   width: 400px;
   max-width: 90%;
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  box-shadow: 0 0 10px rgba(80, 31, 172, 0.3);
 }
 
 .modal-box.success {
@@ -447,11 +447,11 @@ h2::after {
   background: #f0f0f0;
 }
 
-/* 🔥 Hover description modal */
+
 .rule-hover-modal {
   position: fixed;
   right: 20px;
-  bottom: 105%;   /* 🔥 puts it just above dropdown */
+  bottom: 105%;   
   width: 500px;
   
   background: #fff;
