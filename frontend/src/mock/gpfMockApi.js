@@ -4,11 +4,11 @@ import api from "../api/axios";
 
 {/*export const getMasterByEmpCode = async (empcode) => {
 
+  console.log("Fetching master for empcode:", empcode);
   await new Promise(r => setTimeout(r, 300));
 
   return EMPLOYEES.find(e => e.empcode === empcode);
 };*/}
-
 
 export const getMasterByEmpCode = async (empcode) => {
   try {
@@ -24,6 +24,8 @@ export const getMasterByEmpCode = async (empcode) => {
     return null;
   }
 };
+
+
 const mapMasterApi = (data) => {
   if (!data) return null;
 
@@ -42,7 +44,6 @@ const mapMasterApi = (data) => {
     dateofjoining: data.dateofjoining,
     dateofsuperannuation: data.dateofsuperannuation,
     panno: data.panno,
-
     roles: roles
   };
 };
@@ -56,39 +57,68 @@ const mapMasterApi = (data) => {
 
   return GPF_DETAILS.find(d => d.panno === panNo);
 };*/}
+
+{/*export const getDetailsByPan = async (panNo) => {
+
+  await new Promise(r => setTimeout(r, 300));
+
+  const HARD_CODED_PAN = "ABMPA1395B";
+
+  return GPF_DETAILS.find(d => d.panno === HARD_CODED_PAN);
+};*/}
+
+
 export const getDetailsByPan = async (pan) => {
-try{
-  const response = await api.get(`/gpf-withdrawl/details/${pan}`);
+  try {
+    const response = await api.get(`/gpf-withdrawl/details/${pan}`);
 
-  console.log("FULL AXIOS RESPONSE:", response);
+    console.log("FULL AXIOS RESPONSE:", response);
 
-  const data = response.data;
+    const res = response.data;
 
-  console.log("ACTUAL DATA:", data);
+    console.log("ACTUAL DATA:", res);
 
-  return {
-    basicpay: data.basicpay,
-    closingbalance: data.closingbalance,
-    outstandingbalance: data.outstandingbalance,
-    totalcreditamount: data.totalcreditamount,
-    refundafterdateofoutstandingbalance:
-      data.refundafterdateofoutstandingbalance,
-    totalwithdrawlamount: data.totalwithdrawlamount,
-    gpfaccountno: data.gpfaccountno,
-    concernedofficername:
-      data.nameoftheofficermaintainingthePFAccount,
-    netbalance: data.netbalance
+    // 🔴 Case 1: No data found
+    if (
+      res?.status === "OK" &&
+      res?.message === "No data found"
+    ) {
+      return null; // 👈 important
+    }
 
-        
-  };
-} catch (error) {
-   console.error("DETAIL API ERROR:", error);
+    // 🔴 Case 2: Unexpected shape
+    if (!res || typeof res !== "object") {
+      throw new Error("Invalid API response");
+    }
 
+    // 🔴 Case 3: Success → map fields
+    return {
+      basicpay: res.basicpay,
+      closingbalance: res.closingbalance,
+      outstandingbalance: res.outstandingbalance,
+      totalcreditamount: res.totalcreditamount,
+      refundafterdateofoutstandingbalance:
+        res.refundafterdateofoutstandingbalance,
+      totalwithdrawlamount: res.totalwithdrawlamount,
+      gpfaccountno: res.gpfaccountno,
+      concernedofficername:
+        res.nameoftheofficermaintainingthePFAccount,
+      netbalance: res.netbalance
+    };
+
+  } catch (error) {
+    console.error("DETAIL API ERROR:", error);
     console.error("ERROR RESPONSE:", error.response);
 
-    throw error;
+    // 🔴 Extract backend message if available
+    const backendMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to fetch GPF details";
+
+    throw new Error(backendMessage);
+  }
 };
-}
 const mapDetailsApi = (data) => {
   if (!data) return null;
 

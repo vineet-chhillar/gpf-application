@@ -234,11 +234,11 @@ const pendingByRole = applications
   <th>Employee Code</th>
   <th>Name</th>
   <th>Designation</th>
-  <th>Division</th>
+  {/*<th>Division</th>*/}
   <th>Basic Pay</th>
   <th>Net Balance</th>
- <th>Status</th>
-<th>Pending With</th>
+ <th>Pending With</th>
+{/*<th>Pending With</th>*/}
 <th>Last Action By</th>
 <th>Last Remarks</th>
 </tr>
@@ -262,7 +262,7 @@ return (
   <td>{master.empcode}</td>
   <td>{master.empname}</td>
   <td>{master.designation}</td>
-  <td>{master.empdivision}</td>
+  {/*<td>{master.empdivision}</td>*/}
   <td>{details.basicpay}</td>
   <td>{details.netbalance}</td>
 
@@ -290,7 +290,7 @@ return (
   })()}
 </td>
 
-<td><span className="pending-role">{app.currentOwnerRole}</span></td>
+{/*<td><span className="pending-role">{app.currentOwnerRole}</span></td>*/}
 <td>{app.lastActionByRole}</td>
 <td className="remarks-column">{app.lastRemarks}</td>
 </tr>

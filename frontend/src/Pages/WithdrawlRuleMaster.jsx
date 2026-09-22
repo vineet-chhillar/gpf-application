@@ -23,6 +23,7 @@ const WithdrawlRuleMaster = () => {
   const loadRules = async () => {
     const res = await api.get("/gpf/withdrawal-rules");
     setRules(res.data);
+    console.log("rules",res.data);
   };
 const [messageBox, setMessageBox] = useState({
   open: false,
@@ -214,6 +215,7 @@ const toggleRule = (ruleId, ruleCode, isActive) => {
         <td>
   <label className="switch">
     <input
+       disabled
       type="checkbox"
       checked={r.isActive}
       onChange={() => toggleRule(

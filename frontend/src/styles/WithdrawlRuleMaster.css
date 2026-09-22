@@ -183,7 +183,7 @@
 }
 
 input:checked + .slider {
-  background-color: #22c55e;
+  background-color: #81863d;
 }
 
 input:checked + .slider:before {

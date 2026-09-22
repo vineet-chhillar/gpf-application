@@ -3,36 +3,59 @@
 ========================= */
 
 .sidebar {
-
   width: 260px;
   height: 100vh;
-
   position: relative;
 
   background:
     linear-gradient(
       180deg,
-      #1462b3 0%,
-      #105499 45%,
-      #0c437c 100%
+      #1b4f8f 0%,
+      #184783 35%,
+      #143a6a 70%,
+      #102f57 100%
     );
 
-  border-right: 1px solid rgba(255,255,255,0.08);
+  border-right: 1px solid rgba(255,255,255,0.06);
 
-  padding: 14px;
-
+  padding: 16px;
   display: flex;
   flex-direction: column;
-
   overflow-y: auto;
 
-  box-shadow:
-    4px 0 18px rgba(15,23,42,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.08);
-
-  backdrop-filter: blur(10px);
-
   color: #fff;
+
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    8px 0 30px rgba(0,0,0,0.12);
+
+  backdrop-filter: blur(16px);
+}
+
+/* subtle highlight */
+.sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(255,255,255,0.12),
+      transparent 40%
+    );
+
+  pointer-events: none;
+}
+
+/* scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 20px;
 }
 
 /* =========================
@@ -168,8 +191,8 @@
 .menu-item.active{
   background:linear-gradient(
     90deg,
-    rgba(0, 3, 10, 0.16),
-    rgba(0, 3, 10, 0.06)
+    oklab(66.967% -0.00956 -0.01674 / 0.849),
+    #4a5b77
   );
 
   color:#eef0f5;
@@ -263,4 +286,17 @@
 .sidebar::-webkit-scrollbar-thumb{
   background:#cbd5e1;
   border-radius:10px;
+}
+.menu-parent {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.child-menu {
+  padding-left: 38px !important;
+  font-size: 14px;
+}
+
+.child-menu .menu-icon {
+  opacity: 0.8;
 }

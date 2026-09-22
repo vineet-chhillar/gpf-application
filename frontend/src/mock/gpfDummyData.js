@@ -1,6 +1,6 @@
 export const EMPLOYEES = [
   {
-    empcode: "1030",
+    empcode: "3567",
     empname: "Sunita Verma",
     designation: "Scientist-B",
     empdivision: "Accounts",
@@ -9,7 +9,7 @@ export const EMPLOYEES = [
     empemailid: "test.employee@gov.in",
     dateofjoining: "2019-04-01",
     dateofsuperannuation: "2038-03-31",
-    panno: "BFUPK3317L"
+    panno: "AKXPS8966L"
   },
   {
     empcode: "1031",
@@ -112,7 +112,7 @@ export const EMPLOYEES = [
 
 export const GPF_DETAILS = [
   {
-    panno: "ABMPA1395B",
+    panno: "AKXPS8966L",
     gpfaccountno: "GPF-NIC-1030",
     basicpay: 45000,
     outstandingbalance: 500000,

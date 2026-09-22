@@ -10,7 +10,8 @@ import {
 const GpfAdvanceForm = () => {
 
  
-
+const [detailsStatus, setDetailsStatus] = useState("idle");
+// values: idle | loading | nodata | error | success
   const dropdownRef = useRef(null);
 const [empCodeInput,setEmpCodeInput] = useState("");
 const [gpfAccountInput,setGpfAccountInput] = useState("");
@@ -165,35 +166,30 @@ useEffect(() => {
 
   const timer = setTimeout(async () => {
 
-    try {
+  try {
+    setDetailsStatus("loading"); // ✅ ADD
 
-      const pan = masterApiData.panno.trim().toUpperCase();
+    const pan = masterApiData.panno.trim().toUpperCase();
+    const details = await getDetailsByPan(pan);
 
-      const details = await getDetailsByPan(pan);
-
-      if (details) {
-  setDetailsApiData(details);
-  setGpfAccountInput(details.gpfaccountno || ""); // ✅ NEW
-} else {
-  setDetailsApiData(null);
-  setGpfAccountInput(""); // ✅ clear
-}
-
-    } catch (err) {
-
-      console.error("Details fetch failed", err);
-      setDetailsApiData(null); // ❗ API error
-openMessageModal({
-    type: "error",
-    title: "GPF Details Fetch Failed",
-    message:
-      err.response?.data?.message ||
-      err.response?.data ||
-      "Unable to fetch GPF account details."
-  });
+    if (details) {
+      setDetailsApiData(details);
+      setGpfAccountInput(details.gpfaccountno || "");
+      setDetailsStatus("success"); // ✅ ADD
+    } else {
+      setDetailsApiData(null);
+      setGpfAccountInput("");
+      setDetailsStatus("nodata"); // ✅ ADD
     }
 
-  }, 400);
+  } catch (err) {
+    console.error("Details fetch failed", err);
+
+    setDetailsApiData(null);
+    setDetailsStatus("error"); // ✅ ADD
+  }
+
+}, 400);
 
   return () => clearTimeout(timer);
 
@@ -543,7 +539,7 @@ const advanceEligibilityResult =
           detailsApiData.basicpay,
 
         balanceAmount:
-          detailsApiData.closingbalance,
+          detailsApiData.outstandingbalance,
 
         requestedAmount:
           userInput.amountofadvancerequested || 0,
@@ -558,6 +554,7 @@ const selectedRuleText =
 
 console.log("Selected:", selectedRuleId, selectedRule);
 console.log("Rules:", rules);
+
 return (
 
 <div className="container">
@@ -615,6 +612,7 @@ return (
     setMasterApiData(null);
     setDetailsApiData(null);
     setGpfAccountInput("");
+     setDetailsStatus("idle");
   }}
   onBlur={handleEmpCodeBlur}
   onKeyDown={(e) => {
@@ -625,6 +623,24 @@ return (
 
 </div>
 
+{["loading", "nodata", "error"].includes(detailsStatus) && (
+  <div className={`message-box ${detailsStatus}`}>
+
+    {detailsStatus === "loading" && (
+      <>⏳ Fetching GPF details...</>
+    )}
+
+    {detailsStatus === "nodata" && (
+      <>⚠️ No GPF data found for this employee’s PAN.</>
+    )}
+
+    {detailsStatus === "error" && (
+      <>❌ Failed to fetch GPF details. Please try again.</>
+    )}
+
+  </div>
+)}
+{detailsStatus === "success" && (
 <div className="info-grid">
 {false && (
 <div className="info-card">
@@ -710,7 +726,7 @@ readOnly
 */}
 
 </div>
-
+)}
 </div>
 
 <hr/>
@@ -811,16 +827,37 @@ readOnly
   <div className="eligibility-box">
 
     <span className="eligibility-label">
-      Eligible Advance:
+      Eligible Amount:
     </span>
 
     <span className="eligibility-value">
-      ₹{Number(
-        advanceEligibilityResult.eligibleAmount || 0
-      ).toLocaleString("en-IN", {
-        maximumFractionDigits: 2
-      })}
+  ₹{Number(
+    advanceEligibilityResult.eligibleAmount || 0
+  ).toLocaleString("en-IN", {
+    maximumFractionDigits: 2
+  })}
+
+  {selectedRule && (
+    <span
+      style={{
+        marginLeft: "8px",
+        fontSize: "13px",
+        color: "#64748b",
+        fontWeight: 500
+      }}
+    >
+      (
+      {selectedRule.maxPercentage
+        ? (`${selectedRule.maxPercentage}%`) + " of balance"
+        : "N/A"}
+
+      {selectedRule.maxMonthsPay
+        ? ` | ${selectedRule.maxMonthsPay} Months Pay`
+        : ""}
+      )
     </span>
+  )}
+</span>
 
     {!advanceEligibilityResult.isValid &&
       userInput.amountofadvancerequested && (
@@ -1083,7 +1120,7 @@ onChange={handleChange}
 </div>
 
 <div className="info-card">
-<div className="info-label">Refund After Outstanding</div>
+<div className="info-label">Refund After Closing Balance</div>
 <div className="info-value">
 ₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
 </div>

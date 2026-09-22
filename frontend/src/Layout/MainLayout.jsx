@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
@@ -9,31 +10,84 @@ import AppFlowState from "../Pages/AppFlowState";
 import GpfWithdrawlForm from "../Pages/GpfWithdrawlForm";
 import GpfAdvanceForm from "../Pages/GpfAdvanceForm";
 import GpfRuleMaster from "../Pages/GpfRuleMaster";
-import GpfWorkflowPageNew from "../Pages/GpfWorkflowPageNew";
+import { useNavigate } from "react-router-dom";
+
+import GpfWorkflowInboxPage from "../Pages/GpfWorkflowInboxPage";
+import GpfWorkflowDetailsPage from "../Pages/GpfWorkflowDetailsPage";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
+//const handleMenuClick = (menuName) => {
+  //setActivePage(menuName);
+//};
+const navigate = useNavigate();
 
-  const menus = [
-    
-    { menuId: 1, menuName: "GPF Rule Master" },    
-    { menuId: 2, menuName: "GPF Application Status" },
-    { menuId: 3, menuName: "App WorkFlow HQ" },
-    { menuId: 4, menuName: "App WorkFlow States" },
-    { menuId: 5, menuName: "WithDrawl" },
-    { menuId: 6, menuName: "Advance" },
-    { menuId: 7, menuName: "Pending For Action New" },
-    
-    
-  ];
+const handleMenuClick = (menuName) => {
+  setActivePage(menuName);
+
+  if (menuName === "GPF Rule Master") navigate("/rule-master");
+  else if (menuName === "GPF Application Status") navigate("/status");
+    else if (menuName === "WorkFlow HQ") navigate("/workflow-hq");
+  else if (menuName === "WorkFlow States") navigate("/workflow-states");
+  else if (menuName === "WithDrawl") navigate("/withdrawl");
+  else if (menuName === "Advance") navigate("/advance");
+  else if (menuName === "Pending For Action") navigate("/workflow");
+};
+ const menus = [
+  {
+    menuId: 1,
+    menuName: "GPF Rule Master"
+  },
+   {
+    menuId: 100,
+    menuName: "GPF Workflow Master",
+    children: [
+      {
+        menuId: 2,
+        menuName: "WorkFlow HQ"
+      },
+      {
+        menuId: 3,
+        menuName: "WorkFlow States"
+      }
+    ]
+  },
+  {
+    menuId: 200,
+    menuName: "Apply For GPF",
+    children: [
+      {
+        menuId: 4,
+        menuName: "WithDrawl"
+      },
+      {
+        menuId: 5,
+        menuName: "Advance"
+      }
+    ]
+  },
+   {
+    menuId: 6,
+    menuName: "GPF Application Status"
+  },
+  //{
+    //menuId: 7,
+    //menuName: "Pending For Action"
+  //},
+  {
+    menuId: 7,
+    menuName: "Pending For Action"
+  }
+];
 const pageMap = {
   "GPF Rule Master": <GpfRuleMaster />,  
   "GPF Application Status": <GPFApplicationStatus />,
   "Advance Application Status": <AdvanceApplicationStatus />,
-  "App WorkFlow HQ": <WorkflowViewerPage />,
-  "App WorkFlow States": <AppFlowState />,
+  "WorkFlow HQ": <WorkflowViewerPage />,
+  "WorkFlow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
   "Advance": <GpfAdvanceForm />,  
-   "Pending For Action New": <GpfWorkflowPageNew />
+   //"Pending For Action": <GpfWorkflowPageNew />,
+   "Pending For Action": <GpfWorkflowInboxPage />
 ,
   
 };
@@ -54,7 +108,7 @@ const pageMap = {
       <Sidebar
         menus={menus}
         activePage={activePage}
-        onMenuClick={setActivePage}
+        onMenuClick={handleMenuClick}
         
       />
 
@@ -75,7 +129,27 @@ const pageMap = {
     width: "100%"  
   }}
 >
-  {pageMap[activePage] || <h2>No page mapped</h2>}
+<Routes>
+
+  <Route path="/" element={<Navigate to="/rule-master" />} />
+
+  <Route path="/rule-master" element={<GpfRuleMaster />} />
+  <Route path="/status" element={<GPFApplicationStatus />} />
+  <Route path="/advance-status" element={<AdvanceApplicationStatus />} />
+  <Route path="/workflow-hq" element={<WorkflowViewerPage />} />
+  <Route path="/workflow-states" element={<AppFlowState />} />
+
+  <Route path="/withdrawl" element={<GpfWithdrawlForm />} />
+  <Route path="/advance" element={<GpfAdvanceForm />} />
+
+  <Route path="/workflow" element={<GpfWorkflowInboxPage />} />
+
+  <Route
+    path="/workflow/:appType/:id/:empCode"
+    element={<GpfWorkflowDetailsPage />}
+  />
+
+</Routes>
 </div>
 
 

@@ -13,7 +13,8 @@ import {
 const GpfWithdrawlForm = () => {
 
 
-
+const [detailsStatus, setDetailsStatus] = useState("idle");
+// idle | loading | success | nodata | error
 const [empCodeInput, setEmpCodeInput] = useState("");
 const [gpfAccountInput, setGpfAccountInput] = useState("");
 const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -197,40 +198,45 @@ useEffect(() => {
 
 }, [detailsApiData]);
 useEffect(() => {
-
   if (!masterApiData?.panno) {
-    setDetailsApiData(null); // 🔥 clear if no PAN
+    setDetailsApiData(null);
+    setDetailsStatus("idle");
     return;
   }
 
+  setDetailsStatus("loading");
+
   const timer = setTimeout(async () => {
-
     try {
-
       const pan = masterApiData.panno.trim().toUpperCase();
 
       const details = await getDetailsByPan(pan);
-console.log("DETAILS FROM FRONTEND API:", details);
+
+      console.log("DETAILS FROM FRONTEND API:", details);
+
       if (details) {
-  setDetailsApiData(details);
-  setGpfAccountInput(details.gpfaccountno || ""); // ✅ NEW
-} else {
-  setDetailsApiData(null);
-  setGpfAccountInput(""); // ✅ clear
-}
+        setDetailsApiData(details);
+        setGpfAccountInput(details.gpfaccountno || "");
+        setDetailsStatus("success");
+      } else {
+        // 🔥 THIS IS YOUR KEY CASE
+        setDetailsApiData(null);
+        setGpfAccountInput("");
+        setDetailsStatus("nodata");
+      }
 
     } catch (err) {
-
       console.error("Details fetch failed", err);
-      setDetailsApiData(null); // ❗ API failed
 
+      setDetailsApiData(null);
+      setGpfAccountInput("");
+      setDetailsStatus("error");
     }
-
   }, 400);
 
   return () => clearTimeout(timer);
 
-}, [masterApiData]);
+}, [masterApiData?.panno]);
 
 {/*useEffect(() => {
 
@@ -287,6 +293,7 @@ const loadData = async () => {
     }
 
     const master = await getMasterByEmpCode(empCodeInput);
+    console.log("MAPPED MASTER FROM API:", master);
 
     const details = await getDetailsByPan(master.panno);
 
@@ -785,6 +792,23 @@ const handleSubmit = () => {
         </div>
 
 
+{["loading", "nodata", "error"].includes(detailsStatus) && (
+  <div className={`message-box ${detailsStatus}`}>
+
+    {detailsStatus === "loading" && (
+      <>⏳ Fetching GPF details...</>
+    )}
+
+    {detailsStatus === "nodata" && (
+      <>⚠️ No GPF data found for this employee’s PAN.</>
+    )}
+
+    {detailsStatus === "error" && (
+      <>❌ Failed to fetch GPF details. Please try again.</>
+    )}
+
+  </div>
+)}
           <div className="info-grid">
 
 {false && (
@@ -967,18 +991,50 @@ const handleSubmit = () => {
 </div>
 {eligibilityResult && (
   <div className="eligibility-box">
-
     <span className="eligibility-label">
       Eligible Amount:
     </span>
 
     <span className="eligibility-value">
-      ₹{Number(
-        eligibilityResult.eligibleAmount || 0
-      ).toLocaleString("en-IN", {
-        maximumFractionDigits: 2
-      })}
+  ₹{Number(
+    eligibilityResult.eligibleAmount || 0
+  ).toLocaleString("en-IN", {
+    maximumFractionDigits: 2
+  })}
+
+  {selectedRule && (
+    <span
+      style={{
+        marginLeft: "8px",
+        fontSize: "13px",
+        color: "#64748b",
+        fontWeight: 500
+      }}
+    >
+      (
+      {selectedRule.maxPercentage
+        ? (`${selectedRule.maxPercentage}%`) + " of balance"
+        : "N/A"}
+
+      {selectedRule.maxMonthsPay
+        ? ` | ${selectedRule.maxMonthsPay} Months Pay`
+        : ""}
+      )
     </span>
+  )}
+</span>
+
+    {/*{selectedRule?.maxPercentage && (
+      <span
+        style={{
+          marginLeft: "10px",
+          color: "#64748b",
+          fontSize: "13px"
+        }}
+      >
+        ({selectedRule.maxPercentage}% of balance)
+      </span>
+    )}*/}
 
     {!eligibilityResult.isValid &&
       userInput.amountofwithdrawlrequested && (
@@ -986,9 +1042,9 @@ const handleSubmit = () => {
           {eligibilityResult.message}
         </span>
       )}
-
   </div>
 )}
+
 <div className="form-row-compact">
 
     <div className="form-group">
@@ -1149,7 +1205,7 @@ const handleSubmit = () => {
 </div>
 
 <div className="info-card">
-<div className="info-label">Refund After Outstanding</div>
+<div className="info-label">Refund After Closing Balance</div>
 <div className="info-value">
 ₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
 </div>
@@ -1168,7 +1224,7 @@ const handleSubmit = () => {
 
 <div className="info-card">
 <div className="info-label">Total Withdrawal Amount</div>
-<div className="info-value">₹{detailsApiData?.totalwithdrawlamount || "-"}</div>
+<div className="info-value">₹{detailsApiData?.totalwithdrawalamount || "-"}</div>
 </div>
 
 <div className="info-card">

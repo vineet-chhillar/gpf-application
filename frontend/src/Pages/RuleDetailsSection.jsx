@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/GpfWorkflowPage.css";
+import "../styles/GpfWorkflowPageworkflow.css";
 
 /* ================= RULE INPUT ================= */
 const RuleInput = ({

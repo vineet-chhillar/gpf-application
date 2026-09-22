@@ -23,6 +23,7 @@ const AdvanceRuleMaster = () => {
   const loadRules = async () => {
     const res = await api.get("/gpf/advance-rules");
     setRules(res.data);
+    console.log("rules",res.data)
   };
 const [messageBox, setMessageBox] = useState({
   open: false,
@@ -147,7 +148,7 @@ const [messageBox, setMessageBox] = useState({
 
       <hr />
 
-      <table className="status-table">
+      <table className="rule-table">
 
         <thead>
           <tr>
@@ -181,6 +182,7 @@ const [messageBox, setMessageBox] = useState({
               <td>
                 <label className="switch">
                   <input
+                  disabled
                     type="checkbox"
                     checked={r.isActive}
                     onChange={() =>
