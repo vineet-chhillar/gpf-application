@@ -1,7 +1,6 @@
 package com.example.backend.service;
 import com.example.backend.entity.GpfWithdrawlRule;
 import com.example.backend.repository.GpfWithdrawlRuleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import jakarta.transaction.Transactional;
@@ -10,8 +9,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 @Service
 public class GpfWithdrawlRuleService {
 
-    @Autowired
-    private GpfWithdrawlRuleRepository repo;
+    private final GpfWithdrawlRuleRepository repo;
+
+  GpfWithdrawlRuleService(GpfWithdrawlRuleRepository repo) {
+    this.repo = repo;
+  }
 
     public List<GpfWithdrawlRule> getActiveRules() {
         return repo.findByIsActiveTrue();

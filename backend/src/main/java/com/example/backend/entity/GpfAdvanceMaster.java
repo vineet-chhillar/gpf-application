@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "gpfadvancemaster")
+@Table(name = "gpfadvancemaster", schema = "gpf")
 public class GpfAdvanceMaster {
 
     @Id

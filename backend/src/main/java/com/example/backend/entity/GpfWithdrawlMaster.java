@@ -9,7 +9,7 @@ import jakarta.persistence.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
-@Table(name = "gpfwithdrawlmaster")
+@Table(name = "gpfwithdrawlmaster", schema = "gpf")
 
 public class GpfWithdrawlMaster {
 public GpfWithdrawlMaster() {

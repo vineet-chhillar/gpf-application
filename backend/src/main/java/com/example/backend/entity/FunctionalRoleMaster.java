@@ -3,7 +3,7 @@ package com.example.backend.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "functional_role_master")
+@Table(name = "functional_role_master", schema = "gpf")
 public class FunctionalRoleMaster {
 
     @Id

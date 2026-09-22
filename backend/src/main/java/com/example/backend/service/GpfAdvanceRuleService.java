@@ -3,7 +3,6 @@ package com.example.backend.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.backend.entity.GpfAdvanceRule;
@@ -14,8 +13,11 @@ import jakarta.transaction.Transactional;
 @Service
 public class GpfAdvanceRuleService {
 
-    @Autowired
-    private GpfAdvanceRuleRepo repo;
+    private final GpfAdvanceRuleRepo repo;
+
+    GpfAdvanceRuleService(GpfAdvanceRuleRepo repo) {
+        this.repo = repo;
+    }
 
     public List<GpfAdvanceRule> getAll() {
         return repo.findAll();

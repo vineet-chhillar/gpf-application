@@ -1,8 +1,5 @@
 package com.example.backend.dto;
-
 import java.math.BigDecimal;
-
-import com.example.backend.entity.GpfWithdrawlMaster;
 
 public class InboxApplicationDTO {
 

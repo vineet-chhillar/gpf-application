@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
-@Table(name = "gpfwithdrawldetails")
+@Table(name = "gpfwithdrawldetails", schema = "gpf")
 public class GpfWithdrawlDetails {
 
     @Id

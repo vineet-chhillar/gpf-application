@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "applicationstatustrail")
+@Table(name = "applicationstatustrail", schema = "gpf")
 public class ApplicationStatusTrail {
 
     @Id

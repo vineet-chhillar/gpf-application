@@ -3,7 +3,7 @@ package com.example.backend.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "workflow_transition")
+@Table(name = "workflow_transition", schema = "gpf")
 public class WorkflowTransition {
 
      @Id

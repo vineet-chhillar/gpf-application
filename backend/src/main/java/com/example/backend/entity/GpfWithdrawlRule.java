@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "gpf_withdrawl_rules")
+@Table(name = "gpf_withdrawl_rules", schema = "gpf")
 public class GpfWithdrawlRule {
 
     @Id

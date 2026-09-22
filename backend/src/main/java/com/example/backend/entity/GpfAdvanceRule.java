@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "gpf_advance_rules")
+@Table(name = "gpf_advance_rules", schema = "gpf")
 public class GpfAdvanceRule {
 
     @Id

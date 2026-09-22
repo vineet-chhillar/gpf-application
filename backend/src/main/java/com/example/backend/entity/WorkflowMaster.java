@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "workflow_master")
+@Table(name = "workflow_master", schema = "gpf")
 public class WorkflowMaster {
 
     @Id

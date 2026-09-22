@@ -2,7 +2,6 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.GpfWithdrawlRule;
 import com.example.backend.service.GpfWithdrawlRuleService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,11 @@ import java.util.List;
 @CrossOrigin
 public class GpfWithdrawlRuleController {
 
-    @Autowired
-    private GpfWithdrawlRuleService service;
+    private final GpfWithdrawlRuleService service;
+
+    GpfWithdrawlRuleController(GpfWithdrawlRuleService service) {
+        this.service = service;
+    }
 
     /* ================= RULE MASTER (ALL RULES) ================= */
     @GetMapping("/withdrawal-rules")
@@ -26,6 +28,8 @@ public class GpfWithdrawlRuleController {
     /* ================= TRANSACTIONAL (ACTIVE ONLY) ================= */
     @GetMapping("/withdrawal-rules/active")
     public List<GpfWithdrawlRule> getActiveRules() {
+
+        System.out.print("jhgjhghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
         return service.getActiveRules(); // ✅ ACTIVE only
     }
 

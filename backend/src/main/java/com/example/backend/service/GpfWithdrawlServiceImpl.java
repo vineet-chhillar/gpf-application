@@ -4,6 +4,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.StringHttpMessageConverter;
 
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.Transient;
+import tools.jackson.databind.JsonNode;
 
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
@@ -51,8 +54,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import java.util.Base64;
+import java.util.Collections;
 
 @Service
 @Transactional
@@ -768,83 +774,104 @@ if (payload.getAmountofwithdrawlrequested()
 
 @Override
 public Map<String, Object> getDetailsByPan(String pan) {
-
     try {
+        System.out.println("==========================================================================");
 
-        System.out.println("STEP 1");
+        String user = Base64.getEncoder().encodeToString("CCBS".getBytes(StandardCharsets.UTF_8));
+        String pass = Base64.getEncoder().encodeToString("CCBS@2026".getBytes(StandardCharsets.UTF_8));
+        String panEnc = Base64.getEncoder().encodeToString(pan.getBytes(StandardCharsets.UTF_8));
 
-String innerXml =
-          "<gpf_advance_withdrawl>"
-        + "<user_name>CCBS</user_name>"
-        + "<password>CCBS@2026</password>"
-        + "<emp_pan_no>" + pan + "</emp_pan_no>"
-        + "</gpf_advance_withdrawl>";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.set("User-Agent", "PostmanRuntime/7.56.1");
+        headers.set("Accept", "*/*");
 
-System.out.println("STEP 2");
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("emp_pan_no", panEnc);
+        body.add("user_name", user);
+        body.add("password", pass);
 
-String encodedPayload = Base64.getEncoder()
-        .encodeToString(innerXml.getBytes("UTF-8"));
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-System.out.println("STEP 3");
+        RestTemplate restTemplate = new RestTemplate();
 
-String url =
-        "https://training.gifmis.cga.gov.in/centralEIS/WebServiceSOAP/gpf_advance_withdrawal.php"
-        + "?arg0="
-        + URLEncoder.encode(encodedPayload, "UTF-8");
+        // Debug outgoing request
+        restTemplate.getInterceptors().add((req, reqBody, exec) -> {
+            System.out.println("FINAL BODY:");
+            System.out.println(new String(reqBody, StandardCharsets.UTF_8));
+            return exec.execute(req, reqBody);
+        });
 
-System.out.println("STEP 4");
-
-RestTemplate restTemplate = new RestTemplate();
-
-System.out.println("STEP 5");
-
-ResponseEntity<String> response =
-        restTemplate.getForEntity(url, String.class);
-
-System.out.println("STEP 6");
-
-        System.out.println("RAW RESPONSE:");
-        System.out.println(response.getBody());
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        Map<String, Object> apiResponse = mapper.readValue(
-                response.getBody(),
-                new TypeReference<Map<String, Object>>() {}
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "https://gifmis.cga.gov.in/centralEIS/WebServiceSOAP/gpf_advance_withdrawal.php",
+                request,
+                String.class
         );
 
-        Object dataObj = apiResponse.get("data");
+        String raw = response.getBody();
 
-        if (!(dataObj instanceof List<?> outerList)
-                || outerList.isEmpty()) {
+        System.out.println("RESPONSE:");
+        System.out.println(raw);
 
-            throw new RuntimeException("Invalid API response: outer list missing");
+        // ================= STEP 1: Validate raw =================
+        if (raw == null || raw.isEmpty()) {
+            throw new RuntimeException("Empty API response");
         }
 
-        Object innerObj = outerList.get(0);
+        if (raw.contains("StatusCode")) {
+            throw new RuntimeException("API Error: " + raw);
+        }
 
-        if (!(innerObj instanceof List<?> innerList)
-                || innerList.isEmpty()) {
+        // ================= STEP 2: Parse JSON =================
+        ObjectMapper mapper = new ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(raw);
 
+        String status = root.path("status").asText();
+        String message = root.path("message").asText();
+
+        // ================= STEP 3: Handle NO DATA =================
+        if ("OK".equalsIgnoreCase(status) &&
+            "No data found".equalsIgnoreCase(message)) {
+
+            System.out.println("No data found for PAN: " + pan);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", status);
+            result.put("message", message);
+            result.put("data", Collections.emptyList());
+
+            return result;
+        }
+
+        // ================= STEP 4: Parse actual data =================
+        com.fasterxml.jackson.databind.JsonNode dataNode = root.path("data");
+
+        if (dataNode.isMissingNode() || !dataNode.isArray() || dataNode.size() == 0) {
+            throw new RuntimeException("Invalid API response: data list missing");
+        }
+
+        com.fasterxml.jackson.databind.JsonNode outer = dataNode.get(0);
+
+        if (!outer.isArray() || outer.size() == 0) {
             throw new RuntimeException("Invalid API response: inner list missing");
         }
 
-        Object detailObj = innerList.get(0);
+        com.fasterxml.jackson.databind.JsonNode detail = outer.get(0);
 
-        if (!(detailObj instanceof Map<?, ?>)) {
-
+        if (!detail.isObject()) {
             throw new RuntimeException("Invalid API response: detail object missing");
         }
 
-        return (Map<String, Object>) detailObj;
+        // Convert JsonNode → Map
+        return mapper.convertValue(detail, new TypeReference<Map<String, Object>>() {});
 
-   } catch (Exception e) {
-
-    e.printStackTrace();
-
-    throw new RuntimeException(e);
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException("Error calling GPF API", e);
+    }
 }
-}
+
+
 private Map<String, Object> parseSoapResponse(String xml) {
 
     Map<String, Object> result = new HashMap<>();

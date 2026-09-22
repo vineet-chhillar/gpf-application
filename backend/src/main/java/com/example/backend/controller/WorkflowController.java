@@ -4,7 +4,7 @@ import com.example.backend.dto.WorkflowTransitionViewDTO;
 import com.example.backend.entity.WorkflowMaster;
 import com.example.backend.service.WorkflowService;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,8 +13,11 @@ import java.util.List;
 @RequestMapping("/api/workflow")
 public class WorkflowController {
 
-    @Autowired
-    private WorkflowService workflowService;
+    private final WorkflowService workflowService;
+
+    public WorkflowController(WorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }
 
     @GetMapping("/list")
     public List<WorkflowMaster> getAllWorkflows() {
