@@ -9,7 +9,8 @@ function WithdrawlApplicationStatus() {
   const [expandedRow, setExpandedRow] = useState(null);
 const [search, setSearch] = useState("");
 const [appType, setAppType] = useState("withdrawl");
-
+const [modalMessage, setModalMessage] = useState("");
+const [showModal, setShowModal] = useState(false);
 const [roleFilter, setRoleFilter] = useState("");
   {/*const [application, setApplication] = useState({
     master: {},
@@ -88,6 +89,45 @@ const pendingByRole = applications
     return acc;
   }, {});
   //const { master, details, trail } = application;
+
+
+const handleGenerateOrder = async (app) => {
+  try {
+    const base =
+      appType === "withdrawl"
+        ? "/sanction-order"
+        : "/sanction-order-advance";
+
+    const res = await api.post(`${base}/generate-order`, {
+      applicationId: app.master?.id,
+    });
+
+    console.log("Order generated:", res.data);
+
+    // ✅ Show modal
+    setModalMessage(res.data.message);
+    setShowModal(true);
+
+  } catch (err) {
+    console.error("Error generating order", err);
+
+    setModalMessage("Error generating order");
+    setShowModal(true);
+  }
+};
+
+const handleViewOrder = (app) => {
+  const base =
+    appType === "withdrawl" ? "/sanction-order" : "/sanction-order-advance";
+
+  const API_BASE = api.defaults.baseURL;
+
+  window.open(
+    `${API_BASE}${base}/view-order/${app.master?.id}`,
+    "_blank"
+  );
+};
+
 
   return (
     <div className="status-container">
@@ -275,17 +315,44 @@ return (
       app.currentOwnerRole === "Completed";
 
     return (
-      <span
-        className={
-          isRejected
-            ? "status-reject"
-            : isCompleted
-            ? "status-complete"
-            : "status-pending"
-        }
-      >
-        {app.currentOwnerRole}
-      </span>
+      <div className="status-cell">
+        <span
+          className={
+            isRejected
+              ? "status-reject"
+              : isCompleted
+              ? "status-complete"
+              : "status-pending"
+          }
+        >
+          {app.currentOwnerRole}
+        </span>
+
+        {/* 🔥 Show buttons ONLY when completed */}
+        {isCompleted && (
+          <div className="status-actions">
+            <button
+              className="btn-generate"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGenerateOrder(app);
+              }}
+            >
+              Generate Sanction
+            </button>
+
+            <button
+              className="btn-view"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewOrder(app);
+              }}
+            >
+              View Sanction
+            </button>
+          </div>
+        )}
+      </div>
     );
   })()}
 </td>
@@ -582,7 +649,14 @@ return (
 
         </table>
       </div>
-
+{showModal && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modalMessage}</p>
+      <button onClick={() => setShowModal(false)}>OK</button>
+    </div>
+  </div>
+)}
     </div>
   );
 }

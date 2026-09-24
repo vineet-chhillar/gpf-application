@@ -642,3 +642,74 @@ pointer-events: none;
   background: white;
   color: #007bff;
 }
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;   /* prevents wrapping */
+}
+
+.status-actions {
+  display: flex;
+  gap: 6px;
+}
+.status-complete,
+.status-reject,
+.status-pending {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.btn-generate,
+.btn-view {
+  font-size: 11px;
+  padding: 4px 8px;     /* slightly increased for proper shape */
+  border-radius: 0;     /* 🔥 this removes oval shape */
+  border: none;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.btn-generate {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-view {
+  background: #2196f3;
+  color: white;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-box {
+  background: white;
+  padding: 20px 25px;
+  border-radius: 6px;
+  min-width: 250px;
+  text-align: center;
+}
+
+.modal-box p {
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.modal-box button {
+  padding: 6px 14px;
+  background: #4e1d7c; /* your theme */
+  color: white;
+  border: none;
+  cursor: pointer;
+}

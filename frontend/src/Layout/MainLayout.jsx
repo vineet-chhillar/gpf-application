@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 
 import GpfWorkflowInboxPage from "../Pages/GpfWorkflowInboxPage";
 import GpfWorkflowDetailsPage from "../Pages/GpfWorkflowDetailsPage";
+import GpfSanctionPage from "../Pages/GpfSanctionPage";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
 //const handleMenuClick = (menuName) => {
@@ -76,7 +77,12 @@ const handleMenuClick = (menuName) => {
   {
     menuId: 7,
     menuName: "Pending For Action"
+  },
+  {
+    menuId: 7,
+    menuName: "Generate Sanction"
   }
+  
 ];
 const pageMap = {
   "GPF Rule Master": <GpfRuleMaster />,  
@@ -87,7 +93,10 @@ const pageMap = {
   "WithDrawl": <GpfWithdrawlForm />,
   "Advance": <GpfAdvanceForm />,  
    //"Pending For Action": <GpfWorkflowPageNew />,
-   "Pending For Action": <GpfWorkflowInboxPage />
+   "Pending For Action": <GpfWorkflowInboxPage />,
+   "Generate Sanction": <GpfSanctionPage />
+
+
 ,
   
 };
