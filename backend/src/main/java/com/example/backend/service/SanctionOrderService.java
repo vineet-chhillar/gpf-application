@@ -96,26 +96,16 @@ public class SanctionOrderService {
 }
 
     public GenerateOrderResponse generateOrder(GenerateOrderRequest request) {
-
-
     Long applicationId = request.getApplicationId();
-
-//System.out.println("test if it has reached service");
-//System.out.println(applicationId.toString());
     // 1. Check existing
-    
+
 try
 {
     Optional<GpfSanctionOrder> existing = sanctionOrderRepository.findByApplicationId(applicationId);
-
     System.out.println("after repo call");
-
-
-
-            System.out.println("test if it has reached service");
+    System.out.println("test if it has reached service");
     if (existing.isPresent()) {
         GpfSanctionOrder order = existing.get();
-
         GenerateOrderResponse response = new GenerateOrderResponse();
         response.setOrderId(order.getId());
         response.setOrderNumber(order.getOrderNumber());
@@ -129,17 +119,13 @@ try
 }
     // 2. Build DTO
     SanctionOrderDto dto = buildSanctionOrder(applicationId);
-
     // 3. Generate text
     //String orderText = generateSanctionOrderText(dto);
-    String orderText = "Sanction Order Generated";
-
+    String orderText = "Sanction Order for Application ID: " + applicationId;
     // 4. Generate order number
     String orderNumber = generateOrderNumber();
-
     // 5. Generate PDF (IMPORTANT NEW STEP)
     byte[] pdfBytes = generatePdf(dto);
-
     // 6. Save everything
     GpfSanctionOrder entity = new GpfSanctionOrder();
     entity.setApplicationId(applicationId);
