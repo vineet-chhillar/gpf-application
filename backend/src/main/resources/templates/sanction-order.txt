@@ -1,0 +1,2 @@
+under the powers the amount {{amount}} and employee code {{gpfAccNo}} is hereby sanction generated
+

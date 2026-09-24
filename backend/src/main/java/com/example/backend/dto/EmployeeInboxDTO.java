@@ -69,4 +69,7 @@ public class EmployeeInboxDTO {
     public void setIsFinal(Boolean isFinal) {
         this.isFinal = isFinal;
     }
+
+
+
 }

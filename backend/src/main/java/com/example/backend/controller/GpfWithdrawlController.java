@@ -158,14 +158,13 @@ if (rolesObj != null) {
          
 }
     @GetMapping("/status-all")
-public ResponseEntity<?> getAllStatuses() {
+    public ResponseEntity<?> getAllStatuses() 
+    {
     return ResponseEntity.ok(gpfWithdrawlService.getAllApplicationStatus());
-}
+    }
 
     @Autowired
     private GpfWithdrawlService gpfWithdrawlService;
-
-
 
     @PostMapping("/save")
     public ResponseEntity<?> save(@Valid @RequestBody GpfWithdrawlRequestDTO dto) {
