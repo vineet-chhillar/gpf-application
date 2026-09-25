@@ -6,6 +6,7 @@ public class SanctionOrderDto {
     private Double requestedWithdrawlAmount;
     private String designation;
     private String empCode;
+    private String empName;
     private String gpfAccNo;
     private String purposeOfWithdrawl;
 
@@ -39,6 +40,12 @@ public class SanctionOrderDto {
 
     public void setEmpCode(String empCode) {
         this.empCode = empCode;
+    }
+    public String getEmpName() {
+        return empName;
+    }
+    public void setEmpName(String empName) {
+        this.empName = empName;
     }   
     
 

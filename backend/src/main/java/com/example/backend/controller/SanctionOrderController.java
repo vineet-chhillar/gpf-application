@@ -1,5 +1,7 @@
 package com.example.backend.controller;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,16 +14,20 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.backend.dto.GenerateOrderRequest;
 import com.example.backend.dto.GenerateOrderResponse;
 import com.example.backend.service.SanctionOrderService;
+import com.example.backend.repository.GpfSanctionOrderRepository;
 
 @RestController
 @RequestMapping("/api/sanction-order")
 public class SanctionOrderController {
 
     private final SanctionOrderService sanctionOrderService;
+    //private GpfSanctionOrderRepository sanctionOrderRepository;
+    private final GpfSanctionOrderRepository sanctionOrderRepository;
 
     @Autowired
-    public SanctionOrderController(SanctionOrderService sanctionOrderService) {
+    public SanctionOrderController(SanctionOrderService sanctionOrderService, GpfSanctionOrderRepository sanctionOrderRepository) {
         this.sanctionOrderService = sanctionOrderService;
+        this.sanctionOrderRepository = sanctionOrderRepository;
     }
 
     @PostMapping("/generate-order")
@@ -45,4 +51,13 @@ public class SanctionOrderController {
                 .header("Content-Disposition", "inline; filename=sanction-order.pdf")
                 .body(pdf);
     }
+    @GetMapping("/check-order/{applicationId}")
+public ResponseEntity<Map<String, Boolean>> checkOrder(@PathVariable Long applicationId) {
+
+    boolean exists = sanctionOrderRepository
+            .findByApplicationId(applicationId)
+            .isPresent();
+
+    return ResponseEntity.ok(Map.of("exists", exists));
+}
 }

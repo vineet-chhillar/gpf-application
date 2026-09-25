@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.Set;
 
 //import javax.swing.text.Document;
 
@@ -69,6 +71,7 @@ public class SanctionOrderService {
 
     dto.setRequestedWithdrawlAmount(details.getAmountofwithdrawlrequested() != null ? details.getAmountofwithdrawlrequested().doubleValue() : null  );
     dto.setDesignation(master.getDesignation());
+    dto.setEmpName(master.getEmpname());
     dto.setEmpCode(master.getEmpcode());
     dto.setGpfAccNo(details.getGpfaccountno());
     dto.setPurposeOfWithdrawl(details.getPurposeofwithdrawl());
@@ -195,57 +198,148 @@ public byte[] generatePdf(SanctionOrderDto dto)
         Document document = new Document();
         PdfWriter.getInstance(document, out);
         document.open();
+        
+        Set<String> scientistGroup = Set.of("Scientist-D", "Scientist-E", "Scientist-F", "Scientist-G");
+        String adminCode = scientistGroup.contains(
+        dto.getDesignation().toUpperCase()
+        ) ? "ADMN.I" : "ADMN.II";
+
+
+        String adminCodeNew = scientistGroup.contains(
+        dto.getDesignation().toUpperCase()
+        ) ? "Administration Section-I" : "Administration Section-II";
+
+        String prevFY = getPreviousFinancialYear();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate date = LocalDate.parse(dto.getDateOfRetirement(), inputFormat);
+        String formattedDate = date.format(outputFormat);
+
+        String currentFinYearStartDate = getCurrentFYStartDate().format(formatter);
+        String currentFinYearEndDateTillDecember = getCurrentFYEndTillDecember().format(formatter);
+
         // ---------------- HEADER (CENTER) ----------------
-        Font boldFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
-        Paragraph header = new Paragraph("SANCTION ORDER", boldFont);
+        Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+        Paragraph header = new Paragraph("No." + dto.getEmpCode()+"/NIC/GPF/" + java.time.LocalDate.now().getYear()+"-"+ adminCode + "\n"
+         + "Government of India" + "\n"
+         + "Ministry of Electronics and Information Technology" + "\n"
+         + "National Informatics Centre" + "\n"
+         + "[" + adminCodeNew + "]"
+         , boldFont);
         header.setAlignment(Element.ALIGN_CENTER);
         header.setSpacingAfter(10);
         document.add(header);
-        // ---------------- DATE (RIGHT) ----------------
-        Paragraph date = new Paragraph("Date: " + java.time.LocalDate.now());
-        date.setAlignment(Element.ALIGN_RIGHT);
-        date.setSpacingAfter(10);
-        document.add(date);
+        //-------------------HEADER (RIGHT)----------------
+        Font boldFontRight = new Font(Font.FontFamily.HELVETICA,10,Font.BOLD );
+        Paragraph headerright = new Paragraph("A-Block, CGO Complex," + "\n"
+        + "Lodhi Road, New Delhi-110003" + "\n"
+        + "Dated: " + java.time.LocalDate.now().format(formatter) 
+         , boldFontRight);
+        headerright.setAlignment(Element.ALIGN_RIGHT);
+        headerright.setSpacingAfter(10);
+        document.add(headerright);
+        //------------------HEADER (Center)----------------
+        Font boldFontCenter = new Font(Font.FontFamily.HELVETICA, 10,Font.BOLD | Font.UNDERLINE);
+        Paragraph headercenter = new Paragraph("ORDER No:- " + generateOrderNumber() + "\n" 
+        ,boldFontCenter);
+        headercenter.setAlignment(Element.ALIGN_CENTER);
+        headercenter.setSpacingAfter(10);
+        document.add(headercenter);
         // ---------------- MAIN PARAGRAPH ----------------
-        Paragraph para = new Paragraph(
-                "Sanction is hereby accorded for withdrawal of Rs. "
-                        + dto.getRequestedWithdrawlAmount()
-                        + " from GPF Account No. "
-                        + dto.getGpfAccNo()
-                        + " for the purpose of "
-                        + dto.getPurposeOfWithdrawl() + "."
-        );
+        Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
+        
+        Paragraph para = new Paragraph();
+        para.add(new Chunk(
+                "Under the Powers delegated National Informatics Centre vide Office order No. M-11017/1/2014-" 
+                + "MS(O&M) dated 17.07.2014 and 19.01.2016, sanction is hereby accorded under Rule 15(1)(C) read" 
+                + "with Rule 16(1) & 16(2) of GPF Rules 1960 to the withdrawal of Rs. " + dto.getRequestedWithdrawlAmount() + "(" + convertToWords(dto.getRequestedWithdrawlAmount()) + ") "
+                +"by " + dto.getEmpName() + ", " + dto.getDesignation() + ", Employee Code:" + dto.getEmpCode() + " from his/her GPF A/C No " 
+                + dto.getGpfAccNo() + " for the purpose of " + dto.getPurposeOfWithdrawl() + "\n" 
+                + "2. " + dto.getEmpName() +" has rendered more than "+ getNumberOfYearsOfService(dto.getDateOfJoining(), dto.getDateOfRetirement())
+                + " years service.", normalFont));
+
+                para.add(new Chunk(
+                "(" + "Date of Retirement: " + formattedDate + ")" +"\n"  ,boldFont));
+
+                para.add(new Chunk(
+                 "3. The anount of withdrawal is Less Than 50% of balance in his/her GPF A/C." + "\n"
+                + "\n"
+                + "4. The balance at the credit of individual is detailed below: -" + "\n"
+                ,normalFont));
+
+
+                //Sanction is hereby accorded for withdrawal of Rs. "
+                  //      + dto.getRequestedWithdrawlAmount()
+                    //    + " from GPF Account No. "
+                      //  + dto.getGpfAccNo()
+                        //+ " for the purpose of "
+                        //+ dto.getPurposeOfWithdrawl() + "."
+        
         para.setSpacingAfter(15);
         document.add(para);
         // ---------------- DETAILS TABLE ----------------
-        PdfPTable table = new PdfPTable(2);
-        table.setWidthPercentage(100);
+        double totalOneToThree=dto.getClosingBalance()+dto.getCreditAmount()+dto.getRefundAmount();
 
-        table.addCell("Designation");
-        table.addCell(dto.getDesignation());
+        Font smallBoldFont = new Font(Font.FontFamily.HELVETICA,9,Font.BOLD);
 
-        table.addCell("Date of Joining");
-        table.addCell(dto.getDateOfJoining());
+       PdfPTable table = new PdfPTable(3);
+       table.setWidthPercentage(100);
+       float[] columnWidths = {1f, 6f, 3f};
+       table.setWidths(columnWidths);
 
-        table.addCell("Date of Retirement");
-        table.addCell(dto.getDateOfRetirement());
+        table.addCell(new Phrase("i)", smallBoldFont));
+        table.addCell(new Phrase("Closing balance as per statement for the year " + prevFY));
+        table.addCell(dto.getClosingBalance() != null ? String.valueOf(dto.getClosingBalance()) : "N/A");
 
-        table.addCell("Closing Balance");
-        table.addCell(String.valueOf(dto.getClosingBalance()));
+        table.addCell(new Phrase("ii)", smallBoldFont));
+        table.addCell(new Phrase("Credit from" + currentFinYearStartDate + " to " + currentFinYearEndDateTillDecember));
+        table.addCell(dto.getCreditAmount() != null ? String.valueOf(dto.getCreditAmount()) : "N/A");
 
-        table.addCell("Credit Amount");
-        table.addCell(String.valueOf(dto.getCreditAmount()));
+        table.addCell(new Phrase("iii)", smallBoldFont));
+        table.addCell(new Phrase("Refund of advance from" + currentFinYearStartDate + " to " + currentFinYearEndDateTillDecember));
+        table.addCell(dto.getRefundAmount() != null ? String.valueOf(dto.getRefundAmount()) : "N/A");
 
-        table.addCell("Refund Amount");
-        table.addCell(String.valueOf(dto.getRefundAmount()));
+        table.addCell(new Phrase("iv)", smallBoldFont));
+        table.addCell(new Phrase("Total of Col(i) to (iii)"));
+        table.addCell(String.valueOf(totalOneToThree));
 
-        table.setSpacingAfter(20);
+        table.addCell(new Phrase("v)", smallBoldFont));
+        table.addCell(new Phrase("Subsequent withdrawal"));
+        table.addCell(String.valueOf(dto.getSubsequentWithdrawl()));
+
+        table.addCell(new Phrase("vi)", smallBoldFont));
+        table.addCell(new Phrase("Balance as on date of Sanction"));
+        table.addCell(String.valueOf(totalOneToThree - dto.getSubsequentWithdrawl()));
+
+        table.setSpacingAfter(100);
         document.add(table);
 
         // ---------------- SIGNATURE ----------------
         Paragraph sign = new Paragraph("Authorized Signatory");
+        sign.setSpacingAfter(10);
         sign.setAlignment(Element.ALIGN_RIGHT);
         document.add(sign);
+
+
+       Paragraph paraFooterParagraph = new Paragraph(
+                "1. The Senior Accounts Officer, Pay & Accounts Office, NICHQ, New Delhi-110003" + "\n"
+               +"2. DDO, NICHQ, New Delhi-110003" + "\n"
+               +"3. Individual Concerned, with the instruction that within one month of the drawal of the amount, he/she should produce certificate to the effect that the withdrawal sanctioned above has been utilised for the purpose for which it was drawn."+"\n"
+               +"4. Personal file " + dto.getEmpCode() + "\n"
+                , normalFont);
+
+                
+        paraFooterParagraph.setSpacingAfter(80);
+        document.add(paraFooterParagraph);
+
+
+
+        Paragraph signFooter = new Paragraph("Authorized Signatory");
+        signFooter.setAlignment(Element.ALIGN_RIGHT);
+        document.add(signFooter);
 
         document.close();
 
@@ -292,5 +386,94 @@ public byte[] getOrderPdf(Long applicationId) {
         .replace("{{credit}}", String.valueOf(dto.getCreditAmount()))
         .replace("{{refund}}", String.valueOf(dto.getRefundAmount()))
         .replace("{{subsequent}}", String.valueOf(dto.getSubsequentWithdrawl()));
+}
+private static final String[] units = {
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
+    "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen",
+    "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+};
+
+private static final String[] tens = {
+    "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+};
+
+public String convertToWords(Double number) {
+    if (number == 0) return "Zero";
+
+    return convert(number.longValue()).trim() + " Only";
+}
+
+private String convert(long n) {
+    if (n < 20) return units[(int) n];
+
+    if (n < 100)
+        return tens[(int) (n / 10)] + " " + units[(int) (n % 10)];
+
+    if (n < 1000)
+        return units[(int) (n / 100)] + " Hundred " + convert(n % 100);
+
+    if (n < 100000)
+        return convert(n / 1000) + " Thousand " + convert(n % 1000);
+
+    if (n < 10000000)
+        return convert(n / 100000) + " Lakh " + convert(n % 100000);
+
+    return convert(n / 10000000) + " Crore " + convert(n % 10000000);
+}
+public String getNumberOfYearsOfService(String dateOfJoining, String dateOfRetirement) {
+    LocalDate doj = LocalDate.parse(dateOfJoining);
+    LocalDate dor = LocalDate.parse(dateOfRetirement);
+    long years = java.time.temporal.ChronoUnit.YEARS.between(doj, dor);
+   return String.valueOf(years);
+
+}
+public String getPreviousFinancialYear() {
+    java.time.LocalDate today = java.time.LocalDate.now();
+
+    int year = today.getYear();
+    int month = today.getMonthValue();
+
+    int startYear, endYear;
+
+    if (month < 4) {
+        // Jan–Mar → current FY is (year-1)-(year)
+        startYear = year - 2;
+        endYear = year - 1;
+    } else {
+        // Apr–Dec → current FY is (year)-(year+1)
+        startYear = year - 1;
+        endYear = year;
+    }
+
+    return startYear + "-" + endYear;
+}
+public LocalDate getCurrentFYStartDate() {
+    LocalDate today = LocalDate.now();
+
+    int year = today.getYear();
+    int month = today.getMonthValue();
+
+    if (month < 4) {
+        // Jan–Mar → FY started last year
+        return LocalDate.of(year - 1, 4, 1);
+    } else {
+        // Apr–Dec → FY started this year
+        return LocalDate.of(year, 4, 1);
+    }
+}
+
+public LocalDate getCurrentFYEndTillDecember() {
+    LocalDate today = LocalDate.now();
+
+    int year = today.getYear();
+    int month = today.getMonthValue();
+
+    if (month < 4) {
+        // Jan–Mar → December belongs to previous calendar year
+        return LocalDate.of(year - 1, 12, 1);
+    } else {
+        // Apr–Dec → December of same year
+        return LocalDate.of(year, 12, 1);
+    }
 }
 }
