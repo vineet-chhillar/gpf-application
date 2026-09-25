@@ -116,18 +116,38 @@ const handleGenerateOrder = async (app) => {
   }
 };
 
-const handleViewOrder = (app) => {
-  const base =
-    appType === "withdrawl" ? "/sanction-order" : "/sanction-order-advance";
+const handleViewOrder = async (app) => {
+  try {
+    const base =
+      appType === "withdrawl"
+        ? "/sanction-order"
+        : "/sanction-order-advance";
 
-  const API_BASE = api.defaults.baseURL;
+    const applicationId = app.master?.id;
 
-  window.open(
-    `${API_BASE}${base}/view-order/${app.master?.id}`,
-    "_blank"
-  );
+    // 🔥 Step 1: check if exists
+    const res = await api.get(`${base}/check-order/${applicationId}`);
+
+    if (res.data.exists) {
+      // ✅ open PDF
+      const API_BASE = api.defaults.baseURL;
+
+      window.open(
+        `${API_BASE}${base}/view-order/${applicationId}`,
+        "_blank"
+      );
+    } else {
+      setModalMessage("Sanction order not generated yet");
+      setShowModal(true);
+    }
+
+  } catch (err) {
+    console.error(err);
+
+    setModalMessage("Error fetching sanction order");
+    setShowModal(true);
+  }
 };
-
 
   return (
     <div className="status-container">
