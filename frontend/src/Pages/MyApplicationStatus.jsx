@@ -2,16 +2,16 @@ import React, { useEffect, useState } from "react";
 import "../styles/WithdrawlApplicationStatus.css";
 import api from "../api/axios";
 /* temporary until login integration */
-const HARDCODED_EMPCODE = "EMP021";
+const HARDCODED_EMPCODE = "3571";
 
 function WithdrawlApplicationStatus() {
 
   const [expandedRow, setExpandedRow] = useState(null);
-const [search, setSearch] = useState("");
+
 const [appType, setAppType] = useState("withdrawl");
 const [modalMessage, setModalMessage] = useState("");
 const [showModal, setShowModal] = useState(false);
-const [roleFilter, setRoleFilter] = useState("");
+
   {/*const [application, setApplication] = useState({
     master: {},
     details: {},
@@ -23,14 +23,7 @@ const formatLabel = (key) => {
     .replace(/^./, str => str.toUpperCase()); // capitalize
 };
 const [applications, setApplications] = useState([]);
-const filteredApps = applications.filter(a =>
-  (!roleFilter || a.currentOwnerRole === roleFilter) &&
 
-  (
-    a.master?.empname?.toLowerCase().includes(search.toLowerCase()) ||
-    a.master?.empcode?.toLowerCase().includes(search.toLowerCase())
-  )
-);
   const [loading, setLoading] = useState(true);
 
  useEffect(() => {
@@ -43,7 +36,9 @@ appType === "withdrawl"
 ? "/gpf-withdrawl"
 : "/gpf-advance";
 
-const res = await api.get(`${base}/status-all`);
+//const res = await api.get(`${base}/status-all`);
+const res = await api.get(`${base}/status-by-emp/${HARDCODED_EMPCODE}`);
+
 setApplications(res.data);
 setExpandedRow(null);
 
@@ -90,28 +85,18 @@ const pendingByRole = applications
   //const { master, details, trail } = application;
 
 
-const handleGenerateOrder = async (app, index) => {
+const handleGenerateOrder = async (app) => {
   try {
     const base =
       appType === "withdrawl"
         ? "/sanction-order"
-        : "/sanction-order";
+        : "/sanction-order-advance";
 
     const res = await api.post(`${base}/generate-order`, {
       applicationId: app.master?.id,
-       type: appType,
     });
 
     console.log("Order generated:", res.data);
-
-    // ✅ UPDATE UI STATE (IMPORTANT)
-    setApplications(prev =>
-      prev.map((item, i) =>
-        i === index
-          ? { ...item, sanctionGenerated: true }
-          : item
-      )
-    );
 
     // ✅ Show modal
     setModalMessage(res.data.message);
@@ -185,69 +170,10 @@ const handleViewOrder = async (app) => {
   </div>
 
 
- <div className="dashboard-cards">
-
-  <div className="card total">
-    <h3>Total Applications</h3>
-    <p>{applications.length}</p>
-  </div>
-
-  <div className="card pending">
-    <h3>Pending</h3>
-    <p>
-      {
-        applications.filter(
-          a =>
-            a.currentOwnerRole !== "Completed" &&
-            a.currentOwnerRole !== "Cancelled/Rejected"
-        ).length
-      }
-    </p>
-  </div>
-  {/*<div className="card pending-role-card">
-  <h3>Pending by Role</h3>
-
-  {Object.keys(pendingByRole).length === 0 ? (
-    <p>No pending</p>
-  ) : (
-    <div className="role-list">
-      {Object.entries(pendingByRole).map(([role, count]) => (
-        <div key={role} className="role-item">
-          <span>{role}</span>
-          <b>{count}</b>
-        </div>
-      ))}
-    </div>
-  )}
-</div>*/}
-
-  <div className="card completed">
-    <h3>Completed</h3>
-    <p>
-      {
-        applications.filter(
-          a => a.currentOwnerRole === "Completed"
-        ).length
-      }
-    </p>
-  </div>
-
-  {/* 🔥 NEW CARD */}
-  <div className="card rejected">
-    <h3>Cancelled / Rejected</h3>
-    <p>
-      {
-        applications.filter(
-          a => a.currentOwnerRole === "Cancelled/Rejected"
-        ).length
-      }
-    </p>
-  </div>
-
-</div>
+ 
 
 
- <div className="search-container">
+{/* <div className="search-container">
     <input
       type="text"
       className="search-input"
@@ -255,46 +181,10 @@ const handleViewOrder = async (app) => {
       value={search}
       onChange={(e) => setSearch(e.target.value)}
     />
-  </div>
+  </div>*/}
   
 </div>
-<div className="pending-role-row">
-  
-  <div className="pending-role-header">
 
-  <span className="pending-role-title">
-    Pending by Role →
-  </span>
-
-  {roleFilter && (
-    <span
-      className="clear-filter"
-      onClick={() => setRoleFilter("")}
-    >
-      ✖
-    </span>
-  )}
-
-</div>
-
-  <div className="pending-role-inline">
-    {Object.entries(pendingByRole).map(([role, count], index) => (
-      <span
-  key={role}
-  className="role-inline-item"
-  onClick={() => setRoleFilter(role)}
->
-        <span className="role-name">{role}:</span>
-        <span className="role-count">{count}</span>
-
-        {index !== Object.entries(pendingByRole).length - 1 && (
-          <span className="role-separator">|</span>
-        )}
-      </span>
-    ))}
-  </div>
-
-</div>
       <div className="status-table-wrapper">
         <table className="status-table">
 
@@ -315,7 +205,7 @@ const handleViewOrder = async (app) => {
 
           <tbody>
 
-{filteredApps.map((app, index) => {
+{applications.map((app, index) => {
 
 const master = app.master || {};
 const details = app.details || {};
@@ -358,29 +248,15 @@ return (
         </span>
 
         {/* 🔥 Show buttons ONLY when completed */}
-        {isCompleted && (
-          <div className="status-actions">
-            <button
-               className={`btn-generate ${app.sanctionGenerated ? "btn-disabled" : ""}`}
-              disabled={app.sanctionGenerated}
-              onClick={(e) => {e.stopPropagation();
-                handleGenerateOrder(app, index);
-              }}
-            >
-              Generate Sanction
-            </button>
-
-            <button
-              className="btn-view"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewOrder(app);
-              }}
-            >
-              View Sanction
-            </button>
-          </div>
-        )}
+       <span className={
+  isRejected
+    ? "status-reject"
+    : isCompleted
+    ? "status-complete"
+    : "status-pending"
+}>
+  {app.currentOwnerRole}
+</span>
       </div>
     );
   })()}

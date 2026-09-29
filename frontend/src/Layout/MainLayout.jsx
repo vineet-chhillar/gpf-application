@@ -4,6 +4,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 import GPFApplicationStatus from "../Pages/GPFApplicationStatus";
+import MyApplicationStatus from "../Pages/MyApplicationStatus";
 import AdvanceApplicationStatus from "../Pages/AdvanceApplicationStatus";
 import WorkflowViewerPage from "../Pages/WorkflowViewerPage";
 import AppFlowState from "../Pages/AppFlowState";
@@ -26,7 +27,8 @@ const handleMenuClick = (menuName) => {
   setActivePage(menuName);
 
   if (menuName === "GPF Rule Master") navigate("/rule-master");
-  else if (menuName === "GPF Application Status") navigate("/status");
+  else if (menuName === "GPF Application Status(Admin)") navigate("/status");
+  else if (menuName === "My Application Status") navigate("/my-applications");
     else if (menuName === "WorkFlow HQ") navigate("/workflow-hq");
   else if (menuName === "WorkFlow States") navigate("/workflow-states");
   else if (menuName === "WithDrawl") navigate("/withdrawl");
@@ -68,26 +70,32 @@ const handleMenuClick = (menuName) => {
   },
    {
     menuId: 6,
-    menuName: "GPF Application Status"
+    menuName: "GPF Application Status(Admin)"
+  },
+   
+   {
+    menuId: 7,
+    menuName: "My Application Status"
   },
   //{
     //menuId: 7,
     //menuName: "Pending For Action"
   //},
   {
-    menuId: 7,
+    menuId: 8,
     menuName: "Pending For Action"
   },
   {
-    menuId: 7,
+    menuId: 9,
     menuName: "Generate Sanction"
   }
   
 ];
 const pageMap = {
   "GPF Rule Master": <GpfRuleMaster />,  
-  "GPF Application Status": <GPFApplicationStatus />,
-  "Advance Application Status": <AdvanceApplicationStatus />,
+  "GPF Application Status(Admin)": <GPFApplicationStatus />,
+  "My Application Status": <MyApplicationStatus />,     
+   "Advance Application Status": <AdvanceApplicationStatus />,
   "WorkFlow HQ": <WorkflowViewerPage />,
   "WorkFlow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
@@ -128,7 +136,7 @@ const pageMap = {
         <Header title={activePage} />
 
         {/* CONTENT (TEMP) */}
-      <div
+      {/*<div
   style={{
     padding: "10px",
     background:"#f8fafc",
@@ -137,6 +145,16 @@ const pageMap = {
     overflowX: "auto"  ,
     width: "100%"  
   }}
+>*/}
+<div
+  style={{
+    flex: 1,
+    padding: "10px",
+    background: "#f8fafc",
+    overflowY: "auto",
+    overflowX: "auto",
+    width: "100%"
+  }}
 >
 <Routes>
 
@@ -144,6 +162,7 @@ const pageMap = {
 
   <Route path="/rule-master" element={<GpfRuleMaster />} />
   <Route path="/status" element={<GPFApplicationStatus />} />
+  <Route path="/my-applications" element={<MyApplicationStatus />} />
   <Route path="/advance-status" element={<AdvanceApplicationStatus />} />
   <Route path="/workflow-hq" element={<WorkflowViewerPage />} />
   <Route path="/workflow-states" element={<AppFlowState />} />
@@ -160,10 +179,38 @@ const pageMap = {
 
 </Routes>
 </div>
-
+<div
+  style={{
+    padding: "6px 10px",
+    background: "#ffffff",
+    borderTop: "1px solid #e5e7eb",
+    fontSize: "12px",
+    textAlign: "center",
+    lineHeight: "1.5"
+  }}
+>
+  <div>
+    <b>
+      Designed and Developed by{" "}
+      <a
+        href="https://digital.nic.in/LocalTA/application/track#"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: "#1d4ed8", textDecoration: "none" }}
+      >
+        Office Automation Division, National Informatics Centre © 2026 Version 1.0
+      </a>
+    </b>
+  </div>
+  <div style={{ color: "#6b7280" }}>
+    Data displayed in portal is subject to verification by concerned administration
+  </div>
+</div>
 
       </div>
+      
     </div>
+    
   );
 };
 

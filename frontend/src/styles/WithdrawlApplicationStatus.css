@@ -713,3 +713,7 @@ pointer-events: none;
   border: none;
   cursor: pointer;
 }
+.btn-disabled {
+  background: #9e9e9e;
+  cursor: not-allowed;
+}
