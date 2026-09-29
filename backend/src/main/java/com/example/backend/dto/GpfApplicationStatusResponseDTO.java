@@ -11,6 +11,7 @@ private String lastRemarks;
 private String lastActionByRole;
 private String currentOwnerRole;
 private Long currentOwnerRoleId;
+private boolean sanctionGenerated;
 
 public Long getCurrentOwnerRoleId() {
     return currentOwnerRoleId;
@@ -65,5 +66,11 @@ public String getCurrentOwnerRole() {
 public void setCurrentOwnerRole(String currentOwnerRole) {
     this.currentOwnerRole = currentOwnerRole;
 }
-    
+ public boolean isSanctionGenerated() {
+    return sanctionGenerated;
+}
+
+public void setSanctionGenerated(boolean sanctionGenerated) {
+    this.sanctionGenerated = sanctionGenerated;
+}   
 }

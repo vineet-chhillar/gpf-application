@@ -162,6 +162,18 @@ if (rolesObj != null) {
     {
     return ResponseEntity.ok(gpfWithdrawlService.getAllApplicationStatus());
     }
+@GetMapping("/status-by-emp/{empcode}")
+public ResponseEntity<?> getStatusByEmp(@PathVariable String empcode) {
+    try {
+        return ResponseEntity.ok(
+                gpfWithdrawlService.getApplicationStatusByEmp(empcode)
+        );
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}
+    
 
     @Autowired
     private GpfWithdrawlService gpfWithdrawlService;
@@ -300,7 +312,6 @@ public ResponseEntity<?> updateWithdrawal(
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
-
 }
 
 

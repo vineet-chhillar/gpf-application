@@ -16,8 +16,8 @@ public interface GpfSanctionOrderRepository
             @Modifying
 @Query(value = """
 INSERT INTO gpf.gpf_sanction_order
-(application_id, generated_by, generated_on, order_number, order_pdf, order_text)
-VALUES (:applicationId, :generatedBy, :generatedOn, :orderNumber, :orderPdf, :orderText)
+(application_id, generated_by, generated_on, order_number, order_pdf, order_text, type)
+VALUES (:applicationId, :generatedBy, :generatedOn, :orderNumber, :orderPdf, :orderText, :type)
 """, nativeQuery = true)
 void insertSanctionOrder(
     @Param("applicationId") Long applicationId,
@@ -25,8 +25,13 @@ void insertSanctionOrder(
     @Param("generatedOn") LocalDateTime generatedOn,
     @Param("orderNumber") String orderNumber,
     @Param("orderPdf") byte[] orderPdf,
-    @Param("orderText") String orderText
+    @Param("orderText") String orderText,
+    @Param("type") String type
 );
     Optional<GpfSanctionOrder> findByApplicationId(Long applicationId);
+
+    boolean existsByApplicationId(Long applicationId);
+
+    long countByType(String type);
 
 }

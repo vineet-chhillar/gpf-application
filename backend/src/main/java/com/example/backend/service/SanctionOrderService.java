@@ -14,18 +14,24 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.backend.dto.GenerateOrderRequest;
 import com.example.backend.dto.GenerateOrderResponse;
 import com.example.backend.dto.SanctionOrderDto;
+import com.example.backend.entity.GpfAdvanceDetails;
+import com.example.backend.entity.GpfAdvanceMaster;
 import com.example.backend.entity.GpfSanctionOrder;
 import com.example.backend.entity.GpfWithdrawlDetails;
 import com.example.backend.entity.GpfWithdrawlMaster;
 import com.example.backend.repository.GpfWithdrawlDetailsRepository;
 import com.example.backend.repository.GpfWithdrawlMasterRepository;
+import com.example.backend.repository.GpfAdvanceDetailsRepo;
+import com.example.backend.repository.GpfAdvanceMasterRepo;
 import com.example.backend.repository.GpfSanctionOrderRepository;
 import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
@@ -40,15 +46,23 @@ public class SanctionOrderService {
     private final GpfWithdrawlMasterRepository gpfWithdrawlMasterRepository;
 
     private final GpfWithdrawlDetailsRepository gpfWithdrawlDetailsRepository;
+
+    private final GpfAdvanceMasterRepo advanceMasterRepo;
+
+    private final GpfAdvanceDetailsRepo advanceDetailsRepo;
      
     @Autowired
     private final GpfSanctionOrderRepository sanctionOrderRepository;
 
-  
-  SanctionOrderService(GpfWithdrawlMasterRepository gpfWithdrawlMasterRepository, GpfWithdrawlDetailsRepository gpfWithdrawlDetailsRepository) {
+   @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+  SanctionOrderService(GpfWithdrawlMasterRepository gpfWithdrawlMasterRepository, GpfWithdrawlDetailsRepository gpfWithdrawlDetailsRepository, GpfAdvanceMasterRepo advanceMasterRepo, GpfAdvanceDetailsRepo advanceDetailsRepo, GpfSanctionOrderRepository sanctionOrderRepository) {
     this.gpfWithdrawlMasterRepository = gpfWithdrawlMasterRepository;
     this.gpfWithdrawlDetailsRepository = gpfWithdrawlDetailsRepository;
-    this.sanctionOrderRepository = null;
+    this.sanctionOrderRepository = sanctionOrderRepository;
+    this.advanceMasterRepo = advanceMasterRepo;
+    this.advanceDetailsRepo = advanceDetailsRepo;
   }
 
 
@@ -99,80 +113,223 @@ public class SanctionOrderService {
 }
 
     public GenerateOrderResponse generateOrder(GenerateOrderRequest request) {
+
     Long applicationId = request.getApplicationId();
-    // 1. Check existing
+    String type = request.getType(); // 🔥 NEW
+
+    try {
+        Optional<GpfSanctionOrder> existing =
+                sanctionOrderRepository.findByApplicationId(applicationId);
+
+
+                
+        if (existing.isPresent()) {
+//System.out.println("application id is:" + existing.isPresent());
+            GpfSanctionOrder order = existing.get();
+
+            
+            GenerateOrderResponse response = new GenerateOrderResponse();
+            
+            response.setOrderId(order.getId());
+            
+            response.setOrderNumber(order.getOrderNumber());
+            
+            response.setStatus("SUCCESS");
+            response.setMessage("Order already generated");
+
+            return response;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    /* ===============================
+       🔥 BUILD DTO BASED ON TYPE
+    =============================== */
+
+    SanctionOrderDto dto;
+    String orderNumber;
+
+    if ("withdrawl".equalsIgnoreCase(type)) {
+
+        dto = buildSanctionOrder(applicationId);
+        orderNumber = generateOrderNumber("WDL");
+
+    } else if ("advance".equalsIgnoreCase(type)) {
+
+        dto = buildAdvanceSanction(applicationId);
+        
+        orderNumber = generateOrderNumber("ADV");
+
+    } else {
+        throw new RuntimeException("Invalid type");
+    }
+
+    /* ===============================
+       GENERATE ORDER
+    =============================== */
+
+    
+
+
+    String orderText;
+
+//if ("withdrawl".equalsIgnoreCase(type)) {
+  //  orderText = generateSanctionOrderText(dto);
+//} else {
+ // orderText = generateSanctionOrderText(dto);
+//}
+String baseText = generateSanctionOrderText(dto);
+
+String heading = "withdrawl".equalsIgnoreCase(type)
+        ? "Sanction Order (Withdrawal) for Application ID: "
+        : "Sanction Order (Advance) for Application ID: ";
+
+orderText = heading + applicationId + "\n\n" + baseText;
+
+   byte[] pdfBytes;
+
+try {
+
+    if ("withdrawl".equalsIgnoreCase(type)) {
+
+        pdfBytes = generatePdf(dto);
+
+    } else {
+
+        pdfBytes = generateAdvancePdf(dto);
+        System.out.println("Moved to advance sanction");
+    }
+
+} catch (Exception e) {
+
+    e.printStackTrace();    
+    throw new RuntimeException("PDF generation failed: " + e.getMessage());
+}
+String orderType = "withdrawl".equalsIgnoreCase(type) ? "WDL" : "ADV";
 
 try
 {
-    Optional<GpfSanctionOrder> existing = sanctionOrderRepository.findByApplicationId(applicationId);
-    System.out.println("after repo call");
-    System.out.println("test if it has reached service");
-    if (existing.isPresent()) {
-        GpfSanctionOrder order = existing.get();
-        GenerateOrderResponse response = new GenerateOrderResponse();
-        response.setOrderId(order.getId());
-        response.setOrderNumber(order.getOrderNumber());
-        response.setStatus("SUCCESS");
-        response.setMessage("Order already generated");
-
-        return response;
-    }
-} catch (Exception e) {
-    e.printStackTrace();
-}
-    // 2. Build DTO
-    SanctionOrderDto dto = buildSanctionOrder(applicationId);
-    // 3. Generate text
-    //String orderText = generateSanctionOrderText(dto);
-    String orderText = "Sanction Order for Application ID: " + applicationId;
-    // 4. Generate order number
-    String orderNumber = generateOrderNumber();
-    // 5. Generate PDF (IMPORTANT NEW STEP)
-    byte[] pdfBytes = generatePdf(dto);
-    // 6. Save everything
     GpfSanctionOrder entity = new GpfSanctionOrder();
     entity.setApplicationId(applicationId);
     entity.setOrderNumber(orderNumber);
     entity.setOrderText(orderText);
-    entity.setOrderPdf(pdfBytes);   // ✅ store PDF
+    entity.setOrderPdf(pdfBytes);
     entity.setGeneratedOn(LocalDateTime.now());
+    entity.setType(orderType);
+       
 
-    System.out.println("PDF TYPE: " + entity.getOrderPdf().getClass());
-    
-    // 6. Save everything (REPLACE save())
+    sanctionOrderRepository.insertSanctionOrder(
+            applicationId,
+            "System", // generatedBy
+            entity.getGeneratedOn(),
+            entity.getOrderNumber(),
+            entity.getOrderPdf(),
+            entity.getOrderText(),
+            orderType
+    );
+}
+catch (Exception e) {
+e.printStackTrace();    
+    throw new RuntimeException("Failed While inserting sanction order: " + e.getMessage());
+}
+    Optional<GpfSanctionOrder> saved =
+            sanctionOrderRepository.findByApplicationId(applicationId);
 
-sanctionOrderRepository.insertSanctionOrder(
-    applicationId,
-    null,     // make sure this is set (else null)
-    entity.getGeneratedOn(),
-    entity.getOrderNumber(),
-    entity.getOrderPdf(),
-    entity.getOrderText()
-);
-Optional<GpfSanctionOrder> saved =
-        sanctionOrderRepository.findByApplicationId(applicationId);
+    GenerateOrderResponse response = new GenerateOrderResponse();
 
-GenerateOrderResponse response = new GenerateOrderResponse();
+    response.setOrderId(saved.map(GpfSanctionOrder::getId).orElse(null));
+    response.setOrderNumber(orderNumber);
+    response.setStatus("SUCCESS");
+    response.setMessage("Sanction order generated");
 
-if (saved.isPresent()) {
-    response.setOrderId(saved.get().getId());
-} else {
-    response.setOrderId(null); // fallback
+    return response;
 }
 
-response.setOrderNumber(orderNumber);
-response.setStatus("SUCCESS");
-response.setMessage("Sanction order generated");
+private SanctionOrderDto buildAdvanceSanction(Long applicationId) {
 
-return response;
+    // 1. Fetch master
+    GpfAdvanceMaster master = advanceMasterRepo.findById(applicationId)
+            .orElseThrow(() -> new RuntimeException("Advance Master not found"));
+
+    // 2. Fetch details
+    GpfAdvanceDetails details = advanceDetailsRepo.findByMaster_Id(applicationId)
+            .orElseThrow(() -> new RuntimeException("Advance Details not found"));
+
+    // 3. VALIDATION (same rule as withdrawal)
+    if (!COMPLETED_ROLE_ID.equals(details.getCurrentOwnerRole())) {
+        throw new RuntimeException("Order can only be generated for completed applications");
+    }
+
+    // 4. Map DTO
+    SanctionOrderDto dto = new SanctionOrderDto();
+
+    dto.setRequestedWithdrawlAmount(
+        details.getAmountofadvancerequested() != null
+            ? details.getAmountofadvancerequested().doubleValue()
+            : null
+    );
+
+    dto.setDesignation(master.getDesignation());
+    dto.setEmpName(master.getEmpname());
+    dto.setEmpCode(master.getEmpcode());
+
+    dto.setGpfAccNo(details.getGpfaccountno());
+
+    // ⚠️ reuse same DTO field (no need new field)
+    dto.setPurposeOfWithdrawl(details.getPurposeofadvance());
+
+    dto.setDateOfJoining(
+        master.getDateofjoining() != null
+            ? master.getDateofjoining().toString()
+            : null
+    );
+
+    dto.setDateOfRetirement(
+        master.getDateofsuperannuation() != null
+            ? master.getDateofsuperannuation().toString()
+            : null
+    );
+
     
+    dto.setClosingBalance(
+        details.getOutstandingbalance() != null
+            ? details.getOutstandingbalance().doubleValue()
+            : null
+    );
+
+    dto.setCreditAmount(
+        details.getTotalcreditamount() != null
+            ? details.getTotalcreditamount().doubleValue()
+            : null
+    );
+
+    dto.setRefundAmount(
+        details.getRefundafterdateofoutstandingbalance() != null
+            ? details.getRefundafterdateofoutstandingbalance().doubleValue()
+            : null
+    );
+
+    
+    // Advance may not have this — safe fallback
+    //dto.setSubsequentWithdrawl(
+      //  details.get.getPriorwithdrawlamount() != null
+        //    ? details.getPriorwithdrawlamount().doubleValue()
+         //   : null
+    //);
+
+    return dto;
 }
-private String generateOrderNumber() {
+
+private String generateOrderNumber(String type) {
+
     int year = LocalDate.now().getYear();
 
-    long count = sanctionOrderRepository.count() + 1;
+    String prefix = "withdrawl".equalsIgnoreCase(type) ? "WDL" : "ADV";
 
-    return String.format("GPF/WDL/%d/%05d", year, count);
+    long seq = getNextSequence(type);
+
+    return String.format("GPF/%s/%d/%05d", prefix, year, seq);
 }
 
 {/*public byte[] generatePdf(String content) {
@@ -192,7 +349,7 @@ private String generateOrderNumber() {
         throw new RuntimeException("Error generating PDF", e);
     }
 }*/}
-public byte[] generatePdf(SanctionOrderDto dto) 
+public byte[] generateAdvancePdf(SanctionOrderDto dto) 
 {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
         Document document = new Document();
@@ -203,6 +360,10 @@ public byte[] generatePdf(SanctionOrderDto dto)
         String adminCode = scientistGroup.contains(
         dto.getDesignation().toUpperCase()
         ) ? "ADMN.I" : "ADMN.II";
+
+        String adminCodeHindi = scientistGroup.contains(
+        dto.getDesignation().toUpperCase()
+        ) ? "I" : "II";
 
 
         String adminCodeNew = scientistGroup.contains(
@@ -221,17 +382,56 @@ public byte[] generatePdf(SanctionOrderDto dto)
         String currentFinYearStartDate = getCurrentFYStartDate().format(formatter);
         String currentFinYearEndDateTillDecember = getCurrentFYEndTillDecember().format(formatter);
 
+        //BaseFont baseFont = BaseFont.createFont("fonts/NotoSansDevanagari-Regular.ttf",BaseFont.IDENTITY_H,BaseFont.EMBEDDED);
+        //Font hindiFont = new Font(baseFont, 10, Font.BOLD);
+
         // ---------------- HEADER (CENTER) ----------------
-        Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
-        Paragraph header = new Paragraph("No." + dto.getEmpCode()+"/NIC/GPF/" + java.time.LocalDate.now().getYear()+"-"+ adminCode + "\n"
-         + "Government of India" + "\n"
-         + "Ministry of Electronics and Information Technology" + "\n"
-         + "National Informatics Centre" + "\n"
-         + "[" + adminCodeNew + "]"
-         , boldFont);
-        header.setAlignment(Element.ALIGN_CENTER);
-        header.setSpacingAfter(10);
-        document.add(header);
+        // Hindi font
+BaseFont hindiBase = BaseFont.createFont(
+        "fonts/NotoSerifDevanagari-Regular.ttf",
+        BaseFont.IDENTITY_H,
+        BaseFont.EMBEDDED
+);
+Font hindiBold = new Font(hindiBase, 10, Font.BOLD);
+
+// English font
+Font engBold = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+
+// Create paragraph
+Paragraph header = new Paragraph();
+header.setAlignment(Element.ALIGN_CENTER);
+header.setSpacingAfter(10);
+
+// ---- Line 1 ----
+header.add(new Chunk("संख्या. " + dto.getEmpCode() + " रा. सू.वि. कें./जीपीएफ/", hindiBold));
+header.add(new Chunk(java.time.LocalDate.now().getYear() + "-प्रशासन-",hindiBold));
+header.add(new Chunk(adminCodeHindi + "/",engBold));
+
+header.add(new Chunk(
+        "No. " + dto.getEmpCode() + "/NIC/GPF/" +
+        java.time.LocalDate.now().getYear() + "-" + adminCode + "\n",
+        engBold
+));
+
+// ---- Line 2 ----
+header.add(new Chunk("भारत सरकार / ", hindiBold));
+header.add(new Chunk("Government of India\n", engBold));
+
+// ---- Line 3 ----
+header.add(new Chunk("इलेक्ट्रॉनिक्स और सूचना प्रौद्योगिकी मंत्रालय / ", hindiBold));
+header.add(new Chunk("Ministry of Electronics and Information Technology\n", engBold));
+
+// ---- Line 4 ----
+header.add(new Chunk("राष्ट्रीय सूचना-विज्ञान केंद्र / ", hindiBold));
+header.add(new Chunk("National Informatics Centre\n", engBold));
+
+// ---- Line 5 ----
+header.add(new Chunk("प्रशासन विभाग-" , hindiBold));
+header.add(new Chunk(adminCodeHindi + " / ", engBold));
+header.add(new Chunk("[" + adminCodeNew + "]", engBold));
+
+// Add to document
+document.add(header);
         //-------------------HEADER (RIGHT)----------------
         Font boldFontRight = new Font(Font.FontFamily.HELVETICA,10,Font.BOLD );
         Paragraph headerright = new Paragraph("A-Block, CGO Complex," + "\n"
@@ -242,12 +442,238 @@ public byte[] generatePdf(SanctionOrderDto dto)
         headerright.setSpacingAfter(10);
         document.add(headerright);
         //------------------HEADER (Center)----------------
-        Font boldFontCenter = new Font(Font.FontFamily.HELVETICA, 10,Font.BOLD | Font.UNDERLINE);
-        Paragraph headercenter = new Paragraph("ORDER No:- " + generateOrderNumber() + "\n" 
-        ,boldFontCenter);
-        headercenter.setAlignment(Element.ALIGN_CENTER);
-        headercenter.setSpacingAfter(10);
-        document.add(headercenter);
+        //Font boldFontCenter = new Font(Font.FontFamily.HELVETICA, 10,Font.BOLD | Font.UNDERLINE);
+        // Hindi font
+
+// Create paragraph
+Paragraph headercenter = new Paragraph();
+headercenter.setAlignment(Element.ALIGN_CENTER);
+headercenter.setSpacingAfter(10);
+
+// Add mixed content using chunks
+headercenter.add(new Chunk("आदेश संख्या /", hindiBold));
+headercenter.add(new Chunk("ORDER No: ", engBold));
+headercenter.add(new Chunk(generateOrderNumber("ADV"), engBold));
+
+// Line break (cleaner than \n)
+headercenter.add(Chunk.NEWLINE);
+
+// Add to document
+document.add(headercenter);
+        // ---------------- MAIN PARAGRAPH ----------------
+        Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
+        
+        Paragraph para = new Paragraph();
+        para.add(new Chunk(
+                "Under the Powers delegated National Informatics Centre vide Office order No. M-11017/1/2014-" 
+                + "MS(O&M) dated 17.07.2014 and 19.01.2016, sanction is hereby accorded under Rule 15(1)(C) read" 
+                + "with Rule 16(1) & 16(2) of GPF Rules 1960 to the advanve of Rs. " + dto.getRequestedWithdrawlAmount() + "(" + convertToWords(dto.getRequestedWithdrawlAmount()) + ") "
+                +"by " + dto.getEmpName() + ", " + dto.getDesignation() + ", Employee Code:" + dto.getEmpCode() + " from his/her GPF A/C No " 
+                + dto.getGpfAccNo() + " for the purpose of " + dto.getPurposeOfWithdrawl() + "\n" 
+                + "2. " + dto.getEmpName() +" has rendered more than "+ getNumberOfYearsOfService(dto.getDateOfJoining(), dto.getDateOfRetirement())
+                + " years service.", normalFont));
+
+                para.add(new Chunk(
+                "(" + "Date of Retirement: " + formattedDate + ")" +"\n"  ,boldFontRight));
+
+                para.add(new Chunk(
+                 "3. The anount of withdrawal is Less Than 50% of balance in his/her GPF A/C." + "\n"
+                + "\n"
+                + "4. The balance at the credit of individual is detailed below: -" + "\n"
+                ,normalFont));
+
+
+                //Sanction is hereby accorded for withdrawal of Rs. "
+                  //      + dto.getRequestedWithdrawlAmount()
+                    //    + " from GPF Account No. "
+                      //  + dto.getGpfAccNo()
+                        //+ " for the purpose of "
+                        //+ dto.getPurposeOfWithdrawl() + "."
+        
+        para.setSpacingAfter(15);
+        document.add(para);
+        // ---------------- DETAILS TABLE ----------------
+        double totalOneToThree=dto.getClosingBalance()+dto.getCreditAmount()+dto.getRefundAmount();
+
+        Font smallBoldFont = new Font(Font.FontFamily.HELVETICA,9,Font.BOLD);
+
+       PdfPTable table = new PdfPTable(3);
+       table.setWidthPercentage(100);
+       float[] columnWidths = {1f, 6f, 3f};
+       table.setWidths(columnWidths);
+
+        table.addCell(new Phrase("i)", smallBoldFont));
+        table.addCell(new Phrase("Closing balance as per statement for the year " + prevFY));
+        table.addCell(dto.getClosingBalance() != null ? String.valueOf(dto.getClosingBalance()) : "N/A");
+
+        table.addCell(new Phrase("ii)", smallBoldFont));
+        table.addCell(new Phrase("Credit from" + currentFinYearStartDate + " to " + currentFinYearEndDateTillDecember));
+        table.addCell(dto.getCreditAmount() != null ? String.valueOf(dto.getCreditAmount()) : "N/A");
+
+        table.addCell(new Phrase("iii)", smallBoldFont));
+        table.addCell(new Phrase("Refund of advance from" + currentFinYearStartDate + " to " + currentFinYearEndDateTillDecember));
+        table.addCell(dto.getRefundAmount() != null ? String.valueOf(dto.getRefundAmount()) : "N/A");
+
+        table.addCell(new Phrase("iv)", smallBoldFont));
+        table.addCell(new Phrase("Total of Col(i) to (iii)"));
+        table.addCell(String.valueOf(totalOneToThree));
+
+        table.addCell(new Phrase("v)", smallBoldFont));
+        table.addCell(new Phrase("Subsequent withdrawal"));
+        table.addCell(String.valueOf(dto.getSubsequentWithdrawl()));
+
+        table.addCell(new Phrase("vi)", smallBoldFont));
+        table.addCell(new Phrase("Balance as on date of Sanction"));
+        table.addCell(String.valueOf(totalOneToThree - dto.getSubsequentWithdrawl()));
+
+        table.setSpacingAfter(100);
+        document.add(table);
+
+        // ---------------- SIGNATURE ----------------
+        Paragraph sign = new Paragraph("Authorized Signatory");
+        sign.setSpacingAfter(10);
+        sign.setAlignment(Element.ALIGN_RIGHT);
+        document.add(sign);
+
+
+       Paragraph paraFooterParagraph = new Paragraph(
+                "1. The Senior Accounts Officer, Pay & Accounts Office, NICHQ, New Delhi-110003" + "\n"
+               +"2. DDO, NICHQ, New Delhi-110003" + "\n"
+               +"3. Individual Concerned, with the instruction that within one month of the drawal of the amount, he/she should produce certificate to the effect that the withdrawal sanctioned above has been utilised for the purpose for which it was drawn."+"\n"
+               +"4. Personal file " + dto.getEmpCode() + "\n"
+                , normalFont);
+
+                
+        paraFooterParagraph.setSpacingAfter(80);
+        document.add(paraFooterParagraph);
+
+
+
+        Paragraph signFooter = new Paragraph("Authorized Signatory");
+        signFooter.setAlignment(Element.ALIGN_RIGHT);
+        document.add(signFooter);
+
+        document.close();
+
+        return out.toByteArray();
+
+    } 
+       catch (Exception e)
+        {
+        throw new RuntimeException("Error generating PDF", e);
+        }
+}
+public byte[] generatePdf(SanctionOrderDto dto) 
+{
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        Document document = new Document();
+        PdfWriter.getInstance(document, out);
+        document.open();
+        
+        Set<String> scientistGroup = Set.of("Scientist-D", "Scientist-E", "Scientist-F", "Scientist-G");
+        String adminCode = scientistGroup.contains(
+        dto.getDesignation().toUpperCase()
+        ) ? "ADMN.I" : "ADMN.II";
+
+        String adminCodeHindi = scientistGroup.contains(
+        dto.getDesignation().toUpperCase()
+        ) ? "I" : "II";
+
+
+        String adminCodeNew = scientistGroup.contains(
+        dto.getDesignation().toUpperCase()
+        ) ? "Administration Section-I" : "Administration Section-II";
+
+        String prevFY = getPreviousFinancialYear();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate date = LocalDate.parse(dto.getDateOfRetirement(), inputFormat);
+        String formattedDate = date.format(outputFormat);
+
+        String currentFinYearStartDate = getCurrentFYStartDate().format(formatter);
+        String currentFinYearEndDateTillDecember = getCurrentFYEndTillDecember().format(formatter);
+
+        //BaseFont baseFont = BaseFont.createFont("fonts/NotoSansDevanagari-Regular.ttf",BaseFont.IDENTITY_H,BaseFont.EMBEDDED);
+        //Font hindiFont = new Font(baseFont, 10, Font.BOLD);
+
+        // ---------------- HEADER (CENTER) ----------------
+        // Hindi font
+BaseFont hindiBase = BaseFont.createFont(
+        "fonts/NotoSerifDevanagari-Regular.ttf",
+        BaseFont.IDENTITY_H,
+        BaseFont.EMBEDDED
+);
+Font hindiBold = new Font(hindiBase, 10, Font.BOLD);
+
+// English font
+Font engBold = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+
+// Create paragraph
+Paragraph header = new Paragraph();
+header.setAlignment(Element.ALIGN_CENTER);
+header.setSpacingAfter(10);
+
+// ---- Line 1 ----
+header.add(new Chunk("संख्या. " + dto.getEmpCode() + " रा. सू.वि. कें./जीपीएफ/", hindiBold));
+header.add(new Chunk(java.time.LocalDate.now().getYear() + "-प्रशासन-",hindiBold));
+header.add(new Chunk(adminCodeHindi + "/",engBold));
+
+header.add(new Chunk(
+        "No. " + dto.getEmpCode() + "/NIC/GPF/" +
+        java.time.LocalDate.now().getYear() + "-" + adminCode + "\n",
+        engBold
+));
+
+// ---- Line 2 ----
+header.add(new Chunk("भारत सरकार / ", hindiBold));
+header.add(new Chunk("Government of India\n", engBold));
+
+// ---- Line 3 ----
+header.add(new Chunk("इलेक्ट्रॉनिक्स और सूचना प्रौद्योगिकी मंत्रालय / ", hindiBold));
+header.add(new Chunk("Ministry of Electronics and Information Technology\n", engBold));
+
+// ---- Line 4 ----
+header.add(new Chunk("राष्ट्रीय सूचना-विज्ञान केंद्र / ", hindiBold));
+header.add(new Chunk("National Informatics Centre\n", engBold));
+
+// ---- Line 5 ----
+header.add(new Chunk("प्रशासन विभाग-" , hindiBold));
+header.add(new Chunk(adminCodeHindi + " / ", engBold));
+header.add(new Chunk("[" + adminCodeNew + "]", engBold));
+
+// Add to document
+document.add(header);
+        //-------------------HEADER (RIGHT)----------------
+        Font boldFontRight = new Font(Font.FontFamily.HELVETICA,10,Font.BOLD );
+        Paragraph headerright = new Paragraph("A-Block, CGO Complex," + "\n"
+        + "Lodhi Road, New Delhi-110003" + "\n"
+        + "Dated: " + java.time.LocalDate.now().format(formatter) 
+         , boldFontRight);
+        headerright.setAlignment(Element.ALIGN_RIGHT);
+        headerright.setSpacingAfter(10);
+        document.add(headerright);
+        //------------------HEADER (Center)----------------
+        //Font boldFontCenter = new Font(Font.FontFamily.HELVETICA, 10,Font.BOLD | Font.UNDERLINE);
+        // Hindi font
+
+// Create paragraph
+Paragraph headercenter = new Paragraph();
+headercenter.setAlignment(Element.ALIGN_CENTER);
+headercenter.setSpacingAfter(10);
+
+// Add mixed content using chunks
+headercenter.add(new Chunk("आदेश संख्या /", hindiBold));
+headercenter.add(new Chunk("ORDER No: ", engBold));
+headercenter.add(new Chunk(generateOrderNumber("WDL"), engBold));
+
+// Line break (cleaner than \n)
+headercenter.add(Chunk.NEWLINE);
+
+// Add to document
+document.add(headercenter);
         // ---------------- MAIN PARAGRAPH ----------------
         Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
         
@@ -262,7 +688,7 @@ public byte[] generatePdf(SanctionOrderDto dto)
                 + " years service.", normalFont));
 
                 para.add(new Chunk(
-                "(" + "Date of Retirement: " + formattedDate + ")" +"\n"  ,boldFont));
+                "(" + "Date of Retirement: " + formattedDate + ")" +"\n"  ,boldFontRight));
 
                 para.add(new Chunk(
                  "3. The anount of withdrawal is Less Than 50% of balance in his/her GPF A/C." + "\n"
@@ -474,6 +900,13 @@ public LocalDate getCurrentFYEndTillDecember() {
     } else {
         // Apr–Dec → December of same year
         return LocalDate.of(year, 12, 1);
+    }
+}
+private long getNextSequence(String type) {
+    if ("withdrawl".equalsIgnoreCase(type)) {
+        return jdbcTemplate.queryForObject("SELECT nextval('wdl_seq')", Long.class);
+    } else {
+        return jdbcTemplate.queryForObject("SELECT nextval('adv_seq')", Long.class);
     }
 }
 }

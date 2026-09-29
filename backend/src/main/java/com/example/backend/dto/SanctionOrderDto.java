@@ -105,9 +105,9 @@ public class SanctionOrderDto {
         this.refundAmount = refundAmount;
     }
 
-    public Double getSubsequentWithdrawl() {
-        return subsequentWithdrawl;
-    }
+ public double getSubsequentWithdrawl() {
+    return subsequentWithdrawl != null ? subsequentWithdrawl : 0.0;
+}
 
     public void setSubsequentWithdrawl(Double subsequentWithdrawl) {
         this.subsequentWithdrawl = subsequentWithdrawl;

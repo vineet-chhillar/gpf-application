@@ -33,7 +33,19 @@ private GpfAdvanceService service;
 public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
     return service.getAllApplicationStatus();
 }
-    
+  @GetMapping("/status-by-emp/{empcode}")
+public ResponseEntity<?> getApplicationStatusByEmp(
+        @PathVariable String empcode) {
+
+    try {
+        return ResponseEntity.ok(
+                service.getAdvanceStatusByEmp(empcode)
+        );
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}  
 @PostMapping("/save")
 public ResponseEntity<?> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
 

@@ -575,6 +575,106 @@ if (action.getActionId() == 12L) {
         throw new RuntimeException("Workflow processing failed: " + e.getMessage());
     }
 }
+public List<GpfApplicationStatusResponseDTO> getAdvanceStatusByEmp(String empcode) {
+
+    List<GpfAdvanceMaster> masters =
+            masterRepo.findByEmpcodeOrderByIdDesc(empcode);
+
+    return masters.stream().map(master -> {
+
+        GpfApplicationStatusResponseDTO response =
+                new GpfApplicationStatusResponseDTO();
+
+        response.setMaster(master);
+
+        /* ===== DETAILS ===== */
+
+        GpfAdvanceDetails details =
+                detailsRepo.findByMaster_Id(master.getId()).orElse(null);
+
+        if (details != null && details.getAdvancerule() != null) {
+            advanceRuleRepo
+                    .findById(details.getAdvancerule())
+                    .ifPresent(rule ->
+                            details.setAdvanceruleText(rule.getAdvanceReason())
+                    );
+        }
+
+        if (details != null) {
+            response.setDetails(details);
+            response.setCurrentOwnerRoleId(details.getCurrentOwnerRole());
+        }
+
+        /* ===== TRAIL ===== */
+
+        List<AdvanceApplicationStatusTrail> trails =
+                trailRepo.findByApplicationidOrderByActionatAsc(master.getId());
+
+        if (!trails.isEmpty()) {
+            AdvanceApplicationStatusTrail lastTrail =
+                    trails.get(trails.size() - 1);
+
+            response.setLastActionByRole(
+                    resolveRoleName(lastTrail.getActionByRole())
+            );
+
+            response.setLastRemarks(lastTrail.getRemarks());
+        }
+
+        /* ===== CURRENT STATUS ===== */
+
+        String currentRoleName = "-";
+
+        if (details != null && details.getCurrentOwnerRole() != null) {
+
+            Long lastActionId = null;
+
+            if (!trails.isEmpty()) {
+                AdvanceApplicationStatusTrail last =
+                        trails.get(trails.size() - 1);
+                lastActionId = last.getActionId();
+            }
+
+            if (details.getCurrentOwnerRole() == 0) {
+
+                if (lastActionId != null && lastActionId == 12L) {
+                    currentRoleName = "Cancelled/Rejected";
+                } else {
+                    currentRoleName = "Completed";
+                }
+
+            } else {
+                currentRoleName =
+                        resolveRoleName(details.getCurrentOwnerRole());
+            }
+        }
+
+        response.setCurrentOwnerRole(currentRoleName);
+
+        /* ===== TRAIL DTO ===== */
+
+        List<ApplicationTrailDTO> trailDTOs = trails.stream().map(t -> {
+
+            ApplicationTrailDTO dto = new ApplicationTrailDTO();
+
+            dto.setRole(resolveRoleName(t.getActionByRole()));
+            dto.setAction(resolveActionName(t.getActionId()));
+            dto.setRemarks(t.getRemarks());
+
+            if (t.getActionat() != null) {
+                dto.setTime(t.getActionat().toString());
+            }
+
+            return dto;
+
+        }).toList();
+
+        response.setTrail(trailDTOs);
+
+        return response;
+
+    }).toList();
+}
 public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
     List<GpfAdvanceMaster> masters = masterRepo.findAll();

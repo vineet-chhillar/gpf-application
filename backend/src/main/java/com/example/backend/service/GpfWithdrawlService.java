@@ -25,6 +25,8 @@ public interface GpfWithdrawlService {
     List<ApplicationTrailDTO> getTrail(Long applicationId);
 
     List<GpfApplicationStatusResponseDTO> getAllApplicationStatus();
+    List<GpfApplicationStatusResponseDTO> getApplicationStatusByEmp(String empcode);
+    
 
     Long getCurrentWorkflowRole();
 

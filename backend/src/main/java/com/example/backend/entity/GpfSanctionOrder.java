@@ -40,9 +40,11 @@ private byte[] orderPdf;
     @Column(name = "order_text", columnDefinition = "TEXT")
     private String orderText;
 
-    
+@Column(name = "type")    
+private String type;
     // ================= GETTERS & SETTERS =================
 
+    
     public Long getId() {
         return id;
     }
@@ -97,5 +99,15 @@ private byte[] orderPdf;
 
     public void setGeneratedBy(String generatedBy) {
         this.generatedBy = generatedBy;
+    }
+
+ 
+    public String getType(String type)
+    {
+     return type;
+    }
+    public void setType(String type)
+    {
+      this.type=type;
     }
 }

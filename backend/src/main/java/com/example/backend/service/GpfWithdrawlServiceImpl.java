@@ -31,6 +31,7 @@ import tools.jackson.databind.JsonNode;
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
 import com.example.backend.repository.FunctionalRoleRepository;
+import com.example.backend.repository.GpfSanctionOrderRepository;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -87,6 +88,8 @@ private FunctionalRoleRepository roleRepo;
 @Autowired
 private GpfWithdrawlRuleRepository withdrawlRuleRepo;
    
+@Autowired
+private GpfSanctionOrderRepository gpfSanctionOrderRepository;
 
 @Override
 public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
@@ -512,7 +515,116 @@ public List<ApplicationTrailDTO> getTrail(Long applicationId) {
     }).toList();
 }
 
+public List<GpfApplicationStatusResponseDTO> getApplicationStatusByEmp(String empcode) {
 
+    // 🔥 FETCH ONLY EMPLOYEE DATA
+    List<GpfWithdrawlMaster> masters =
+            masterRepo.findByEmpcodeOrderByIdDesc(empcode);
+
+    return masters.stream().map(master -> {
+        try {
+
+            // 🔹 DETAILS (latest)
+            List<GpfWithdrawlDetails> detailsList =
+                    detailsRepo.findByMaster_EmpcodeOrderByIdDesc(master.getEmpcode());
+
+            GpfWithdrawlDetails details =
+                    detailsList.isEmpty() ? null : detailsList.get(0);
+
+            // 🔹 RULE TEXT
+            if (details != null && details.getWithdrawlrule() != null) {
+                withdrawlRuleRepo
+                        .findById(details.getWithdrawlrule())
+                        .ifPresent(rule ->
+                                details.setWithdrawlruleText(rule.getWithdrawlReason())
+                        );
+            }
+
+            // 🔹 TRAIL
+            List<ApplicationStatusTrail> trails =
+                    trailRepo.findByApplicationIdOrderByActionatAsc(master.getId());
+
+            List<ApplicationTrailDTO> trailDTO =
+                    trails.stream().map(t -> {
+
+                        ApplicationTrailDTO dto = new ApplicationTrailDTO();
+
+                        dto.setRole(
+                                t.getActionByRole() != null
+                                        ? resolveRoleName(t.getActionByRole())
+                                        : "-"
+                        );
+
+                        dto.setAction(resolveActionName(t.getActionId()));
+                        dto.setRemarks(t.getRemarks());
+
+                        dto.setTime(
+                                t.getActionat() != null
+                                        ? t.getActionat().toString()
+                                        : ""
+                        );
+
+                        return dto;
+
+                    }).toList();
+
+            // 🔹 LAST ACTION
+            String lastRemarks = null;
+            String lastActionByRole = null;
+
+            if (!trails.isEmpty()) {
+                ApplicationStatusTrail last = trails.get(trails.size() - 1);
+                lastRemarks = last.getRemarks();
+                lastActionByRole = resolveRoleName(last.getActionByRole());
+            }
+
+            // 🔹 CURRENT STATUS
+            String currentRoleName = "-";
+
+            if (details != null && details.getCurrentOwnerRole() != null) {
+
+                Long lastActionId = null;
+
+                if (!trails.isEmpty()) {
+                    ApplicationStatusTrail last = trails.get(trails.size() - 1);
+                    lastActionId = last.getActionId();
+                }
+
+                if (details.getCurrentOwnerRole() == 0) {
+
+                    if (lastActionId != null && lastActionId == 12L) {
+                        currentRoleName = "Cancelled/Rejected";
+                    } else {
+                        currentRoleName = "Completed";
+                    }
+
+                } else {
+                    currentRoleName = resolveRoleName(details.getCurrentOwnerRole());
+                }
+            }
+
+            // 🔹 BUILD RESPONSE
+            GpfApplicationStatusResponseDTO res =
+                    new GpfApplicationStatusResponseDTO();
+
+            res.setMaster(master);
+            res.setDetails(details);
+            res.setTrail(trailDTO);
+
+            res.setLastRemarks(lastRemarks);
+            res.setLastActionByRole(lastActionByRole);
+            res.setCurrentOwnerRole(currentRoleName);
+
+            return res;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error for master ID: " + master.getId());
+            e.printStackTrace();
+            throw e;
+        }
+
+    }).toList();
+}
 public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
     List<GpfWithdrawlMaster> masters = masterRepo.findAll();
@@ -607,6 +719,10 @@ if (details != null && details.getCurrentOwnerRole() != null) {
         res.setLastRemarks(lastRemarks);
         res.setLastActionByRole(lastActionByRole);
         res.setCurrentOwnerRole(currentRoleName);
+        boolean sanctionExists =
+        gpfSanctionOrderRepository.existsByApplicationId(master.getId());
+
+res.setSanctionGenerated(sanctionExists);
         {/*if (details != null) {
             res.setCurrentOwnerRole(resolveRoleName(details.getCurrentOwnerRole()));
         }*/}
@@ -667,6 +783,7 @@ dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
 
     }).toList();
 }
+
 private void validateWithdrawal(GpfWithdrawlDetails d) {
 
     /* ================= BASIC ================= */
