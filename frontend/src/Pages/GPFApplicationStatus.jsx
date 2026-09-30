@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../styles/WithdrawlApplicationStatus.css";
 import api from "../api/axios";
 /* temporary until login integration */
-const HARDCODED_EMPCODE = "EMP021";
+//const HARDCODED_EMPCODE = "EMP021";
 
 function WithdrawlApplicationStatus() {
 
@@ -33,30 +33,27 @@ const filteredApps = applications.filter(a =>
 );
   const [loading, setLoading] = useState(true);
 
- useEffect(() => {
 
+ useEffect(() => {
 const loadData = async () => {
 try {
-
-const base =
-appType === "withdrawl"
-? "/gpf-withdrawl"
-: "/gpf-advance";
-
+const base = appType === "withdrawl" ? "/gpf-withdrawl" : "/gpf-advance";
 const res = await api.get(`${base}/status-all`);
 setApplications(res.data);
-setExpandedRow(null);
 
+console.log(applications);
+
+setExpandedRow(null);
 } catch (err) {
 console.error("Failed to load workflow status", err);
 } finally {
 setLoading(false);
 }
 };
-
 loadData();
-
 }, [appType]);
+
+
 
   const toggleRow = (index) => {
     setExpandedRow(expandedRow === index ? null : index);
@@ -92,15 +89,8 @@ const pendingByRole = applications
 
 const handleGenerateOrder = async (app, index) => {
   try {
-    const base =
-      appType === "withdrawl"
-        ? "/sanction-order"
-        : "/sanction-order";
-
-    const res = await api.post(`${base}/generate-order`, {
-      applicationId: app.master?.id,
-       type: appType,
-    });
+    const base = appType === "withdrawl" ? "/sanction-order" : "/sanction-order";
+    const res = await api.post(`${base}/generate-order`, {applicationId: app.master?.id,type: appType,});
 
     console.log("Order generated:", res.data);
 
@@ -130,7 +120,7 @@ const handleViewOrder = async (app) => {
     const base =
       appType === "withdrawl"
         ? "/sanction-order"
-        : "/sanction-order-advance";
+        : "/sanction-order";
 
     const applicationId = app.master?.id;
 
@@ -320,6 +310,7 @@ const handleViewOrder = async (app) => {
 const master = app.master || {};
 const details = app.details || {};
 const trail = app.trail || [];
+
 const lastTrail = trail.length > 0 ? trail[trail.length - 1] : {};
 return (
 <React.Fragment key={index}>

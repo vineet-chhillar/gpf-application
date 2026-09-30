@@ -539,7 +539,7 @@ const advanceEligibilityResult =
           detailsApiData.basicpay,
 
         balanceAmount:
-          detailsApiData.outstandingbalance,
+          detailsApiData.closingbalance,
 
         requestedAmount:
           userInput.amountofadvancerequested || 0,

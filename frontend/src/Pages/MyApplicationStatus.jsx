@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../styles/WithdrawlApplicationStatus.css";
 import api from "../api/axios";
 /* temporary until login integration */
-const HARDCODED_EMPCODE = "3571";
+const HARDCODED_EMPCODE = "3960";
 
 function WithdrawlApplicationStatus() {
 

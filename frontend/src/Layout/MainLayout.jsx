@@ -84,11 +84,8 @@ const handleMenuClick = (menuName) => {
   {
     menuId: 8,
     menuName: "Pending For Action"
-  },
-  {
-    menuId: 9,
-    menuName: "Generate Sanction"
   }
+  
   
 ];
 const pageMap = {
@@ -102,10 +99,10 @@ const pageMap = {
   "Advance": <GpfAdvanceForm />,  
    //"Pending For Action": <GpfWorkflowPageNew />,
    "Pending For Action": <GpfWorkflowInboxPage />,
-   "Generate Sanction": <GpfSanctionPage />
+   
 
 
-,
+
   
 };
 {/*"WorkFlow/Pending For Action": <GpfWorkflowPage roleId={11} roleName="DDO" />*/}
