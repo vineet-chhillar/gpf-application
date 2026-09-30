@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -74,6 +75,10 @@ public class SanctionOrderService {
     // 2. Fetch details using relationship
     GpfWithdrawlDetails details = gpfWithdrawlDetailsRepository.findByMaster_Id(applicationId).orElseThrow(() -> new RuntimeException("Details not found"));
 
+
+
+
+
     // 3. VALIDATION (very important)
     if (!COMPLETED_ROLE_ID.equals(details.getCurrentOwnerRole())) 
         {
@@ -113,21 +118,15 @@ public class SanctionOrderService {
 }
 
     public GenerateOrderResponse generateOrder(GenerateOrderRequest request) {
-
     Long applicationId = request.getApplicationId();
     String type = request.getType(); // 🔥 NEW
-
     try {
-        Optional<GpfSanctionOrder> existing =
-                sanctionOrderRepository.findByApplicationId(applicationId);
-
-
+        Optional<GpfSanctionOrder> existing =  sanctionOrderRepository.findByApplicationId(applicationId);
                 
         if (existing.isPresent()) {
 //System.out.println("application id is:" + existing.isPresent());
             GpfSanctionOrder order = existing.get();
-
-            
+          
             GenerateOrderResponse response = new GenerateOrderResponse();
             
             response.setOrderId(order.getId());
@@ -310,6 +309,33 @@ private SanctionOrderDto buildAdvanceSanction(Long applicationId) {
             : null
     );
 
+   Double requestedAmount = details.getAmountofadvancerequested() != null
+        ? details.getAmountofadvancerequested().doubleValue()
+        : null;
+
+Integer installments = details.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance() != null
+        ? details.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance().intValue()
+        : null;
+
+dto.setRequestedAdvanceAmount(requestedAmount);
+dto.setNoOfInstallments(installments);
+
+dto.setgetPurposeOfAdvance(details.getPurposeofadvance());
+
+
+Double installmentAmount = null;
+
+if (requestedAmount != null && installments != null && installments > 0) {
+    installmentAmount = requestedAmount / installments;
+
+
+    installmentAmount = Math.round(installmentAmount * 100.0) / 100.0;
+}
+
+dto.setInstallmentAmount(installmentAmount);
+
+
+     
     
     // Advance may not have this — safe fallback
     //dto.setSubsequentWithdrawl(
@@ -465,31 +491,76 @@ document.add(headercenter);
         
         Paragraph para = new Paragraph();
         para.add(new Chunk(
-                "Under the Powers delegated National Informatics Centre vide Office order No. M-11017/1/2014-" 
-                + "MS(O&M) dated 17.07.2014 and 19.01.2016, sanction is hereby accorded under Rule 15(1)(C) read" 
-                + "with Rule 16(1) & 16(2) of GPF Rules 1960 to the advanve of Rs. " + dto.getRequestedWithdrawlAmount() + "(" + convertToWords(dto.getRequestedWithdrawlAmount()) + ") "
-                +"by " + dto.getEmpName() + ", " + dto.getDesignation() + ", Employee Code:" + dto.getEmpCode() + " from his/her GPF A/C No " 
-                + dto.getGpfAccNo() + " for the purpose of " + dto.getPurposeOfWithdrawl() + "\n" 
-                + "2. " + dto.getEmpName() +" has rendered more than "+ getNumberOfYearsOfService(dto.getDateOfJoining(), dto.getDateOfRetirement())
-                + " years service.", normalFont));
+                "Under the Powers delegated in NIC vide NIC-HQ Office order No. 1(6)/2014-Pers dated 19.01.2016, I am directed "
+                + "to convey the sanction of the competent authority under rules 12(1)(f) read with 12(2) of GPF rules to the grant of an advance of "
+                ,normalFont)); 
+                
+       para.add(new Chunk("Rs." + dto.getRequestedAdvanceAmount() + "/-" + "(" + convertToWords(dto.getRequestedAdvanceAmount()) + ") "  
+       +"to " + dto.getEmpName() + ", " + dto.getDesignation() + " (Employee Code " + dto.getEmpCode() + ") " 
+       +"from his GPF Account No. " + dto.getGpfAccNo() + " to enable him to defray the expenses to be incurred by him in connection with "
+       +dto.getPurposeOfAdvance()
+       ,boldFontRight));
+       para.add(Chunk.NEWLINE);
 
-                para.add(new Chunk(
-                "(" + "Date of Retirement: " + formattedDate + ")" +"\n"  ,boldFontRight));
+       para.add(new Chunk(
+        "2.The sum of Rs. "
+        ,normalFont
+       ));
+       para.add(new Chunk(
+    dto.getRequestedAdvanceAmount() + "/-" + "(" + convertToWords(dto.getRequestedAdvanceAmount()) + ") "
+    ,boldFontRight));
 
-                para.add(new Chunk(
-                 "3. The anount of withdrawal is Less Than 50% of balance in his/her GPF A/C." + "\n"
-                + "\n"
-                + "4. The balance at the credit of individual is detailed below: -" + "\n"
-                ,normalFont));
+    para.add(new Chunk(
+    "will be recovered in "
+    ,normalFont
+     ));
+     para.add(new Chunk(
+     dto.getNoOfInstallments() + "(" + convertToWords(dto.getNoOfInstallments()) + ") "
+     ,boldFontRight
+     ));
 
+     para.add(new Chunk(
+    "monthly instalments of "
+     ,normalFont
+    ));
+ 
+     para.add(new Chunk(
+       "Rs. " + dto.getInstallmentAmount() + "/-(" + convertToWords(dto.getInstallmentAmount()) + ") "
+        ,boldFontRight
+     ));
+   
+     para.add(new Chunk(
+    "each commencing from the salary for the month of "
+     ,normalFont
+    ));
 
-                //Sanction is hereby accorded for withdrawal of Rs. "
-                  //      + dto.getRequestedWithdrawlAmount()
-                    //    + " from GPF Account No. "
-                      //  + dto.getGpfAccNo()
-                        //+ " for the purpose of "
-                        //+ dto.getPurposeOfWithdrawl() + "."
-        
+LocalDate nextMonth = LocalDate.now().plusMonths(1);
+DateTimeFormatter formatterAdvance =
+        DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
+String monthYear = nextMonth.format(formatterAdvance);
+       
+para.add(new Chunk(
+    monthYear
+     ,boldFontRight
+    ));
+       para.add(Chunk.NEWLINE);
+
+       para.add(new Chunk(
+        "3. The details of balance at the credit of "
+        ,normalFont
+       ));
+
+       para.add(new Chunk(
+dto.getEmpName()
+    ,boldFontRight
+    ));
+
+    para.add(new Chunk(
+" as on date are given below:-"
+    ,normalFont
+));
+
+                
         para.setSpacingAfter(15);
         document.add(para);
         // ---------------- DETAILS TABLE ----------------

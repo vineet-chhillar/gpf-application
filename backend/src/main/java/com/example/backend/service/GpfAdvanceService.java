@@ -22,6 +22,7 @@ import com.example.backend.repository.FunctionalRoleRepository;
 import com.example.backend.repository.GpfAdvanceDetailsRepo;
 import com.example.backend.repository.GpfAdvanceMasterRepo;
 import com.example.backend.repository.GpfAdvanceRuleRepo;
+import com.example.backend.repository.GpfSanctionOrderRepository;
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
 
@@ -54,7 +55,8 @@ private FunctionalRoleRepository roleRepo;
     @Autowired
     private WorkflowTransitionRepository workflowTransitionRepo;
 
-    
+    @Autowired
+private GpfSanctionOrderRepository gpfSanctionOrderRepository;
     /* ================= FINANCIAL YEAR METHODS ================= */
 
     private LocalDate getFinancialYearStart() {
@@ -754,6 +756,10 @@ if (details != null && details.getCurrentOwnerRole() != null) {
 
 response.setCurrentOwnerRole(currentRoleName);
 
+          boolean sanctionExists =  gpfSanctionOrderRepository.existsByApplicationId(master.getId());
+          response.setSanctionGenerated(sanctionExists);
+
+
         List<ApplicationTrailDTO> trailDTOs = trails.stream().map(t -> {
 
             ApplicationTrailDTO dto = new ApplicationTrailDTO();
@@ -771,6 +777,8 @@ response.setCurrentOwnerRole(currentRoleName);
         }).toList();
 
         response.setTrail(trailDTOs);
+
+        
 
         return response;
 

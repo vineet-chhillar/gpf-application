@@ -43,7 +43,7 @@ public class SanctionOrderController {
 
     @GetMapping("/view-order/{applicationId}")
     public ResponseEntity<byte[]> viewOrder(@PathVariable Long applicationId) {
-
+System.out.println("controller reached");
         byte[] pdf = sanctionOrderService.getOrderPdf(applicationId);
 
         return ResponseEntity.ok()

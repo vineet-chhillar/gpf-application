@@ -17,6 +17,10 @@ public class SanctionOrderDto {
     private Double creditAmount;
     private Double refundAmount;
     private Double subsequentWithdrawl;
+    private Double requestedAdvanceAmount;
+    private Double noOfInstallments;
+    private Double installmentAmount;
+    private String purposeOfAdvance;
 
     public Double getRequestedWithdrawlAmount() {
         return requestedWithdrawlAmount;
@@ -105,7 +109,7 @@ public class SanctionOrderDto {
         this.refundAmount = refundAmount;
     }
 
- public double getSubsequentWithdrawl() {
+ public Double getSubsequentWithdrawl() {
     return subsequentWithdrawl != null ? subsequentWithdrawl : 0.0;
 }
 
@@ -114,7 +118,41 @@ public class SanctionOrderDto {
     }
 
     public void setRequestedWithdrawlAmount(BigDecimal amountofwithdrawlrequested) {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setRequestedWithdrawlAmount'");
     }
+
+    public Double getRequestedAdvanceAmount()
+    {
+        return requestedAdvanceAmount;
+    }
+    public void setRequestedAdvanceAmount(Double requestedAdvanceAmount)
+    {
+        this.requestedAdvanceAmount=requestedAdvanceAmount;
+    }
+
+    public Double getInstallmentAmount()
+    {
+        return installmentAmount;
+    }
+    public void setInstallmentAmount(Double installmentAmount)
+    {
+        this.installmentAmount=installmentAmount;
+    }
+
+    public Double getNoOfInstallments()
+    {
+        return noOfInstallments;
+    }
+    public void setNoOfInstallments(Double noOfInstallments)
+    {
+        this.noOfInstallments=noOfInstallments;
+    }
+
+    public String getPurposeOfAdvance() {
+        return purposeOfAdvance;
+    }
+    public void setgetPurposeOfAdvance(String purposeOfAdvance) {
+        this.purposeOfAdvance = purposeOfAdvance;
+    }
+
 }
