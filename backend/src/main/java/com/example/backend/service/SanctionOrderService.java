@@ -313,8 +313,8 @@ private SanctionOrderDto buildAdvanceSanction(Long applicationId) {
         ? details.getAmountofadvancerequested().doubleValue()
         : null;
 
-Integer installments = details.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance() != null
-        ? details.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance().intValue()
+Double installments = details.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance() != null
+        ? details.getNoofmonthlyinstallmentsforpaymentofconsolidatedadvance().doubleValue()
         : null;
 
 dto.setRequestedAdvanceAmount(requestedAmount);

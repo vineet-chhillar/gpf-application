@@ -49,23 +49,21 @@ public ResponseEntity<?> getApplicationStatusByEmp(
 @PostMapping("/save")
 public ResponseEntity<?> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
 
+    System.out.println("===== SAVE ADVANCE API HIT =====");
+
+    if (dto.getDetails() == null) {
+        return ResponseEntity.badRequest().body(Map.of(
+            "status", "error",
+            "message", "Details cannot be null"
+        ));
+    }
+
     try {
-
-        System.out.println("===== SAVE ADVANCE API HIT =====");
-
-        if (dto.getDetails() == null) {
-            return ResponseEntity.badRequest().body("Details cannot be null");
-        }
-
-        System.out.println("MASTER : " + dto.getMaster());
-        System.out.println("DETAILS : " + dto.getDetails());
-        System.out.println("ADVANCE RULE : " + dto.getDetails().getAdvancerule());
-         System.out.println("RULE DATA : " + dto.getRuleSpecificData());
 
         service.saveAdvanceApplication(
                 dto.getMaster(),
                 dto.getDetails(),
-                 dto.getRuleSpecificData(),
+                dto.getRuleSpecificData(),
                 dto.getRoleId(),
                 dto.getActionId());
 
@@ -74,13 +72,21 @@ public ResponseEntity<?> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
             "message", "Advance application saved"
         ));
 
-    } catch (Exception e) {
-
+    } 
+    catch (IllegalArgumentException | IllegalStateException e) {
+        // 🔹 BUSINESS / VALIDATION ERRORS → 400
+        return ResponseEntity.badRequest().body(Map.of(
+            "status", "error",
+            "message", e.getMessage()
+        ));
+    } 
+    catch (Exception e) {
+        // 🔹 REAL SERVER ERROR → 500
         e.printStackTrace();
 
         return ResponseEntity.status(500).body(Map.of(
             "status", "error",
-            "message", e.getMessage()
+            "message", "Internal server error"
         ));
     }
 }

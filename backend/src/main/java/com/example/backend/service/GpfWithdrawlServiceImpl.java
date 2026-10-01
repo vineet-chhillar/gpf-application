@@ -32,6 +32,7 @@ import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.ApplicationStatusTrailRepository;
 import com.example.backend.repository.FunctionalRoleRepository;
 import com.example.backend.repository.GpfSanctionOrderRepository;
+import com.example.backend.repository.GpfAdvanceDetailsRepo;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -91,6 +92,10 @@ private GpfWithdrawlRuleRepository withdrawlRuleRepo;
 @Autowired
 private GpfSanctionOrderRepository gpfSanctionOrderRepository;
 
+@Autowired
+private GpfAdvanceDetailsRepo advanceDetailsRepo;
+
+
 @Override
 public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
 
@@ -115,12 +120,28 @@ System.out.println("EMPCODE RAW: " + (dto.getMaster() != null ? dto.getMaster().
         throw new IllegalArgumentException("Empcode is mandatory");
     }
 
-    List<GpfWithdrawlDetails> activeApps =
-    detailsRepo.findByMaster_EmpcodeAndCurrentOwnerRoleNot(empcode, 0L);
+   /* ================= CHECK ACTIVE APPLICATIONS ================= */
 
-if (!activeApps.isEmpty()) {
+// Check active WITHDRAWAL
+// 🔹 Check active WITHDRAWAL
+boolean activeWithdrawal =
+        detailsRepo.existsActiveWithdrawal(empcode);
+
+if (activeWithdrawal) {
     throw new IllegalStateException(
-        "An application is already under process for this employee"
+        "A withdrawal application is already under process for this employee"
+    );
+}
+
+
+// 🔹 Check active ADVANCE
+boolean activeAdvance =
+        advanceDetailsRepo.existsActiveAdvance(empcode);
+
+if (activeAdvance) {
+    throw new IllegalStateException(
+        "An advance application is already under process for this employee. " +
+        "A withdrawal application cannot be submitted until it is completed or cancelled."
     );
 }
 

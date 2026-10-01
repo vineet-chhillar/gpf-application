@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.backend.entity.GpfAdvanceDetails;
@@ -18,8 +20,18 @@ public interface GpfAdvanceDetailsRepo
     Optional<GpfAdvanceDetails> findByMaster_Id(Long id);
 
 List<GpfAdvanceDetails> findByCurrentOwnerRoleNot(Long role);
-List<GpfAdvanceDetails> findByMaster_EmpcodeAndCurrentOwnerRoleNot(
+List<GpfAdvanceDetails> findByMaster_EmpcodeAndCurrentOwnerRoleNot
+(
     String empcode, Long roleId
 );
+
+//boolean existsByMaster_EmpcodeAndCurrentOwnerRoleNot(String empcode,Long currentOwnerRole);
+@Query("""
+    SELECT COUNT(d) > 0
+    FROM GpfAdvanceDetails d
+    WHERE d.master.empcode = :empcode
+    AND d.currentOwnerRole <> 0
+""")
+boolean existsActiveAdvance(String empcode);
 }
 

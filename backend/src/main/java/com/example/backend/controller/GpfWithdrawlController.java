@@ -178,24 +178,45 @@ public ResponseEntity<?> getStatusByEmp(@PathVariable String empcode) {
     @Autowired
     private GpfWithdrawlService gpfWithdrawlService;
 
-    @PostMapping("/save")
-    public ResponseEntity<?> save(@Valid @RequestBody GpfWithdrawlRequestDTO dto) {
-        try {
+    
+@PostMapping("/save")
+public ResponseEntity<?> save(@Valid @RequestBody GpfWithdrawlRequestDTO dto) {
 
-            System.out.println("FULL DTO: " + dto);
-    System.out.println("MASTER: " + dto.getMaster());
+    System.out.println("===== SAVE WITHDRAWAL API HIT =====");
 
-    if (dto.getMaster() != null) {
-        System.out.println("EMPCODE IN CONTROLLER: " + dto.getMaster().getEmpcode());
+    if (dto.getMaster() == null) {
+        return ResponseEntity.badRequest().body(Map.of(
+            "status", "error",
+            "message", "Master data is required"
+        ));
     }
 
-    
-            gpfWithdrawlService.saveWithdrawl(dto);
-            return ResponseEntity.ok("GPF Withdrawl Application Saved Successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-           
+    try {
+
+        gpfWithdrawlService.saveWithdrawl(dto);
+
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", "GPF Withdrawal Application Saved Successfully"
+        ));
+
+    } 
+    catch (IllegalArgumentException | IllegalStateException e) {
+        // 🔹 Business / validation errors
+        return ResponseEntity.badRequest().body(Map.of(
+            "status", "error",
+            "message", e.getMessage()
+        ));
+    } 
+    catch (Exception e) {
+        // 🔹 Unexpected errors
+        e.printStackTrace();
+
+        return ResponseEntity.status(500).body(Map.of(
+            "status", "error",
+            "message", "Internal server error"
+        ));
+    }
 }
 
 {/*@PostMapping("/save")

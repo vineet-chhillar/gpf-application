@@ -21,6 +21,7 @@ import com.example.backend.repository.AdvanceStatusTrailRepo;
 import com.example.backend.repository.FunctionalRoleRepository;
 import com.example.backend.repository.GpfAdvanceDetailsRepo;
 import com.example.backend.repository.GpfAdvanceMasterRepo;
+import com.example.backend.repository.GpfWithdrawlDetailsRepository;
 import com.example.backend.repository.GpfAdvanceRuleRepo;
 import com.example.backend.repository.GpfSanctionOrderRepository;
 import com.example.backend.repository.ActionMasterRepository;
@@ -49,14 +50,19 @@ public class GpfAdvanceService {
     @Autowired
     private GpfAdvanceRuleRepo advanceRuleRepo;
 
-@Autowired
-private FunctionalRoleRepository roleRepo;
+    @Autowired
+    private FunctionalRoleRepository roleRepo;
     
     @Autowired
     private WorkflowTransitionRepository workflowTransitionRepo;
 
     @Autowired
-private GpfSanctionOrderRepository gpfSanctionOrderRepository;
+    private GpfSanctionOrderRepository gpfSanctionOrderRepository;
+
+    @Autowired
+    private GpfWithdrawlDetailsRepository withdrawlDetailsRepo;
+
+
     /* ================= FINANCIAL YEAR METHODS ================= */
 
     private LocalDate getFinancialYearStart() {
@@ -121,6 +127,8 @@ private GpfSanctionOrderRepository gpfSanctionOrderRepository;
         Long actionId) {
 
     try {
+        
+        //System.out.println("Withdrawl Repo: " + withdrawlDetailsRepo);
 System.out.println("===== SERVICE START =====");
         if (master == null || details == null) {
             throw new IllegalArgumentException("Invalid request payload");
@@ -140,14 +148,32 @@ System.out.println("===== SERVICE START =====");
             throw new IllegalArgumentException("Empcode is mandatory");
         }
 
-        List<GpfAdvanceDetails> activeApps =
-    detailsRepo.findByMaster_EmpcodeAndCurrentOwnerRoleNot(empcode, 0L);
+        /* ================= CHECK ACTIVE APPLICATIONS ================= */
 
-if (!activeApps.isEmpty()) {
+// 🔹 Check active ADVANCE
+boolean activeAdvance =
+        detailsRepo.existsActiveAdvance(empcode);
+
+if (activeAdvance) {
     throw new IllegalStateException(
         "An advance application is already under process for this employee"
     );
 }
+
+
+// 🔹 Check active WITHDRAWAL
+boolean activeWithdrawal =
+        withdrawlDetailsRepo.existsActiveWithdrawal(empcode);
+
+if (activeWithdrawal) {
+    throw new IllegalStateException(
+        "A withdrawal application is already under process for this employee. " +
+        "An advance application cannot be submitted until it is completed or cancelled."
+    );
+}
+
+
+
         if (details.getGpfaccountno() == null || details.getGpfaccountno().isBlank()) {
             throw new IllegalArgumentException("GPF Account No is mandatory");
         }
@@ -260,7 +286,8 @@ if (ruleSpecificData != null) {
         System.err.println("Error while saving advance application");
         e.printStackTrace();
 
-        throw new RuntimeException("Failed to save advance application: " + e.getMessage());
+        //throw new RuntimeException("Failed to save advance application: " + e.getMessage());
+        throw e;
     }
 }
 public List<InboxApplicationDTO> getAllPendingApplications() {
@@ -683,8 +710,7 @@ public List<GpfApplicationStatusResponseDTO> getAllApplicationStatus() {
 
     return masters.stream().map(master -> {
 
-        GpfApplicationStatusResponseDTO response =
-                new GpfApplicationStatusResponseDTO();
+        GpfApplicationStatusResponseDTO response = new GpfApplicationStatusResponseDTO();
 
         response.setMaster(master);
 
