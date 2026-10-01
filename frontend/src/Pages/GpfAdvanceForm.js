@@ -428,44 +428,29 @@ useEffect(() => {
 /* ================= SUBMIT ================= */
 
 const handleSubmit = () => {
-
  if(!validate()) return;
-
  if (!masterApiData || !detailsApiData) {
-
   openMessageModal({
     type: "warning",
     title: "Required Data Missing",
     message:
       "Employee or GPF details are not loaded properly."
   });
-
   return;
 }
-
  setShowVerification(true);
-
 };
 const confirmSubmit = async () => {
-
  try{
-
  const payload = {
-
   master:{
     ...masterApiData
-    
   },
-
   details:{
     ...detailsApiData,
-
   particulars: userInput.particulars,   
-
-  
     gpfaccountno: detailsApiData?.gpfaccountno,
 panno:masterApiData?.panno,
-
     creditfromdate:getCurrentFinancialYearStartDate(),
     credittodate:getTodayDate(),
 

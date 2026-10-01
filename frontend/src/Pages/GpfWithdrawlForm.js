@@ -688,14 +688,17 @@ resetForm();
   } catch (err) {
 
     console.error(err);
-    
+  
+    const errorMessage =
+  err.response?.data?.message || "Error while saving";
+
+
 openMessageModal({
   type: "warning",
-  title: err.response?.data || "Error while saving",
-  message: err.response?.data || "Error while saving"
+  title: "Error",
+  message: errorMessage
 });
   }
-
 };
 
 const handleSubmit = () => {
