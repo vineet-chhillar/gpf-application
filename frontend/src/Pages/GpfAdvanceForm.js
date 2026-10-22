@@ -441,74 +441,94 @@ const handleSubmit = () => {
  setShowVerification(true);
 };
 const confirmSubmit = async () => {
- try{
- const payload = {
-  master:{
-    ...masterApiData
-  },
-  details:{
-    ...detailsApiData,
-  particulars: userInput.particulars,   
-    gpfaccountno: detailsApiData?.gpfaccountno,
-panno:masterApiData?.panno,
-    creditfromdate:getCurrentFinancialYearStartDate(),
-    credittodate:getTodayDate(),
+  try {
 
-    dateofoutstandingbalance:getLastFinancialYearEndDate(),
+    const payload = {
+      master: {
+        ...masterApiData
+      },
+      details: {
+        ...detailsApiData,
 
-    withdrawlfromdate:getCurrentFinancialYearStartDate(),
-    withdrawltodate:getTodayDate(),
+        particulars: userInput.particulars,
+        gpfaccountno: detailsApiData?.gpfaccountno,
+        panno: masterApiData?.panno,
 
-    totalwithdrawlamount: detailsApiData?.totalwithdrawlamount ?? 0,
+        creditfromdate: getCurrentFinancialYearStartDate(),
+        credittodate: getTodayDate(),
 
-    amountofadvancerequested:userInput.amountofadvancerequested,
-    purposeofadvance:userInput.purposeofadvance,
+        dateofoutstandingbalance: getLastFinancialYearEndDate(),
 
-    noofmonthlyinstallmentsforpaymentofconsolidatedadvance:
-      userInput.noofmonthlyinstallmentsforpaymentofconsolidatedadvance,
+        withdrawlfromdate: getCurrentFinancialYearStartDate(),
+        withdrawltodate: getTodayDate(),
 
-    advancerule:Number(selectedRuleId),
+        totalwithdrawlamount: detailsApiData?.totalwithdrawlamount ?? 0,
 
-    dateofapplication:userInput.dateofapplication,
+        amountofadvancerequested: userInput.amountofadvancerequested,
+        purposeofadvance: userInput.purposeofadvance,
 
-      closingbalance: detailsApiData?.closingbalance || 0,
-    amountofadvanceoutstanding: detailsApiData?.advanceOutstanding || 0,
-    amountofconsolidatedadvance:consolidatedAdvance
-  },
-ruleSpecificData: ruleSpecificData,   
-  roleId:28,
-  actionId:17
+        noofmonthlyinstallmentsforpaymentofconsolidatedadvance:
+          userInput.noofmonthlyinstallmentsforpaymentofconsolidatedadvance,
 
- };
+        advancerule: Number(selectedRuleId),
 
- await api.post("/gpf-advance/save",payload);
+        dateofapplication: userInput.dateofapplication,
 
- setShowVerification(false);
- openMessageModal({
-  type: "success",
-  title: "Advance Submitted Successfully",
-  message:
-    "Your GPF advance application has been submitted."
-});
+        closingbalance: detailsApiData?.closingbalance || 0,
+        amountofadvanceoutstanding: detailsApiData?.advanceOutstanding || 0,
+        amountofconsolidatedadvance: consolidatedAdvance
+      },
 
- resetForm();
+      ruleSpecificData: ruleSpecificData,
+      roleId: 28,
+      actionId: 17
+    };
 
- }catch (err) {
-  console.error(err);
+    const res = await api.post("/gpf-advance/save", payload);
 
-  const message =
-    err.response?.data?.message ||   // ✅ if backend sends JSON
-    err.response?.data ||            // ✅ if plain string
-    err.message ||                   // fallback
-    "Save failed";
+    // ✅ ALWAYS READ BACKEND RESPONSE
+    const success = res.data?.success;
+    const message = res.data?.message || "Operation completed";
 
-openMessageModal({
-  type: "error",
-  title: "Save Failed",
-  message
-});
-}
+    if (success) {
 
+      setShowVerification(false);
+
+      openMessageModal({
+        type: "success",
+        title: "Success",
+        message: message
+      });
+
+      resetForm();
+
+    } else {
+
+      // ⚠️ in case backend returns 200 but success=false
+      openMessageModal({
+        type: "warning",
+        title: "Error",
+        message: message
+      });
+    }
+
+  } catch (err) {
+
+    console.error(err);
+
+    // ✅ THIS is where your real backend errors (400) come
+    const message =
+      err.response?.data?.message ||   // ApiResponse failure
+      err.response?.data?.error ||     // fallback (old APIs)
+      err.message ||                   
+      "Save failed";
+
+    openMessageModal({
+      type: "error",
+      title: "Save Failed",
+      message
+    });
+  }
 };
 
 /* ================= UI ================= */

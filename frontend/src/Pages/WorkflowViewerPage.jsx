@@ -6,21 +6,28 @@ function WorkflowViewerPage() {
   const [workflows, setWorkflows] = useState([]);
   const [transitions, setTransitions] = useState([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
-
-  const roles = [];
+const roles = [];
 
 transitions.forEach((t, i) => {
-  if (i === 0) roles.push(t.fromRole);
-  roles.push(t.toRole);
+  if (i === 0) {
+    roles.push({
+      role: t.fromRole,
+      divName: null
+    });
+  }
+
+  roles.push({
+    role: t.toRole,
+    divName: t.divName
+  });
 });
 
+useEffect(() => {
+    api.get("/workflow/list").then(res => setWorkflows(res.data)).catch(console.error);
+      
+}, []);
 
-  useEffect(() => {
-    api.get("/workflow/list")
-      .then(res => setWorkflows(res.data))
-      .catch(console.error);
-  }, []);
-
+console.log(workflows);
   const loadTransitions = async (workflowId) => {
 
     setSelectedWorkflow(workflowId);
@@ -28,6 +35,8 @@ transitions.forEach((t, i) => {
     try {
       const res = await api.get(`/workflow/transitions/${workflowId}`);
       setTransitions(res.data);
+       console.log("API response:", res.data);
+    console.log("Division names:", res.data.map(t => t.divName));
     } catch (err) {
       console.error(err);
     }
@@ -44,6 +53,7 @@ transitions.forEach((t, i) => {
             <th>ID</th>
             <th>Workflow Name</th>
             <th>Description</th>
+            <th>Division</th>
           </tr>
         </thead>
 
@@ -54,31 +64,40 @@ transitions.forEach((t, i) => {
               <td>{w.workflowId}</td>
               <td>{w.workflowName}</td>
               <td>{w.description}</td>
+              <td>{w.divName}</td>
             </tr>
           ))}
-        </tbody>
+        </tbody>  
       </table>
 
 {selectedWorkflow && (
-<div className="workflow-vertical">
+  <div className="workflow-vertical">
 
-  {roles.map((role, index) => (
-    <React.Fragment key={index}>
+    {roles.map((item, index) => (
+      <React.Fragment key={index}>
 
-      <div className="workflow-vertical-step">
-        {role}
-      </div>
+        <div className="workflow-vertical-step">
+          <div className="workflow-role">
+            {item.role}
+          </div>
 
-      {index !== roles.length - 1 && (
-        <div className="workflow-vertical-line">
-          ↓
+          {item.divName && (
+            <div className="workflow-division">
+              {item.divName}
+            </div>
+          )}
         </div>
-      )}
 
-    </React.Fragment>
-  ))}
+        {index !== roles.length - 1 && (
+          <div className="workflow-vertical-line">
+            ↓
+          </div>
+        )}
 
-</div>
+      </React.Fragment>
+    ))}
+
+  </div>
 )}
 
     </div>

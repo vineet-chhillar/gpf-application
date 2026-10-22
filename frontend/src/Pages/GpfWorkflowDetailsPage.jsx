@@ -176,10 +176,12 @@ if (!details) return;
   console.log("👉 Expected Next Step:", Number(details.currentStep) + 1);
     console.log("👉 Found Next:", next);
       if (next) {
-        setNextRoleName(next.toRole);
-      } else {
-        setNextRoleName("Completed");
-      }
+    setNextRoleName(
+        [next.toRole, next.divName].filter(Boolean).join(" - ")
+    );
+} else {
+    setNextRoleName("Completed");
+}
 
     } catch (err) {
       console.error("Next role fetch failed", err);
@@ -273,20 +275,17 @@ fetchSendToRoles();
 
 
 /* ================= LOAD ACTIONS ================= */
-
 useEffect(() => {
-
   const url =
     appType === "withdrawl"
       ? "/gpf-withdrawl/actions"
-      : "/gpf-advance/actions";
+      : "/gpf-withdrawl/actions";
 
   api.get(url)
     .then(res => {
       setActions(Array.isArray(res.data) ? res.data : []);
     })
     .catch(err => console.error("Action load error", err));
-
 }, [appType]);
 
 /* ================= CHECKBOX ================= */
@@ -874,21 +873,24 @@ return (
 )}</div>
             </div>
 
-            <RuleDetailsSection
+
+
+
+   <RuleDetailsSection
   appId={selectedId}
-  ruleId={
+  ruleId={Number(
     editData[selectedId]?.advancerule ??
     details?.advancerule
-  }
+  )}
   jsonData={
-    isRowEditable
-      ? editData[selectedId]?.ruleSpecificDataJson
-      : details?.ruleSpecificDataJson
+    editData[selectedId]?.ruleSpecificDataJson ??
+    details?.ruleSpecificDataJson
   }
   isRowEditable={isRowEditable}
   editData={editData}
   handleEditChange={handleRuleFieldChange}
 />
+
 
             <div className="details-grid details-grid-4">
               <div className="detail-item"><span>Installments</span><b>{details?.noofmonthlyinstallmentsforpaymentofconsolidatedadvance}</b></div>

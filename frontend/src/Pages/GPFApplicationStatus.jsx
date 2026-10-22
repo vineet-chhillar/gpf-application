@@ -345,7 +345,9 @@ return (
               : "status-pending"
           }
         >
-          {app.currentOwnerRole}
+          {app.currentDivisionName && app.currentDivisionName !== "-"
+  ? `${app.currentOwnerRole} (${app.currentDivisionName})`
+  : app.currentOwnerRole}
         </span>
 
         {/* 🔥 Show buttons ONLY when completed */}

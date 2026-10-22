@@ -17,9 +17,7 @@ const GpfWorkflowInboxPage = () => {
         ? "/gpf-withdrawl/inbox"
         : "/gpf-advance/inbox";
 
-    api.get(url)
-      .then(res => setApplications(res.data))
-      .catch(err => console.error(err));
+    api.get(url).then(res => setApplications(res.data)).catch(err => console.error(err));
 
   }, [appType]);
 
@@ -88,7 +86,10 @@ const GpfWorkflowInboxPage = () => {
 
                   <td>
   <span className="status-pending">
-    {app.pendingWithRole}
+    {app.currentDivisionName && app.currentDivisionName !== "-"
+  ? `${app.pendingWithRole} (${app.currentDivisionName})`
+  : app.pendingWithRole}
+    {console.log("dfxgfdgsfdgfgfgfgdfg"+app.currentDivisionName)}
   </span>
 </td>
 

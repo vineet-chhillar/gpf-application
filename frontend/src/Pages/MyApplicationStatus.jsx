@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../styles/WithdrawlApplicationStatus.css";
 import api from "../api/axios";
 /* temporary until login integration */
-const HARDCODED_EMPCODE = "3960";
+const HARDCODED_EMPCODE = "3571";
 
 function WithdrawlApplicationStatus() {
 
@@ -36,8 +36,8 @@ appType === "withdrawl"
 ? "/gpf-withdrawl"
 : "/gpf-advance";
 
-//const res = await api.get(`${base}/status-all`);
-const res = await api.get(`${base}/status-by-emp/${HARDCODED_EMPCODE}`);
+const res = await api.get(`${base}/status-all`);
+//const res = await api.get(`${base}/status-by-emp/${HARDCODED_EMPCODE}`);
 
 setApplications(res.data);
 setExpandedRow(null);
@@ -206,7 +206,7 @@ const handleViewOrder = async (app) => {
           <tbody>
 
 {applications.map((app, index) => {
-
+console.log(app.currentDivisionName);
 const master = app.master || {};
 const details = app.details || {};
 const trail = app.trail || [];
@@ -244,19 +244,13 @@ return (
               : "status-pending"
           }
         >
-          {app.currentOwnerRole}
+               {app.currentDivisionName && app.currentDivisionName !== "-"
+  ? `${app.currentOwnerRole} (${app.currentDivisionName})`
+  : app.currentOwnerRole}
+          
         </span>
 
-        {/* 🔥 Show buttons ONLY when completed */}
-       <span className={
-  isRejected
-    ? "status-reject"
-    : isCompleted
-    ? "status-complete"
-    : "status-pending"
-}>
-  {app.currentOwnerRole}
-</span>
+      
       </div>
     );
   })()}

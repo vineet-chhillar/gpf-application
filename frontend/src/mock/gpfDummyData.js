@@ -112,10 +112,11 @@ export const EMPLOYEES = [
 
 export const GPF_DETAILS = [
   {
-    panno: "AKXPS8966L",
+    panno: "ABMPA1395B",
     gpfaccountno: "GPF-NIC-1030",
     basicpay: 45000,
     outstandingbalance: 500000,
+    closingbalance: 500000,
     totalcreditamount: 50000,
     refundafterdateofoutstandingbalance: 200000,
     totalwithdrawlamount: 100000,

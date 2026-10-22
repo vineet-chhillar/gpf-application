@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 
 import GpfWorkflowInboxPage from "../Pages/GpfWorkflowInboxPage";
 import GpfWorkflowDetailsPage from "../Pages/GpfWorkflowDetailsPage";
+import Home from "../Pages/Home";
 import GpfSanctionPage from "../Pages/GpfSanctionPage";
 const MainLayout = () => {
   const [activePage, setActivePage] = useState("AdminList");
@@ -34,10 +35,15 @@ const handleMenuClick = (menuName) => {
   else if (menuName === "WithDrawl") navigate("/withdrawl");
   else if (menuName === "Advance") navigate("/advance");
   else if (menuName === "Pending For Action") navigate("/workflow");
+  else if (menuName === "Home") navigate("/home");
 };
  const menus = [
   {
     menuId: 1,
+    menuName: "Home"
+  },
+  {
+    menuId: 2,
     menuName: "GPF Rule Master"
   },
    {
@@ -45,11 +51,11 @@ const handleMenuClick = (menuName) => {
     menuName: "GPF Workflow Master",
     children: [
       {
-        menuId: 2,
+        menuId: 3,
         menuName: "WorkFlow HQ"
       },
       {
-        menuId: 3,
+        menuId: 4,
         menuName: "WorkFlow States"
       }
     ]
@@ -59,22 +65,22 @@ const handleMenuClick = (menuName) => {
     menuName: "Apply For GPF",
     children: [
       {
-        menuId: 4,
+        menuId: 5,
         menuName: "WithDrawl"
       },
       {
-        menuId: 5,
+        menuId: 6,
         menuName: "Advance"
       }
     ]
   },
    {
-    menuId: 6,
+    menuId: 7,
     menuName: "GPF Application Status(Admin)"
   },
    
    {
-    menuId: 7,
+    menuId: 8,
     menuName: "My Application Status"
   },
   //{
@@ -82,13 +88,14 @@ const handleMenuClick = (menuName) => {
     //menuName: "Pending For Action"
   //},
   {
-    menuId: 8,
+    menuId: 9,
     menuName: "Pending For Action"
   }
   
   
 ];
 const pageMap = {
+  "Home":<Home/>,
   "GPF Rule Master": <GpfRuleMaster />,  
   "GPF Application Status(Admin)": <GPFApplicationStatus />,
   "My Application Status": <MyApplicationStatus />,     
@@ -154,6 +161,8 @@ const pageMap = {
   }}
 >
 <Routes>
+
+<Route path="/" element={<Navigate to="/home" />} />
 
   <Route path="/" element={<Navigate to="/rule-master" />} />
 

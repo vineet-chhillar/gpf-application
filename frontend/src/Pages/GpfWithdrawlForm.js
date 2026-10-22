@@ -624,20 +624,29 @@ useEffect(() => {
     document.removeEventListener("mousedown", handleClickOutside);
   };
 }, []);
+const getBackendMessage = (resOrErr) => {
+  return (
+    resOrErr?.data?.message ||
+    resOrErr?.data?.error ||
+    resOrErr?.message ||
+    "Something went wrong"
+  );
+};
 const confirmSubmit = async () => {
 
   try {
 
     const payload = {
       master: {
-         ...masterApiData,
-  empcode: masterApiData.empcode || masterApiData.empCode  
+        ...masterApiData,
+        empcode: masterApiData.empcode || masterApiData.empCode  
       },
       details: {
         ...detailsApiData,
 
-       gpfaccountno: detailsApiData.gpfaccountno,
-panno: masterApiData.panno,
+        gpfaccountno: detailsApiData.gpfaccountno,
+        panno: masterApiData.panno,
+
         creditfromdate: getCurrentFinancialYearStartDate(),
         credittodate: getTodayDate(),
         dateofoutstandingbalance: getCurrentFinancialYearStartDate(),
@@ -649,21 +658,21 @@ panno: masterApiData.panno,
         purposeofwithdrawl: userInput.purposeofwithdrawl,
         withdrawlrule: Number(selectedRuleId),
 
-       concernedofficername:
-  detailsApiData?.concernedofficername || userInput.concernedofficername,
+        concernedofficername:
+          detailsApiData?.concernedofficername || userInput.concernedofficername,
 
-ispriorwithdrawlforsamepurpose:
-  userInput.ispriorwithdrawlforsamepurpose,
+        ispriorwithdrawlforsamepurpose:
+          userInput.ispriorwithdrawlforsamepurpose,
 
-priorwithdrawlamount:
-  userInput.ispriorwithdrawlforsamepurpose
-    ? userInput.priorwithdrawlamount
-    : 0,
+        priorwithdrawlamount:
+          userInput.ispriorwithdrawlforsamepurpose
+            ? userInput.priorwithdrawlamount
+            : 0,
 
-priorwithdrawlfinyear:
-  userInput.ispriorwithdrawlforsamepurpose
-    ? userInput.priorwithdrawlfinyear
-    : "",
+        priorwithdrawlfinyear:
+          userInput.ispriorwithdrawlforsamepurpose
+            ? userInput.priorwithdrawlfinyear
+            : "",
 
         dateofapplication: userInput.dateofapplication,
 
@@ -672,32 +681,43 @@ priorwithdrawlfinyear:
       }
     };
 
-    console.log("FINAL PAYLOAD:", payload);
-    await api.post("/gpf-withdrawl/save", payload);
+    const res = await api.post("/gpf-withdrawl/save", payload);
 
-    setShowVerification(false);
+    const backendMessage = getBackendMessage(res);
 
-    openMessageModal({
-  type: "success",
-  title: "Withdrawal Submitted Successfully",
-  message:
-    "Your GPF withdrawal application has been submitted."
-});
-resetForm();
+    if (res.data?.success) {
+
+      setShowVerification(false);
+
+      openMessageModal({
+        type: "success",
+        title: "Success",
+        message: backendMessage
+      });
+
+      resetForm();
+
+    } else {
+
+      // even if 200 but failure
+      openMessageModal({
+        type: "warning",
+        title: "Error",
+        message: backendMessage
+      });
+    }
 
   } catch (err) {
 
     console.error(err);
-  
-    const errorMessage =
-  err.response?.data?.message || "Error while saving";
 
+    const backendMessage = getBackendMessage(err.response || err);
 
-openMessageModal({
-  type: "warning",
-  title: "Error",
-  message: errorMessage
-});
+    openMessageModal({
+      type: "warning",
+      title: "Error",
+      message: backendMessage
+    });
   }
 };
 

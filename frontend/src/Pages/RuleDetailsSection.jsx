@@ -9,11 +9,18 @@ const RuleInput = ({
   appId,
   isEditable,
   editData,
+  jsonData,
   handleEditChange
 }) => {
+  const val = isEditable
+    ? editData?.[appId]?.ruleSpecificDataJson?.[name]
+        ?? jsonData?.[name]
+        ?? ""
+    : jsonData?.[name] ?? "";
 
-  const val =
-    editData?.[appId]?.ruleSpecificDataJson?.[name] ?? "";
+  // Keep the remaining JSX unchanged
+
+
 
   return (
     <div className="detail-item">
@@ -48,11 +55,16 @@ const RuleSelect = ({
   appId,
   isEditable,
   editData,
+  jsonData,
   handleEditChange
 }) => {
+  const val = isEditable
+    ? editData?.[appId]?.ruleSpecificDataJson?.[name]
+        ?? jsonData?.[name]
+        ?? ""
+    : jsonData?.[name] ?? "";
 
-  const val =
-    editData?.[appId]?.ruleSpecificDataJson?.[name] ?? "";
+  // Keep the remaining JSX unchanged
 
   return (
     <div className="detail-item">
@@ -87,7 +99,20 @@ const RuleDetailsSection = React.memo(({
   handleEditChange
 }) => {
 
-  if (!jsonData) return null;
+  const normalizedRuleId = Number(ruleId);
+
+  console.log("Rule Details Debug:", {
+    appId,
+    ruleId,
+    normalizedRuleId,
+    jsonData,
+    isRowEditable
+  });
+
+  if (!jsonData) {
+    console.log("Rule specific data is missing for appId:", appId);
+    return null;
+  }
 
   return (
     <>
@@ -95,36 +120,160 @@ const RuleDetailsSection = React.memo(({
 
       <div className="rule-grid">
 
-        {/* 🏠 HOUSE */}
-        {ruleId === 1 && (
-          <>
-            <RuleInput label="Location & Measurement" name="location" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleSelect label="Ownership Type" name="ownershipType" options={["Freehold", "Leasehold"]} appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleInput label="Construction Plan" name="constructionPlan" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleInput label="Society Name" name="societyName" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleInput label="Cost of Construction" name="constructionCost" type="number" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleInput label="Housing Board" name="housingBoardName" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-          </>
-        )}
+        
+        
+{normalizedRuleId === 1 && (
+  <>
+    <RuleInput
+      label="Location & Measurement"
+      name="location"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleSelect
+      label="Ownership Type"
+      name="ownershipType"
+      options={["Freehold", "Leasehold"]}
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleInput
+      label="Construction Plan"
+      name="constructionPlan"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleInput
+      label="Society Name"
+      name="societyName"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleInput
+      label="Cost of Construction"
+      name="constructionCost"
+      type="number"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleInput
+      label="Housing Board"
+      name="housingBoardName"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+  </>
+)}
+
 
         {/* 🎓 EDUCATION */}
-        {ruleId === 2 && (
-          <>
-            <RuleInput label="Child Name" name="childName" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleInput label="Class / College" name="classCollege" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleSelect label="Student Type" name="studentType" options={["DayScholar", "Hostler"]} appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-          </>
-        )}
+        
+        {normalizedRuleId === 2 && (
+  <>
+    <RuleInput
+      label="Child Name"
+      name="childName"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleInput
+      label="Class / College"
+      name="classCollege"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleSelect
+      label="Student Type"
+      name="studentType"
+      options={["DayScholar", "Hostler"]}
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+  </>
+)}
 
         {/* 🏥 MEDICAL */}
-        {ruleId === 3 && (
-          <>
-            <RuleInput label="Patient Details" name="patientDetails" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleInput label="Hospital / Doctor" name="hospitalName" appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleSelect label="Patient Type" name="patientType" options={["Indoor", "Outdoor"]} appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-            <RuleSelect label="Reimbursement Available" name="reimbursementAvailable" options={["true", "false"]} appId={appId} isEditable={isRowEditable} editData={editData} handleEditChange={handleEditChange} />
-          </>
-        )}
+        
+{normalizedRuleId === 3 && (
+  <>
+    <RuleInput
+      label="Patient Details"
+      name="patientDetails"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleInput
+      label="Hospital / Doctor"
+      name="hospitalName"
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleSelect
+      label="Patient Type"
+      name="patientType"
+      options={["Indoor", "Outdoor"]}
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+
+    <RuleSelect
+      label="Reimbursement Available"
+      name="reimbursementAvailable"
+      options={["true", "false"]}
+      appId={appId}
+      isEditable={isRowEditable}
+      editData={editData}
+      jsonData={jsonData}
+      handleEditChange={handleEditChange}
+    />
+  </>
+)}
+
 
       </div>
     </>
