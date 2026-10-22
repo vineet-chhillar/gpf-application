@@ -28,6 +28,12 @@ private Long actionByRole;
     @Column(name = "actionat", insertable = false, updatable = false)
     private LocalDateTime actionat;
 
+    @Column(name="action_by_div_code")
+    private String action_by_div_code;
+
+    @Column(name="action_by_emp_code")
+    private String action_by_emp_code;
+
     // ===== GETTERS & SETTERS =====
 
     public Long getId() {
@@ -66,6 +72,26 @@ public void setApplicationId(Long applicationId) {
 public void setActionByRole(Long actionByRole) {
     this.actionByRole = actionByRole;
 }
+
+
+public String getActionByDivCode()
+{
+    return action_by_div_code;
+}
+public void setActionByDivCode(String action_by_div_code)
+{
+    this.action_by_div_code=action_by_div_code;
+}
+
+public String getActionByEmpCode()
+{
+    return action_by_emp_code;
+}
+public void setActionByEmpCode(String action_by_emp_code)
+{
+    this.action_by_emp_code=action_by_emp_code;
+}
+
 
 
     public LocalDateTime getActionat() {

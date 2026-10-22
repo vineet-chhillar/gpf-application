@@ -24,6 +24,9 @@ public class WorkflowMaster {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "div_code")
+    private String workflowDiv;
+
     public Long getWorkflowId() {
         return workflowId;
     }
@@ -63,4 +66,13 @@ public class WorkflowMaster {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public String getWorkflowDiv() {
+        return workflowDiv;
+    }
+
+    public void setWorkflowDiv(String workflowDiv) {
+        this.workflowDiv = workflowDiv;
+    }
+
 }

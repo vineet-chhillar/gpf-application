@@ -11,6 +11,9 @@ public class WorkflowTransitionViewDTO {
 private Long roleId;
 private String roleName;
 
+private String toRoleDivCode;
+private String divName;
+
 public Long getRoleId() {
     return roleId;
 }
@@ -67,4 +70,20 @@ public void setRoleName(String roleName) {
     public void setIsFinal(Boolean isFinal) {
         this.isFinal = isFinal;
     }
+
+   public String getToRoleDivCode() {
+    return toRoleDivCode;
+}
+
+public void setToRoleDivCode(String toRoleDivCode) {
+    this.toRoleDivCode = toRoleDivCode;
+}
+
+public String getDivName() {
+    return divName;
+}
+
+public void setDivName(String divName) {
+    this.divName = divName;
+}
 }

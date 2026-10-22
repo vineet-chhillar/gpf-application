@@ -27,6 +27,17 @@ private Long toRole;
     @Column(name = "is_final")
     private Boolean isFinal;
 
+    @Column(name = "to_role_div_code")
+private String toRoleDivCode;
+
+public String getToRoleDivCode() {
+    return toRoleDivCode;
+}
+
+public void setToRoleDivCode(String toRoleDivCode) {
+    this.toRoleDivCode = toRoleDivCode;
+}
+
     // Getters & Setters
 
     public Long getTransitionId() {

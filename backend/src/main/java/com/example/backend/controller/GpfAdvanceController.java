@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.dto.AdvanceRequestDTO;
+import com.example.backend.dto.ApiResponse;
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
 import com.example.backend.dto.InboxApplicationDTO;
@@ -47,53 +49,51 @@ public ResponseEntity<?> getApplicationStatusByEmp(
     }
 }  
 @PostMapping("/save")
-public ResponseEntity<?> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
+public ResponseEntity<ApiResponse<?>> saveAdvance(@RequestBody AdvanceRequestDTO dto) {
 
     System.out.println("===== SAVE ADVANCE API HIT =====");
 
     if (dto.getDetails() == null) {
-        return ResponseEntity.badRequest().body(Map.of(
-            "status", "error",
-            "message", "Details cannot be null"
-        ));
+        return ResponseEntity.badRequest().body(
+            ApiResponse.failure("Details cannot be null")
+        );
     }
 
     try {
 
-        service.saveAdvanceApplication(
+        // ✅ CAPTURE RESPONSE FROM SERVICE
+        ApiResponse<?> response = service.saveAdvanceApplication(
                 dto.getMaster(),
                 dto.getDetails(),
                 dto.getRuleSpecificData(),
                 dto.getRoleId(),
-                dto.getActionId());
+                dto.getActionId()
+        );
 
-        return ResponseEntity.ok(Map.of(
-            "status", "success",
-            "message", "Advance application saved"
-        ));
+        // ✅ IF FAILURE → return 400 with SAME message
+        if (!response.isSuccess()) {
+            return ResponseEntity.badRequest().body(response);
+        }
 
-    } 
-    catch (IllegalArgumentException | IllegalStateException e) {
-        // 🔹 BUSINESS / VALIDATION ERRORS → 400
-        return ResponseEntity.badRequest().body(Map.of(
-            "status", "error",
-            "message", e.getMessage()
-        ));
-    } 
-    catch (Exception e) {
-        // 🔹 REAL SERVER ERROR → 500
+        // ✅ IF SUCCESS → return 200 with SAME response
+        return ResponseEntity.ok(response);
+
+    } catch (Exception e) {
+
         e.printStackTrace();
 
-        return ResponseEntity.status(500).body(Map.of(
-            "status", "error",
-            "message", "Internal server error"
-        ));
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ApiResponse.failure("Internal server error")
+        );
     }
 }
  @GetMapping("/inbox")
     public List<InboxApplicationDTO> getInbox() {
         System.out.println("Advance inbox size = " );
+        
         return service.getAllPendingApplications();
+        
     }
 
     /* ================= PROCESS ================= */

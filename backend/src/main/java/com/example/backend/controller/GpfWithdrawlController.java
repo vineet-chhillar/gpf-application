@@ -1,4 +1,5 @@
 package com.example.backend.controller;
+import com.example.backend.dto.ApiResponse;
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
 import com.example.backend.dto.GpfWithdrawlRequestDTO;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -180,45 +181,38 @@ public ResponseEntity<?> getStatusByEmp(@PathVariable String empcode) {
 
     
 @PostMapping("/save")
-public ResponseEntity<?> save(@Valid @RequestBody GpfWithdrawlRequestDTO dto) {
+public ResponseEntity<ApiResponse<?>> save(@Valid @RequestBody GpfWithdrawlRequestDTO dto) {
 
     System.out.println("===== SAVE WITHDRAWAL API HIT =====");
 
     if (dto.getMaster() == null) {
-        return ResponseEntity.badRequest().body(Map.of(
-            "status", "error",
-            "message", "Master data is required"
-        ));
+        return ResponseEntity.badRequest().body(
+            ApiResponse.failure("Master data is required")
+        );
     }
 
     try {
 
-        gpfWithdrawlService.saveWithdrawl(dto);
+        // ✅ GET RESPONSE FROM SERVICE
+        ApiResponse<?> response = gpfWithdrawlService.saveWithdrawl(dto);
 
-        return ResponseEntity.ok(Map.of(
-            "status", "success",
-            "message", "GPF Withdrawal Application Saved Successfully"
-        ));
+        // ✅ IF FAILURE → return 400 with same message
+        if (!response.isSuccess()) {
+            return ResponseEntity.badRequest().body(response);
+        }
 
-    } 
-    catch (IllegalArgumentException | IllegalStateException e) {
-        // 🔹 Business / validation errors
-        return ResponseEntity.badRequest().body(Map.of(
-            "status", "error",
-            "message", e.getMessage()
-        ));
-    } 
-    catch (Exception e) {
-        // 🔹 Unexpected errors
-        e.printStackTrace();
+        // ✅ IF SUCCESS → return 200 with same response
+        return ResponseEntity.ok(response);
 
-        return ResponseEntity.status(500).body(Map.of(
-            "status", "error",
-            "message", "Internal server error"
-        ));
+    } catch (Exception ex) {
+
+        ex.printStackTrace();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ApiResponse.failure("Something went wrong. Please try again.")
+        );
     }
 }
-
 {/*@PostMapping("/save")
 public ResponseEntity<?> save(@RequestBody GpfWithdrawlRequestDTO dto) {
     System.out.println("GPF DATA RECEIVED: " + dto);

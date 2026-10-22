@@ -1,7 +1,7 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.WorkflowMasterDTO;
 import com.example.backend.dto.WorkflowTransitionViewDTO;
-import com.example.backend.entity.WorkflowMaster;
 import com.example.backend.entity.WorkflowTransition;
 import com.example.backend.repository.WorkflowMasterRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
@@ -24,52 +24,81 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Autowired
     private FunctionalRoleRepository roleRepo;
 
-    @Override
-    public List<WorkflowMaster> getAllWorkflows() {
-        return workflowMasterRepo.findAll();
-    }
+    
+@Override
+public List<WorkflowMasterDTO> getAllWorkflows() {
 
-    @Override
-    public List<WorkflowTransitionViewDTO> getWorkflowTransitions(Long workflowId) {
+    List<WorkflowMasterRepository.WorkflowMasterProjection> results =   workflowMasterRepo.findWorkflowWithDivision();
 
-        List<WorkflowTransition> transitions =
-                transitionRepo.findByWorkflowIdOrderByStepOrder(workflowId);
+    return results.stream().map(row -> {
+        WorkflowMasterDTO dto = new WorkflowMasterDTO();
 
-        return transitions.stream().map(t -> {
+        dto.setWorkflowId(row.getWorkflowId());
+        dto.setWorkflowName(row.getWorkflowName());
+        dto.setDescription(row.getDescription());
+        dto.setIsActive(row.getIsActive());
+        dto.setCreatedAt(row.getCreatedAt());
+        dto.setWorkflowDiv(row.getWorkflowDiv());
+        dto.setDivName(row.getDivName());
 
-            WorkflowTransitionViewDTO dto = new WorkflowTransitionViewDTO();
-
-            dto.setTransitionId(t.getTransitionId());
-            dto.setStepOrder(t.getStepOrder());
-
-System.out.println("WorkflowId: " + workflowId);
-System.out.println("Transitions count: " + transitions.size());
-for (WorkflowTransition tt : transitions) {
-    System.out.println(
-        "Step: " + tt.getStepOrder() +
-        " From: " + tt.getFromRole() +
-        " To: " + tt.getToRole() +
-        " Final: " + tt.getIsFinal()
-    );
+        return dto;
+    }).toList();
 }
-            dto.setFromRole(
-                    roleRepo.findById(t.getFromRole())
-                            .map(r -> r.getRoleName())
-                            .orElse("Unknown")
-            );
 
-            dto.setToRole(
-                    roleRepo.findById(t.getToRole())
-                            .map(r -> r.getRoleName())
-                            .orElse("Unknown")
-            );
 
-            dto.setIsFinal(t.getIsFinal());
+    
+@Override
+public List<WorkflowTransitionViewDTO> getWorkflowTransitions(Long workflowId) {
 
-            return dto;
+    List<WorkflowTransitionRepository.WorkflowTransitionProjection> transitions =
+            transitionRepo.findWorkflowTransitionsWithDivision(workflowId);
 
-        }).toList();
+    System.out.println("WorkflowId: " + workflowId);
+    System.out.println("Transitions count: " + transitions.size());
+
+    for (WorkflowTransitionRepository.WorkflowTransitionProjection tt : transitions) {
+        System.out.println(
+            "Step: " + tt.getStepOrder() +
+            " From: " + tt.getFromRole() +
+            " To: " + tt.getToRole() +
+            " Final: " + tt.getIsFinal() +
+            " Division Code: " + tt.getToRoleDivCode() +
+            " Division Name: " + tt.getDivName()
+        );
     }
+
+    return transitions.stream().map(t -> {
+
+        WorkflowTransitionViewDTO dto = new WorkflowTransitionViewDTO();
+
+        dto.setTransitionId(t.getTransitionId());
+        dto.setStepOrder(t.getStepOrder());
+
+        dto.setFromRole(
+            roleRepo.findById(t.getFromRole())
+                .map(r -> r.getRoleName())
+                .orElse("Unknown")
+        );
+
+        dto.setToRole(
+            roleRepo.findById(t.getToRole())
+                .map(r -> r.getRoleName())
+                .orElse("Unknown")
+        );
+
+        dto.setIsFinal(t.getIsFinal());
+
+        // New fields
+        dto.setToRoleDivCode(t.getToRoleDivCode());
+        dto.setDivName(t.getDivName());
+System.out.print(dto.getToRoleDivCode());
+System.out.print(dto.getDivName());
+        return dto;
+
+    }).toList();
+
+}
+
 
 @Override
 public List<WorkflowTransitionViewDTO> getPreviousRoles(

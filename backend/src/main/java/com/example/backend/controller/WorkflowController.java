@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import com.example.backend.dto.WorkflowMasterDTO;
 import com.example.backend.dto.WorkflowTransitionViewDTO;
 import com.example.backend.entity.WorkflowMaster;
 import com.example.backend.service.WorkflowService;
@@ -15,12 +16,14 @@ public class WorkflowController {
 
     private final WorkflowService workflowService;
 
+    private final WorkflowMasterDTO workflowMasterDTO;
     public WorkflowController(WorkflowService workflowService) {
         this.workflowService = workflowService;
+        this.workflowMasterDTO = new WorkflowMasterDTO();
     }
 
     @GetMapping("/list")
-    public List<WorkflowMaster> getAllWorkflows() {
+    public List<WorkflowMasterDTO> getAllWorkflows() {
         return workflowService.getAllWorkflows();
     }
 

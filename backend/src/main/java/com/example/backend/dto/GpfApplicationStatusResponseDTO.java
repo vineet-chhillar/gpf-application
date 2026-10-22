@@ -13,6 +13,16 @@ private String currentOwnerRole;
 private Long currentOwnerRoleId;
 private boolean sanctionGenerated;
 
+
+private String currentDivisionName;
+
+public String getCurrentDivisionName() {
+    return currentDivisionName;
+}
+
+public void setCurrentDivisionName(String currentDivisionName) {
+    this.currentDivisionName = currentDivisionName;
+}
 public Long getCurrentOwnerRoleId() {
     return currentOwnerRoleId;
 }

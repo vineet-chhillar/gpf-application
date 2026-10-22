@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 
+import com.example.backend.dto.ApiResponse;
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
 import com.example.backend.dto.GpfWithdrawlRequestDTO;
@@ -61,12 +62,14 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import java.util.Base64;
 import java.util.Collections;
+import jakarta.servlet.http.HttpSession;
 
 @Service
 @Transactional
 public class GpfWithdrawlServiceImpl implements GpfWithdrawlService {
 
-
+@Autowired
+private HttpSession session;
     private static final boolean USE_MOCK = false;
 
     @Autowired
@@ -96,11 +99,26 @@ private GpfSanctionOrderRepository gpfSanctionOrderRepository;
 private GpfAdvanceDetailsRepo advanceDetailsRepo;
 
 
+private String getLoggedInEmpCode() {
+    return "6507";
+}
+{/*private String getLoggedInEmpCode() {
+    Object empCode = session.getAttribute("empcode");
+
+    //Object empCode="6507";
+    if (empCode == null || empCode.toString().isBlank()) {
+        throw new IllegalStateException(
+            "Logged-in employee code not found in session"
+        );
+    }
+
+    return empCode.toString();
+}*/}
 @Override
-public void saveWithdrawl(GpfWithdrawlRequestDTO dto) {
+public ApiResponse<?> saveWithdrawl(GpfWithdrawlRequestDTO dto) {
 
     if (dto == null || dto.getMaster() == null || dto.getDetails() == null) {
-        throw new IllegalArgumentException("Invalid request payload");
+        return ApiResponse.failure("Invalid request payload");
     }
 
     GpfWithdrawlMaster master = dto.getMaster();
@@ -117,7 +135,7 @@ System.out.println("EMPCODE RAW: " + (dto.getMaster() != null ? dto.getMaster().
     String empcode = master.getEmpcode();
     System.out.println("emp code: " + empcode);
     if (empcode == null || empcode.isBlank()) {
-        throw new IllegalArgumentException("Empcode is mandatory");
+        return ApiResponse.failure("Empcode is mandatory");
     }
 
    /* ================= CHECK ACTIVE APPLICATIONS ================= */
@@ -128,7 +146,7 @@ boolean activeWithdrawal =
         detailsRepo.existsActiveWithdrawal(empcode);
 
 if (activeWithdrawal) {
-    throw new IllegalStateException(
+    return ApiResponse.failure(
         "A withdrawal application is already under process for this employee"
     );
 }
@@ -139,7 +157,7 @@ boolean activeAdvance =
         advanceDetailsRepo.existsActiveAdvance(empcode);
 
 if (activeAdvance) {
-    throw new IllegalStateException(
+    return ApiResponse.failure(
         "An advance application is already under process for this employee. " +
         "A withdrawal application cannot be submitted until it is completed or cancelled."
     );
@@ -148,17 +166,17 @@ if (activeAdvance) {
     /* ================= BASIC VALIDATION ================= */
 
     if (details.getGpfaccountno() == null || details.getGpfaccountno().isBlank()) {
-        throw new IllegalArgumentException("GPF Account No is mandatory");
+        return ApiResponse.failure("GPF Account No is mandatory");
     }
 
     if (details.getDateofapplication() == null) {
-        throw new IllegalArgumentException("Date of application is mandatory");
+        return ApiResponse.failure("Date of application is mandatory");
     }
 
     /* ================= ACTION VALIDATION ================= */
 
     if (details.getAction() == null || details.getAction().getActionId() == null) {
-        throw new IllegalArgumentException("Action is mandatory");
+        return ApiResponse.failure("Action is mandatory");
     }
 
     ActionMaster action = actionRepo.findById(details.getAction().getActionId())
@@ -176,14 +194,17 @@ if (activeAdvance) {
 
     Long employeeRoleId = 28L; // TODO: replace with dynamic role
 
-    WorkflowTransition firstTransition =
-            workflowTransitionRepo
-                    .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
-                            workflowId,
-                            employeeRoleId
-                    )
-                    .orElseThrow(() ->
-                            new IllegalStateException("Workflow not configured properly"));
+   WorkflowTransition firstTransition =
+        workflowTransitionRepo
+                .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
+                        workflowId,
+                        employeeRoleId
+                )
+                .orElse(null);
+
+if (firstTransition == null) {
+    return ApiResponse.failure("Workflow not configured properly");
+}
 
     /* ================= RESUME / NORMAL FLOW ================= */
 
@@ -211,6 +232,10 @@ if (activeAdvance) {
     trail.setRemarks("Application Submitted");
 
     trailRepo.save(trail);
+    return ApiResponse.success(
+    "Withdrawal application submitted successfully",
+    master.getId() // optional: return application id
+);
 }
 
     private Long determineWorkflow(String designation) {
@@ -273,6 +298,8 @@ public GpfWithdrawlRequestDTO getByEmpcode(String empcode) {
 @Transactional
 public void processApplications(WorkflowProcessRequestDTO request) {
 
+
+    
     if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
         throw new IllegalArgumentException("No applications selected");
     }
@@ -296,6 +323,30 @@ public void processApplications(WorkflowProcessRequestDTO request) {
 
         Long actingRole = details.getCurrentOwnerRole();
         Long workflowId = details.getWorkflowId();
+        //new code for new columns action_by_div_code and action_by_emp_code
+        // Capture the acting employee before processing the action
+        System.out.println("reached process application");
+String actionByEmpCode = getLoggedInEmpCode();
+System.out.println("reached process application" + actionByEmpCode);
+// Capture the current step before modifying workflow state
+Integer actingStep = details.getCurrentStep();
+System.out.println("reached process application" + actingStep);
+// Fetch the transition corresponding to the current workflow step
+WorkflowTransition actingTransition =
+    workflowTransitionRepo
+        .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
+            workflowId,
+            actingStep
+        )
+        .orElseThrow(() ->
+            new IllegalStateException(
+                "Workflow transition not found for workflowId="
+                    + workflowId + ", stepOrder=" + actingStep
+            )
+        );
+
+// Division code associated with the acting workflow step
+String actionByDivCode = actingTransition.getToRoleDivCode();
 
         // 🔥 RESUME FLOW (HIGHEST PRIORITY)
         if (details.getIsReturned() != null && details.getIsReturned()) {
@@ -331,6 +382,11 @@ details.setCurrentStep(next.getStepOrder());
             trail.setActionByRole(actingRole);
             trail.setRemarks(request.getRemarks());
 
+            //two new columns added to table applicationstatustrail,action_by_div_code,action_by_emp_code
+// NEW COLUMNS
+trail.setActionByDivCode(actionByDivCode);
+trail.setActionByEmpCode(actionByEmpCode);
+
             trailRepo.save(trail);
 
             continue; // 🔥 VERY IMPORTANT (skip normal flow)
@@ -361,7 +417,9 @@ if (action.getActionId() == 12L) {
     trail.setActionId(action.getActionId());
     trail.setActionByRole(actingRole);
     trail.setRemarks(request.getRemarks());
-
+//new columns
+trail.setActionByDivCode(actionByDivCode);
+trail.setActionByEmpCode(actionByEmpCode);
     trailRepo.save(trail);
 
     continue; // 🔥 VERY IMPORTANT
@@ -423,7 +481,9 @@ if (action.getActionId() == 12L) {
         trail.setActionId(action.getActionId());
         trail.setActionByRole(actingRole);
         trail.setRemarks(request.getRemarks());
-
+//new columns
+trail.setActionByDivCode(actionByDivCode);
+trail.setActionByEmpCode(actionByEmpCode);
         trailRepo.save(trail);
     }
 }
@@ -553,12 +613,10 @@ public List<GpfApplicationStatusResponseDTO> getApplicationStatusByEmp(String em
                     detailsList.isEmpty() ? null : detailsList.get(0);
 
             // 🔹 RULE TEXT
-            if (details != null && details.getWithdrawlrule() != null) {
-                withdrawlRuleRepo
-                        .findById(details.getWithdrawlrule())
-                        .ifPresent(rule ->
-                                details.setWithdrawlruleText(rule.getWithdrawlReason())
-                        );
+            if (details != null && details.getWithdrawlrule() != null)
+                 {
+                withdrawlRuleRepo.findById(details.getWithdrawlrule())
+                .ifPresent(rule -> details.setWithdrawlruleText(rule.getWithdrawlReason()));
             }
 
             // 🔹 TRAIL
@@ -625,18 +683,36 @@ public List<GpfApplicationStatusResponseDTO> getApplicationStatusByEmp(String em
             }
 
             // 🔹 BUILD RESPONSE
-            GpfApplicationStatusResponseDTO res =
-                    new GpfApplicationStatusResponseDTO();
+         // 🔹 BUILD RESPONSE
+GpfApplicationStatusResponseDTO res =
+        new GpfApplicationStatusResponseDTO();
 
-            res.setMaster(master);
-            res.setDetails(details);
-            res.setTrail(trailDTO);
+res.setMaster(master);
+res.setDetails(details);
+res.setTrail(trailDTO);
 
-            res.setLastRemarks(lastRemarks);
-            res.setLastActionByRole(lastActionByRole);
-            res.setCurrentOwnerRole(currentRoleName);
+res.setLastRemarks(lastRemarks);
+res.setLastActionByRole(lastActionByRole);
+res.setCurrentOwnerRole(currentRoleName);
 
-            return res;
+// 🔹 CURRENT DIVISION NAME
+String currentDivisionName = "-";
+
+if (details != null
+        && details.getWorkflowId() != null
+        && details.getCurrentStep() != null
+        && details.getCurrentStep() > 0) {
+
+    currentDivisionName =
+            workflowTransitionRepo.findDivisionNameByWorkflowAndStep(
+                    details.getWorkflowId(),
+                    details.getCurrentStep()
+            ).orElse("-");
+}
+
+res.setCurrentDivisionName(currentDivisionName);
+System.out.println("sdfgdgffdgdfhdfhdfghdfghdfhdfghg" + currentDivisionName);
+return res;
 
         } catch (Exception e) {
             System.out.println("❌ Error for master ID: " + master.getId());
@@ -740,6 +816,24 @@ if (details != null && details.getCurrentOwnerRole() != null) {
         res.setLastRemarks(lastRemarks);
         res.setLastActionByRole(lastActionByRole);
         res.setCurrentOwnerRole(currentRoleName);
+
+        String currentDivisionName = "-";
+
+if (details != null
+        && details.getWorkflowId() != null
+        && details.getCurrentStep() != null
+        && details.getCurrentStep() > 0) {
+
+    currentDivisionName =
+        workflowTransitionRepo.findDivisionNameByWorkflowAndStep(
+            details.getWorkflowId(),
+            details.getCurrentStep()
+        ).orElse("-");
+}
+
+res.setCurrentDivisionName(currentDivisionName);
+
+
         boolean sanctionExists =
         gpfSanctionOrderRepository.existsByApplicationId(master.getId());
 
@@ -779,32 +873,48 @@ public List<InboxApplicationDTO> getAllPendingApplications() {
 
         InboxApplicationDTO dto = new InboxApplicationDTO();
 
-          dto.setApplicationId(d.getMaster().getId());  // FIX
-
         if (d.getMaster() != null) {
+            dto.setApplicationId(d.getMaster().getId());
             dto.setEmployeeName(d.getMaster().getEmpname());
             dto.setEmpCode(d.getMaster().getEmpcode());
-             dto.setDesignation(d.getMaster().getDesignation());
+            dto.setDesignation(d.getMaster().getDesignation());
         }
 
-       dto.setAmount(d.getAmountofwithdrawlrequested());
-dto.setPurpose(d.getPurposeofwithdrawl());
-dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
+        dto.setAmount(d.getAmountofwithdrawlrequested());
+        dto.setPurpose(d.getPurposeofwithdrawl());
+        dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
+
         if (d.getDateofapplication() != null) {
             dto.setApplicationDate(d.getDateofapplication().toString());
         }
 
+        // Current role name
         String roleName = roleRepo.findById(d.getCurrentOwnerRole())
                 .map(r -> r.getRoleName())
                 .orElse("Role");
 
         dto.setPendingWithRole(roleName);
 
+        // Current division name
+        String currentDivisionName = "-";
+
+        if (d.getWorkflowId() != null
+                && d.getCurrentStep() != null
+                && d.getCurrentStep() > 0) {
+
+            currentDivisionName =
+                    workflowTransitionRepo.findDivisionNameByWorkflowAndStep(
+                            d.getWorkflowId(),
+                            d.getCurrentStep()
+                    ).orElse("-");
+        }
+
+        dto.setCurrentDivisionName(currentDivisionName);
+
         return dto;
 
     }).toList();
 }
-
 private void validateWithdrawal(GpfWithdrawlDetails d) {
 
     /* ================= BASIC ================= */

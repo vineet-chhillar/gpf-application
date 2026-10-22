@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
+import com.example.backend.dto.ApiResponse;
 import com.example.backend.dto.ApplicationTrailDTO;
 import com.example.backend.dto.GpfApplicationStatusResponseDTO;
 import com.example.backend.dto.GpfWithdrawlRequestDTO;
@@ -12,7 +13,7 @@ import com.example.backend.dto.WorkflowProcessRequestDTO;
 import com.example.backend.entity.GpfWithdrawlDetails;
 public interface GpfWithdrawlService {
 
-    void saveWithdrawl(GpfWithdrawlRequestDTO dto);
+    ApiResponse<?> saveWithdrawl(GpfWithdrawlRequestDTO dto);
 
     GpfWithdrawlRequestDTO getByEmpcode(String empcode);
 
