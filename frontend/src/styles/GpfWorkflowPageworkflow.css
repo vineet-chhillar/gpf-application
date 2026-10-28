@@ -745,6 +745,15 @@ body > div {
   font-size: 10px;
   color: gray;
 }
+
+.no-pending-applications {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  padding: 12px 0;
+  margin: 0;
+}
+
 /* =========================
    MODAL OVERLAY
 ========================= */

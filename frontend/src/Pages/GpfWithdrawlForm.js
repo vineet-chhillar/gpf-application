@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../api/axios";
 import "../styles/GpfForm.css";
 import { useRef } from "react";
@@ -6,12 +6,20 @@ import {
   getMasterByEmpCode,
   getDetailsByPan
 } from "../mock/gpfMockApi";
-
+import { useAuth } from "../context/AuthContext";
 //api.get("/gpf/withdrawal-rules/active")
 
 
 const GpfWithdrawlForm = () => {
 
+const { employee, loading: employeeLoading, error: employeeError } = useAuth();
+
+const sessionEmpCode = employee?.empCode ??  "";
+useEffect(() => {
+  if (sessionEmpCode) {
+    setEmpCodeInput(String(sessionEmpCode).trim());
+  }
+}, [sessionEmpCode]);
 
 const [detailsStatus, setDetailsStatus] = useState("idle");
 // idle | loading | success | nodata | error
@@ -31,19 +39,18 @@ const [messageModal, setMessageModal] = useState({
   title: "",
   message: ""
 });
-const openMessageModal = ({
+const openMessageModal = useCallback(({
   type = "success",
   title,
   message
 }) => {
-
   setMessageModal({
     open: true,
     type,
     title,
     message
   });
-};
+}, []);
   const formatDate = (dateString) => {
   if (!dateString) return "";
 
@@ -94,7 +101,8 @@ const resetForm = () => {
   setMasterApiData(null);
   setDetailsApiData(null);
 
-  setEmpCodeInput("");
+  {/*setEmpCodeInput("");*/}
+  setDetailsStatus("idle");
   setGpfAccountInput("");
 
   setSelectedRuleId("");
@@ -145,7 +153,132 @@ const DEFAULT_DETAILS_DATA = {
   totalwithdrawlamount: 100000,
   netbalance: 650000};*/}
   
-const handleEmpCodeBlur = async () => {
+
+  
+const handleGetDetails = useCallback(async () => {
+  if (employeeLoading) {
+    return;
+  }
+
+  if (employeeError) {
+    openMessageModal({
+      type: "error",
+      title: "Authentication Error",
+      message: "Unable to load the logged-in employee details. Please sign in again."
+    });
+    return;
+  }
+
+  const empCode = String(sessionEmpCode || "").trim().toUpperCase();
+
+  if (!empCode) {
+    openMessageModal({
+      type: "warning",
+      title: "Employee Code Unavailable",
+      message: "The employee code could not be obtained from your login session."
+    });
+    return;
+  }
+
+  // Clear previously fetched data before starting a new request.
+  setMasterApiData(null);
+  setDetailsApiData(null);
+  setGpfAccountInput("");
+  setDetailsStatus("loading");
+  setErrors({});
+
+  try {
+    const master = await getMasterByEmpCode(empCode);
+
+    console.log("Employee master response:", master);
+
+    if (!master) {
+      setDetailsStatus("nodata");
+
+      openMessageModal({
+        type: "warning",
+        title: "Employee Not Found",
+        message: "No employee record was found for your session employee code."
+      });
+      return;
+    }
+
+    setMasterApiData(master);
+
+    const pan = master.panno?.trim().toUpperCase();
+
+    if (!pan) {
+      setDetailsStatus("nodata");
+
+      openMessageModal({
+        type: "warning",
+        title: "PAN Unavailable",
+        message: "PAN number is not available in the employee master record."
+      });
+      return;
+    }
+
+    const details = await getDetailsByPan(pan);
+
+    console.log("Employee GPF details response:", details);
+
+    if (!details) {
+      setDetailsStatus("nodata");
+
+      openMessageModal({
+        type: "warning",
+        title: "GPF Details Not Found",
+        message: "No GPF details were found for this employee's PAN."
+      });
+      return;
+    }
+
+    setDetailsApiData(details);
+    setGpfAccountInput(details.gpfaccountno || "");
+    setDetailsStatus("success");
+  } catch (err) {
+    console.error("Failed to fetch employee/GPF details:", err);
+
+    setMasterApiData(null);
+    setDetailsApiData(null);
+    setGpfAccountInput("");
+    setDetailsStatus("error");
+
+    openMessageModal({
+      type: "error",
+      title: "Failed to Load Details",
+      message: "Unable to fetch employee or GPF details. Please try again."
+    });
+  }
+}, [
+  employeeLoading,
+  employeeError,
+  sessionEmpCode,
+  openMessageModal
+]);
+
+const autoFetchStartedRef = useRef(false);
+
+useEffect(() => {
+  // Wait until authentication/session information has loaded.
+  if (employeeLoading) return;
+
+  // Wait for an employee code or a definitive authentication error.
+  if (!sessionEmpCode && !employeeError) return;
+
+  // Prevent duplicate requests during re-renders.
+  if (autoFetchStartedRef.current) return;
+
+  autoFetchStartedRef.current = true;
+
+  handleGetDetails();
+}, [
+  employeeLoading,
+  sessionEmpCode,
+  employeeError,
+  handleGetDetails
+]);
+{/*const handleEmpCodeBlur = async () => {
 
   if (!empCodeInput) {
     setMasterApiData(null);
@@ -183,7 +316,7 @@ const handleEmpCodeBlur = async () => {
     setDetailsApiData(null);
     setGpfAccountInput("");
   }
-};
+};*/}
 
 useEffect(() => {
   if (!detailsApiData) return;
@@ -197,7 +330,8 @@ useEffect(() => {
   }));
 
 }, [detailsApiData]);
-useEffect(() => {
+
+{/*useEffect(() => {
   if (!masterApiData?.panno) {
     setDetailsApiData(null);
     setDetailsStatus("idle");
@@ -236,7 +370,7 @@ useEffect(() => {
 
   return () => clearTimeout(timer);
 
-}, [masterApiData?.panno]);
+}, [masterApiData?.panno]);*/}
 
 {/*useEffect(() => {
 
@@ -681,9 +815,63 @@ const confirmSubmit = async () => {
       }
     };
 
-    const res = await api.post("/gpf-withdrawl/save", payload);
 
-    const backendMessage = getBackendMessage(res);
+    
+  let res;
+
+try {
+  console.log("========== GPF WITHDRAWAL SAVE DIAGNOSTICS ==========");
+  console.log("Request URL:", `${api.defaults.baseURL}/gpf-withdrawl/save`);
+  console.log("Request Method: POST");
+  console.log("Payload:", JSON.stringify(payload, null, 2));
+  console.log("Cookies enabled:", true);
+
+  res = await api.post(
+    "/gpf-withdrawl/save",
+    payload,
+    {
+      withCredentials: true,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  console.log("HTTP Status:", res.status);
+  console.log("Response Headers:", res.headers);
+  console.log("Response Data:", res.data);
+
+  console.log("====================================================");
+
+} catch (err) {
+  console.error("========== GPF WITHDRAWAL SAVE FAILED ==========");
+
+  if (err.response) {
+    // Server or proxy returned an HTTP response
+    console.error("HTTP Status:", err.response.status);
+    console.error("Response Data:", err.response.data);
+    console.error("Response Headers:", err.response.headers);
+    console.error("Request URL:", err.config?.url);
+    console.error("Request Method:", err.config?.method);
+  } else if (err.request) {
+    // Request was sent but no response was received
+    console.error("No response received from server.");
+    console.error("Request:", err.request);
+    console.error("Message:", err.message);
+  } else {
+    // Error while preparing the request
+    console.error("Request setup error:", err.message);
+  }
+
+  console.error("Error Object:", err);
+  console.error("================================================");
+
+  throw err;
+}
+
+const backendMessage = getBackendMessage(res);
+
 
     if (res.data?.success) {
 
@@ -789,30 +977,68 @@ const handleSubmit = () => {
 </div>
       <div className="form-section">
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Employee Code <span className="required">*</span></label>
-            {/*<input className="form-input" value={masterApiData?.empcode || ""} readOnly />*/}
- <input
-  className="form-input"
-  value={empCodeInput}
-  onChange={(e) => {
-    setEmpCodeInput(e.target.value);
+        
+<div className="form-row">
+  <div className="form-group">
+    <label className="form-label">
+      Employee Code <span className="required">*</span>
+    </label>
 
-    // 🔥 clear old data instantly
-    setMasterApiData(null);
-    setDetailsApiData(null);
-    setGpfAccountInput("");
-  }}
-  onBlur={handleEmpCodeBlur}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") handleEmpCodeBlur();
-  }}
-/>
-          </div>
+    <input
+      className="form-input"
+      value={empCodeInput}
+      readOnly
+      placeholder={
+        employeeLoading
+          ? "Loading employee code..."
+          : "Employee code from login session"
+      }
+    />
+  </div>
 
-          
-        </div>
+<div className="form-group">
+  <label className="form-label">&nbsp;</label>
+
+  <div className={`employee-status status-${ 
+  employeeLoading || detailsStatus === "loading"
+    ? "loading"
+    : detailsStatus === "success"
+      ? "success"
+      : detailsStatus === "error"
+        ? "error"
+        : detailsStatus === "nodata"
+          ? "warning"
+          : "waiting"
+}`}>
+  <span className="employee-status-icon">
+    {employeeLoading || detailsStatus === "loading" ? (
+      <span className="status-spinner"></span>
+    ) : detailsStatus === "success" ? (
+      "✓"
+    ) : detailsStatus === "error" ? (
+      "!"
+    ) : detailsStatus === "nodata" ? (
+      "!"
+    ) : (
+      "◷"
+    )}
+  </span>
+
+  <span className="employee-status-text">
+    {employeeLoading || detailsStatus === "loading"
+      ? "Loading employee and GPF details..."
+      : detailsStatus === "success"
+        ? "Employee details loaded successfully"
+        : detailsStatus === "error"
+          ? "Unable to load employee details"
+          : detailsStatus === "nodata"
+            ? "Employee or GPF details unavailable"
+            : "Waiting for employee session..."}
+  </span>
+</div>
+</div>
+</div>
+
 
 
 {["loading", "nodata", "error"].includes(detailsStatus) && (

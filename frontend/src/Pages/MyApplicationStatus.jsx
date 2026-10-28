@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
 import "../styles/WithdrawlApplicationStatus.css";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 /* temporary until login integration */
-const HARDCODED_EMPCODE = "3571";
+//const HARDCODED_EMPCODE = "3571";
 
 function WithdrawlApplicationStatus() {
+
+  const { employee, employeeLoading } = useAuth();
+
+const empCode = employee?.empCode ??  "";
 
   const [expandedRow, setExpandedRow] = useState(null);
 
@@ -27,31 +32,41 @@ const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
  useEffect(() => {
+  if (employeeLoading) return;
 
-const loadData = async () => {
-try {
+  if (!empCode) {
+    setApplications([]);
+    setLoading(false);
+    return;
+  }
 
-const base =
-appType === "withdrawl"
-? "/gpf-withdrawl"
-: "/gpf-advance";
+  const loadData = async () => {
+    setLoading(true);
 
-const res = await api.get(`${base}/status-all`);
-//const res = await api.get(`${base}/status-by-emp/${HARDCODED_EMPCODE}`);
+    try {
+      const base =
+        appType === "withdrawl"
+          ? "/gpf-withdrawl"
+          : "/gpf-advance";
 
-setApplications(res.data);
-setExpandedRow(null);
+      const res = await api.get(
+        `${base}/status-by-emp/${encodeURIComponent(empCode)}`
+      );
 
-} catch (err) {
-console.error("Failed to load workflow status", err);
-} finally {
-setLoading(false);
-}
-};
+      setApplications(
+        Array.isArray(res.data) ? res.data : []
+      );
+      setExpandedRow(null);
+    } catch (err) {
+      console.error("Failed to load employee application status", err);
+      setApplications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-loadData();
-
-}, [appType]);
+  loadData();
+}, [appType, empCode, employeeLoading]);
 
   const toggleRow = (index) => {
     setExpandedRow(expandedRow === index ? null : index);
@@ -205,7 +220,14 @@ const handleViewOrder = async (app) => {
 
           <tbody>
 
-{applications.map((app, index) => {
+{applications.length === 0 ? (
+  <tr>
+    <td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>
+      No {appType === "withdrawl" ? "withdrawal" : "advance"} applications found.
+    </td>
+  </tr>
+) : (
+  applications.map((app, index) => {
 console.log(app.currentDivisionName);
 const master = app.master || {};
 const details = app.details || {};
@@ -542,8 +564,9 @@ return (
 </React.Fragment>
 );
 
-})}
 
+  })
+)}
 </tbody>
 
         </table>

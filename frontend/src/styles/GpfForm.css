@@ -668,3 +668,108 @@ h2::after {
   color: #991b1b;
   border: 1px solid #fecaca;
 }
+.employee-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.employee-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.employee-status-text {
+  flex: 1;
+}
+
+/* Loading */
+.status-loading {
+  color: #475569;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.status-loading .employee-status-icon {
+  color: #475569;
+}
+
+/* Success */
+.status-success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.status-success .employee-status-icon {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+/* Error */
+.status-error {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.status-error .employee-status-icon {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+/* Warning */
+.status-warning {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.status-warning .employee-status-icon {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+/* Waiting */
+.status-waiting {
+  color: #475569;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.status-waiting .employee-status-icon {
+  color: #64748b;
+  background: #e2e8f0;
+}
+
+/* Spinner */
+.status-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #4e1d7c;
+  border-radius: 50%;
+  animation: employee-status-spin 0.7s linear infinite;
+}
+
+@keyframes employee-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

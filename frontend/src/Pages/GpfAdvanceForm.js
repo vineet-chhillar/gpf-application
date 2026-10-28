@@ -1,15 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef
+} from "react";
+
 import api from "../api/axios";
-import { useRef } from "react";
 import "../styles/GpfForm.css";
+
 import {
   getMasterByEmpCode,
   getDetailsByPan
 } from "../mock/gpfMockApi";
-
+import { useAuth } from "../context/AuthContext";
 const GpfAdvanceForm = () => {
 
- 
+ const {employee,loading: employeeLoading, error: employeeError} = useAuth();
+
+const sessionEmpCode = employee?.empCode ??  "";
+
+useEffect(() => {
+  if (sessionEmpCode) {
+    setEmpCodeInput(String(sessionEmpCode).trim());
+  }
+}, [sessionEmpCode]);
+
+
 const [detailsStatus, setDetailsStatus] = useState("idle");
 // values: idle | loading | nodata | error | success
   const dropdownRef = useRef(null);
@@ -31,19 +47,18 @@ const [messageModal, setMessageModal] = useState({
   title: "",
   message: ""
 });
-const openMessageModal = ({
+const openMessageModal = useCallback(({
   type = "success",
   title,
   message
 }) => {
-
   setMessageModal({
     open: true,
     type,
     title,
     message
   });
-};
+}, []);
 const getTodayDate = ()=>{
  const today = new Date();
  return today.toISOString().split("T")[0];
@@ -106,7 +121,8 @@ const resetForm = ()=>{
 
  setMasterApiData(null);
  setDetailsApiData(null);
- setEmpCodeInput("");
+ {/*setEmpCodeInput("");*/}
+   setDetailsStatus("idle");
  setGpfAccountInput("");
  setSelectedRuleId(null);
 setRuleSpecificData({});
@@ -120,7 +136,141 @@ setRuleSpecificData({});
 
 };
 
-const handleEmpCodeBlur = async () => {
+
+const handleGetDetails = useCallback(async () => {
+  if (employeeLoading) return;
+
+  if (employeeError) {
+    openMessageModal({
+      type: "error",
+      title: "Authentication Error",
+      message:
+        "Unable to load the logged-in employee details. Please sign in again."
+    });
+    return;
+  }
+
+  const empCode = String(sessionEmpCode || "")
+    .trim()
+    .toUpperCase();
+
+  if (!empCode) {
+    openMessageModal({
+      type: "warning",
+      title: "Employee Code Unavailable",
+      message:
+        "The employee code could not be obtained from your login session."
+    });
+    return;
+  }
+
+  // Clear old data before fetching fresh details.
+  setMasterApiData(null);
+  setDetailsApiData(null);
+  setGpfAccountInput("");
+  setDetailsStatus("loading");
+  setErrors({});
+
+  try {
+    const master = await getMasterByEmpCode(empCode);
+
+    console.log("Advance employee master:", master);
+
+    if (!master) {
+      setDetailsStatus("nodata");
+
+      openMessageModal({
+        type: "warning",
+        title: "Employee Not Found",
+        message:
+          "No employee record was found for your session employee code."
+      });
+      return;
+    }
+
+    setMasterApiData(master);
+
+    const pan = master.panno?.trim().toUpperCase();
+
+    if (!pan) {
+      setDetailsStatus("nodata");
+
+      openMessageModal({
+        type: "warning",
+        title: "PAN Unavailable",
+        message:
+          "PAN number is not available in the employee master record."
+      });
+      return;
+    }
+
+    const details = await getDetailsByPan(pan);
+
+    console.log("Advance GPF details:", details);
+
+    if (!details) {
+      setDetailsStatus("nodata");
+
+      openMessageModal({
+        type: "warning",
+        title: "GPF Details Not Found",
+        message:
+          "No GPF details were found for this employee's PAN."
+      });
+      return;
+    }
+
+    setDetailsApiData(details);
+    setGpfAccountInput(details.gpfaccountno || "");
+    setDetailsStatus("success");
+  } catch (err) {
+    console.error("Advance employee details fetch failed:", err);
+
+    setMasterApiData(null);
+    setDetailsApiData(null);
+    setGpfAccountInput("");
+    setDetailsStatus("error");
+
+    openMessageModal({
+      type: "error",
+      title: "Failed to Load Details",
+      message:
+        err.response?.data?.message ||
+        err.message ||
+        "Unable to fetch employee or GPF details. Please try again."
+    });
+  }
+}, [
+  employeeLoading,
+  employeeError,
+  sessionEmpCode,
+  openMessageModal
+]);
+
+
+const autoFetchStartedRef = useRef(false);
+
+useEffect(() => {
+  // Wait for authentication information to finish loading.
+  if (employeeLoading) return;
+
+  // Wait until an employee code or authentication error is available.
+  if (!sessionEmpCode && !employeeError) return;
+
+  // Prevent duplicate fetches.
+  if (autoFetchStartedRef.current) return;
+
+  autoFetchStartedRef.current = true;
+
+  handleGetDetails();
+}, [
+  employeeLoading,
+  sessionEmpCode,
+  employeeError,
+  handleGetDetails
+]);
+
+{/*const handleEmpCodeBlur = async () => {
 
   if (!empCodeInput) {
     setMasterApiData(null);
@@ -154,9 +304,9 @@ const handleEmpCodeBlur = async () => {
     setDetailsApiData(null);
     setGpfAccountInput("");
   }
-};
+};*/}
 
-useEffect(() => {
+{/*useEffect(() => {
 
   if (!masterApiData?.panno) {
     setDetailsApiData(null); 
@@ -193,7 +343,7 @@ useEffect(() => {
 
   return () => clearTimeout(timer);
 
-}, [masterApiData]);
+}, [masterApiData]);*/}
 
 {/*useEffect(()=>{
 
@@ -602,31 +752,69 @@ return (
 
 <div className="form-section">
 
+
 <div className="form-row">
+  <div className="form-group">
+    <label className="form-label">
+      Employee Code <span className="required">*</span>
+    </label>
 
-<div className="form-group">
-<label className="form-label">Employee Code <span className="required">*</span></label>
-<input
-  className="form-input"
-  value={empCodeInput}
-  onChange={(e) => {
-    const value = e.target.value;
-    setEmpCodeInput(value);
+    <input
+      className="form-input"
+      value={empCodeInput}
+      readOnly
+      placeholder={
+        employeeLoading
+          ? "Loading employee code..."
+          : "Employee code from login session"
+      }
+    />
+  </div>
 
-    // 🔥 instant clear (prevents flicker of old data)
-    setMasterApiData(null);
-    setDetailsApiData(null);
-    setGpfAccountInput("");
-     setDetailsStatus("idle");
-  }}
-  onBlur={handleEmpCodeBlur}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") handleEmpCodeBlur();
-  }}
-/>
+  <div className="form-group">
+  <label className="form-label">&nbsp;</label>
+
+  <div
+    className={`employee-status status-${
+      employeeLoading || detailsStatus === "loading"
+        ? "loading"
+        : detailsStatus === "success"
+          ? "success"
+          : detailsStatus === "error"
+            ? "error"
+            : detailsStatus === "nodata"
+              ? "warning"
+              : "waiting"
+    }`}
+  >
+    <span className="employee-status-icon">
+      {employeeLoading || detailsStatus === "loading" ? (
+        <span className="status-spinner"></span>
+      ) : detailsStatus === "success" ? (
+        "✓"
+      ) : detailsStatus === "error" ||
+        detailsStatus === "nodata" ? (
+        "!"
+      ) : (
+        "◷"
+      )}
+    </span>
+
+    <span className="employee-status-text">
+      {employeeLoading || detailsStatus === "loading"
+        ? "Loading employee and GPF details..."
+        : detailsStatus === "success"
+          ? "Employee details loaded successfully"
+          : detailsStatus === "error"
+            ? "Unable to load employee details"
+            : detailsStatus === "nodata"
+              ? "Employee or GPF details unavailable"
+              : "Waiting for employee session..."}
+    </span>
+  </div>
+</div>
 </div>
 
-</div>
 
 {["loading", "nodata", "error"].includes(detailsStatus) && (
   <div className={`message-box ${detailsStatus}`}>

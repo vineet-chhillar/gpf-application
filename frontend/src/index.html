@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Digital-NIC</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Bootstrap 3.3.7 -->
+
+    <link rel="stylesheet" type="text/css" th:href="@{/adminlte3/plugins/iCheck/square/blue.css}">
+    <link rel="icon" type="image/x-icon" th:href="@{/login/di_faviconew.ico}" />
+
+    <link rel="shortcut icon" th:href="@{/login/di_faviconew.ico}" type="image/ico" />
+
+    <link rel="stylesheet" type="text/css" th:href="@{/adminlte3/plugins/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/login/css.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/login/style.css}">
+    <!-- other elements you want to reference in your layout -->
+
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="logo">
+            <img th:src="@{/images/digitalnic_logo_website.png}" alt="Digital NIC" />
+        </div>
+
+        <div class="digital-india float-right">
+            <a href="http://www.nic.in/" class="nic-logo"> <img th:src="@{images/nic-logo-01.png}" alt="National Informatics Centre" /> </a>
+            <img th:src="@{/images/Digital-India-logo.png}" alt="Logo" />
+        </div>
+    </div>
+</header>
+
+<div class="form">
+
+    <div class="thumb"><img th:src="@{/images/logo-icon.png}" alt="logo"/></div>
+
+    <form class="login-form" th:object="${user}" th:action="@{/loginprocess}" method="post">
+        <div class="error" th:if="${#fields.hasErrors('*')}">
+            <ul style="list-style: none;padding-left: 0;">
+                <li th:each="e : ${#fields.detailedErrors()}" th:class="${e.global}? globalerr : fielderr">
+                    <!--/*<span th:text="${e.global}? '*' : ${e.fieldName}">The field name</span>*/-->
+                    <span th:text="${e.message}">The error message</span>
+                </li>
+            </ul>
+        </div>
+        <input type="text" placeholder="Login Id" th:field="*{loginId}"/>
+        <input type="password" placeholder="Password" th:field="*{password}"/>
+        <button>Login</button>
+    </form>
+</div>
+
+
+
+
+
+<footer>
+    <div class="container">
+        <p> Office Automation Division <br/>
+            <a href="http://www.nic.in/" target="_blank"> National Informatics Centre</a>
+        </p>
+    </div>
+</footer>
+</body>
+</html>

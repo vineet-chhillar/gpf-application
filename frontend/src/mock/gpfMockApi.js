@@ -58,17 +58,17 @@ const mapMasterApi = (data) => {
   return GPF_DETAILS.find(d => d.panno === panNo);
 };*/}
 
-{/*export const getDetailsByPan = async (panNo) => {
+export const getDetailsByPan = async (panNo) => {
 
   await new Promise(r => setTimeout(r, 300));
 
   const HARD_CODED_PAN = "ABMPA1395B";
 
   return GPF_DETAILS.find(d => d.panno === HARD_CODED_PAN);
-};*/}
+};
 
 
-export const getDetailsByPan = async (pan) => {
+{/*export const getDetailsByPan = async (pan) => {
   try {
     const response = await api.get(`/gpf-withdrawl/details/${pan}`);
 
@@ -118,7 +118,7 @@ export const getDetailsByPan = async (pan) => {
 
     throw new Error(backendMessage);
   }
-};
+};*/}
 const mapDetailsApi = (data) => {
   if (!data) return null;
 

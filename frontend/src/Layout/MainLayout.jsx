@@ -28,13 +28,13 @@ const handleMenuClick = (menuName) => {
   setActivePage(menuName);
 
   if (menuName === "GPF Rule Master") navigate("/rule-master");
-  else if (menuName === "GPF Application Status(Admin)") navigate("/status");
-  else if (menuName === "My Application Status") navigate("/my-applications");
+  else if (menuName === "Dashboard") navigate("/status");
+  else if (menuName === "Application Status") navigate("/my-applications");
     else if (menuName === "WorkFlow HQ") navigate("/workflow-hq");
   else if (menuName === "WorkFlow States") navigate("/workflow-states");
   else if (menuName === "WithDrawl") navigate("/withdrawl");
   else if (menuName === "Advance") navigate("/advance");
-  else if (menuName === "Pending For Action") navigate("/workflow");
+  else if (menuName === "Inbox") navigate("/workflow");
   else if (menuName === "Home") navigate("/home");
 };
  const menus = [
@@ -44,6 +44,10 @@ const handleMenuClick = (menuName) => {
   },
   {
     menuId: 2,
+    menuName: "Dashboard"
+  },
+  {
+    menuId: 3,
     menuName: "GPF Rule Master"
   },
    {
@@ -51,11 +55,11 @@ const handleMenuClick = (menuName) => {
     menuName: "GPF Workflow Master",
     children: [
       {
-        menuId: 3,
+        menuId: 4,
         menuName: "WorkFlow HQ"
       },
       {
-        menuId: 4,
+        menuId: 5,
         menuName: "WorkFlow States"
       }
     ]
@@ -65,23 +69,20 @@ const handleMenuClick = (menuName) => {
     menuName: "Apply For GPF",
     children: [
       {
-        menuId: 5,
+        menuId: 6,
         menuName: "WithDrawl"
       },
       {
-        menuId: 6,
+        menuId: 7,
         menuName: "Advance"
       }
     ]
   },
-   {
-    menuId: 7,
-    menuName: "GPF Application Status(Admin)"
-  },
+   
    
    {
     menuId: 8,
-    menuName: "My Application Status"
+    menuName: "Application Status"
   },
   //{
     //menuId: 7,
@@ -89,7 +90,7 @@ const handleMenuClick = (menuName) => {
   //},
   {
     menuId: 9,
-    menuName: "Pending For Action"
+    menuName: "Inbox"
   }
   
   
@@ -97,15 +98,15 @@ const handleMenuClick = (menuName) => {
 const pageMap = {
   "Home":<Home/>,
   "GPF Rule Master": <GpfRuleMaster />,  
-  "GPF Application Status(Admin)": <GPFApplicationStatus />,
-  "My Application Status": <MyApplicationStatus />,     
+  "Dashboard": <GPFApplicationStatus />,
+  "Application Status": <MyApplicationStatus />,     
    "Advance Application Status": <AdvanceApplicationStatus />,
   "WorkFlow HQ": <WorkflowViewerPage />,
   "WorkFlow States": <AppFlowState />,
   "WithDrawl": <GpfWithdrawlForm />,
   "Advance": <GpfAdvanceForm />,  
    //"Pending For Action": <GpfWorkflowPageNew />,
-   "Pending For Action": <GpfWorkflowInboxPage />,
+   "Inbox": <GpfWorkflowInboxPage />,
    
 
 
