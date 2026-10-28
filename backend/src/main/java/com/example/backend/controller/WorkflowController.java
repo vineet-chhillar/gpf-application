@@ -16,10 +16,8 @@ public class WorkflowController {
 
     private final WorkflowService workflowService;
 
-    private final WorkflowMasterDTO workflowMasterDTO;
     public WorkflowController(WorkflowService workflowService) {
         this.workflowService = workflowService;
-        this.workflowMasterDTO = new WorkflowMasterDTO();
     }
 
     @GetMapping("/list")
@@ -28,9 +26,8 @@ public class WorkflowController {
     }
 
     @GetMapping("/transitions/{workflowId}")
-    public List<WorkflowTransitionViewDTO> getTransitions(
-            @PathVariable Long workflowId) {
-
+    public List<WorkflowTransitionViewDTO> getTransitions(@PathVariable Long workflowId) 
+    {
         return workflowService.getWorkflowTransitions(workflowId);
     }
 

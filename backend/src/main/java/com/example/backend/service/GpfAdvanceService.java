@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,12 @@ import com.example.backend.repository.GpfAdvanceRuleRepo;
 import com.example.backend.repository.GpfSanctionOrderRepository;
 import com.example.backend.repository.ActionMasterRepository;
 import com.example.backend.repository.WorkflowTransitionRepository;
-
-
+import com.example.backend.dto.GpfEmployeeDetailsDTO;
+import com.example.backend.dto.FunctionalRoleDTO;
+import java.util.Set;
+import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpSession;
+import com.example.backend.service.GpfEmployeeService;
 
 import java.util.Map;
 
@@ -63,12 +68,66 @@ public class GpfAdvanceService {
     @Autowired
     private GpfWithdrawlDetailsRepository withdrawlDetailsRepo;
 
+    
 
     /* ================= FINANCIAL YEAR METHODS ================= */
+@Autowired
+private HttpSession session;
 
-    private String getLoggedInEmpCode() {
-    return "6507";
+
+private final GpfEmployeeService employeeService;
+
+    public GpfAdvanceService(
+            GpfEmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+   private GpfEmployeeDetailsDTO getLoggedInEmployee() {
+
+    Object employeeDetails =
+            session.getAttribute("GPF_EMPLOYEE_DETAILS");
+
+    if (!(employeeDetails instanceof GpfEmployeeDetailsDTO employee)) {
+        throw new IllegalStateException(
+                "Logged-in employee details not found in session"
+        );
+    }
+
+    return employee;
 }
+
+private String getLoggedInEmpCode() {
+
+    GpfEmployeeDetailsDTO employee = getLoggedInEmployee();
+
+    if (employee.getEmpCode() == null) {
+        throw new IllegalStateException(
+                "Logged-in employee code not found in session"
+        );
+    }
+
+    return String.valueOf(employee.getEmpCode());
+}
+
+private Set<String> getLoggedInRoleDivisionAssignments() {
+
+    GpfEmployeeDetailsDTO employee = getLoggedInEmployee();
+
+    if (employee.getFunctionalRoles() == null
+            || employee.getFunctionalRoles().isEmpty()) {
+        throw new IllegalStateException(
+                "No functional roles found for logged-in employee"
+        );
+    }
+
+    return employee.getFunctionalRoles().stream()
+            .filter(role -> role.getPostId() != null)
+            .filter(role -> role.getDivCode() != null
+                    && !role.getDivCode().isBlank())
+            .map(role -> role.getPostId()
+                    + "|" + role.getDivCode().trim())
+            .collect(Collectors.toSet());
+}
+
 {/*private String getLoggedInEmpCode() {
     Object empCode = session.getAttribute("empcode");
 
@@ -319,64 +378,127 @@ trail.setActionByDivCode(transition.getToRoleDivCode());
 
 public List<InboxApplicationDTO> getAllPendingApplications() {
 
+    // 1. Logged-in employee's assignments
+    Set<String> assignments =
+            new HashSet<>(getLoggedInRoleDivisionAssignments());
+
+    // 2. Check whether logged-in employee is a Link Officer
+    Object employeeDetails =
+            session.getAttribute("GPF_EMPLOYEE_DETAILS");
+
+    if (employeeDetails instanceof GpfEmployeeDetailsDTO employee
+            && employee.getFunctionalRoles() != null) {
+
+        boolean isLinkOfficer =
+                employee.getFunctionalRoles().stream()
+                        .anyMatch(role ->
+                                role.getPostId() != null
+                                && role.getPostId().longValue() == 13L
+                        );
+
+        // 3. Add linked employee's assignments
+        if (isLinkOfficer) {
+
+            Long empCode = employee.getEmpCode();
+
+            employeeService.getLinkedEmployeeCode(empCode)
+                    .flatMap(employeeService::getEmployeeDetails)
+                    .ifPresent(linkedEmployee -> {
+
+                        if (linkedEmployee.getFunctionalRoles() != null) {
+
+                            linkedEmployee.getFunctionalRoles().stream()
+                                    .filter(role -> role.getPostId() != null)
+                                    .filter(role -> role.getDivCode() != null
+                                            && !role.getDivCode().isBlank())
+                                    .map(role -> role.getPostId()
+                                            + "|" + role.getDivCode().trim())
+                                    .forEach(assignments::add);
+                        }
+                    });
+        }
+    }
+
+    // 4. Fetch pending advance applications
     List<GpfAdvanceDetails> list =
             detailsRepo.findByCurrentOwnerRoleNot(0L);
 
-    System.out.println("Advance inbox size = " + list.size());
+    System.out.println(
+            "Advance inbox total before filtering = " + list.size()
+    );
 
-    return list.stream().map(d -> {
+    // 5. Apply existing workflow filters and map DTOs
+    return list.stream()
 
-        InboxApplicationDTO dto = new InboxApplicationDTO();
+            .filter(d -> d.getCurrentOwnerRole() != null
+                    && d.getWorkflowId() != null
+                    && d.getCurrentStep() != null
+                    && d.getCurrentStep() > 0)
 
-        if (d.getMaster() != null) {
+            .filter(d -> {
 
-            dto.setApplicationId(d.getMaster().getId());
-            dto.setEmpCode(d.getMaster().getEmpcode());
-            dto.setEmployeeName(d.getMaster().getEmpname());
-            dto.setDesignation(d.getMaster().getDesignation());
+                String divisionCode =
+                        workflowTransitionRepo
+                                .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
+                                        d.getWorkflowId(),
+                                        d.getCurrentStep()
+                                )
+                                .map(WorkflowTransition::getToRoleDivCode)
+                                .orElse(null);
 
-        }
+                if (divisionCode == null || divisionCode.isBlank()) {
+                    return false;
+                }
 
-        dto.setAmount(d.getAmountofadvancerequested());
-        dto.setPurpose(d.getPurposeofadvance());
-        dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
+                String assignment =
+                        d.getCurrentOwnerRole()
+                                + "|" + divisionCode.trim();
 
-        if (d.getDateofapplication() != null) {
-            dto.setApplicationDate(
-                    d.getDateofapplication().toString()
-            );
-        }
+                return assignments.contains(assignment);
+            })
 
-        // Current role name
-        String roleName = roleRepo.findById(d.getCurrentOwnerRole())
-                .map(r -> r.getRoleName())
-                .orElse("Role");
+            .map(d -> {
 
-        dto.setPendingWithRole(roleName);
+                InboxApplicationDTO dto = new InboxApplicationDTO();
 
-        // Current division name
-        String currentDivisionName = "-";
+                if (d.getMaster() != null) {
+                    dto.setApplicationId(d.getMaster().getId());
+                    dto.setEmpCode(d.getMaster().getEmpcode());
+                    dto.setEmployeeName(d.getMaster().getEmpname());
+                    dto.setDesignation(d.getMaster().getDesignation());
+                }
 
-        if (d.getWorkflowId() != null
-                && d.getCurrentStep() != null
-                && d.getCurrentStep() > 0) {
+                dto.setAmount(d.getAmountofadvancerequested());
+                dto.setPurpose(d.getPurposeofadvance());
+                dto.setCurrentOwnerRoleId(d.getCurrentOwnerRole());
 
-            currentDivisionName =
-                    workflowTransitionRepo
-                            .findDivisionNameByWorkflowAndStep(
-                                    d.getWorkflowId(),
-                                    d.getCurrentStep()
-                            )
-                            .orElse("-");
-        }
+                if (d.getDateofapplication() != null) {
+                    dto.setApplicationDate(
+                            d.getDateofapplication().toString()
+                    );
+                }
 
-        dto.setCurrentDivisionName(currentDivisionName);
+                String roleName =
+                        roleRepo.findById(d.getCurrentOwnerRole())
+                                .map(r -> r.getRoleName())
+                                .orElse("Role");
 
-        return dto;
+                dto.setPendingWithRole(roleName);
 
-    }).toList();
+                String divisionName =
+                        workflowTransitionRepo
+                                .findDivisionNameByWorkflowAndStep(
+                                        d.getWorkflowId(),
+                                        d.getCurrentStep()
+                                )
+                                .orElse("-");
+
+                dto.setCurrentDivisionName(divisionName);
+
+                return dto;
+            })
+            .toList();
 }
-
 
 public GpfApplicationStatusResponseDTO getApplicationStatus(String empcode) {
 
