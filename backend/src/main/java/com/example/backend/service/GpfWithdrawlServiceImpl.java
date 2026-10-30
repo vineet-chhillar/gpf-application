@@ -52,6 +52,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.el.stream.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.http.HttpEntity;
 //import org.springframework.http.HttpMethod;
@@ -113,7 +114,22 @@ private final GpfEmployeeService employeeService;
         this.employeeService = employeeService;
     }
 private String getLoggedInEmpCode() {
-    Object empCode = session.getAttribute("empcode");
+
+    //Object empCode = session.getAttribute("empcode");
+    Object employeeDetails =
+            session.getAttribute("GPF_EMPLOYEE_DETAILS");
+
+            if (!(employeeDetails instanceof GpfEmployeeDetailsDTO employee)) {
+        throw new IllegalStateException(
+                "Logged-in employee details not found in session"
+        );
+    }
+
+            Long empCode=employee.getEmpCode();
+System.out.println("getLoggedInEmpCode");
+            System.out.println(employeeDetails);
+            System.out.println(empCode);
+
 
     if (empCode == null || empCode.toString().isBlank()) {
         throw new IllegalStateException(
@@ -123,6 +139,7 @@ private String getLoggedInEmpCode() {
 
     return empCode.toString().trim();
 }
+
 private Set<String> getLoggedInRoleDivisionAssignments() {
 
     Object employeeDetails =
@@ -134,6 +151,9 @@ private Set<String> getLoggedInRoleDivisionAssignments() {
         );
     }
 
+    System.out.println("========== SESSION ASSIGNMENT DEBUG ==========");
+    System.out.println("Employee Code: " + employee.getEmpCode());
+
     if (employee.getFunctionalRoles() == null
             || employee.getFunctionalRoles().isEmpty()) {
         throw new IllegalStateException(
@@ -141,14 +161,34 @@ private Set<String> getLoggedInRoleDivisionAssignments() {
         );
     }
 
-    return employee.getFunctionalRoles().stream()
-            .filter(role -> role.getPostId() != null)
-            .filter(role -> role.getDivCode() != null
-                    && !role.getDivCode().isBlank())
-            .map(role -> role.getPostId()
-                    + "|" + role.getDivCode().trim())
-            .collect(Collectors.toSet());
+    Set<String> assignments = new HashSet<>();
+
+    employee.getFunctionalRoles().forEach(role -> {
+
+        System.out.println(
+                "Session Role: postId=" + role.getPostId()
+                + ", divCode=[" + role.getDivCode() + "]"
+        );
+
+        if (role.getPostId() != null
+                && role.getDivCode() != null
+                && !role.getDivCode().isBlank()) {
+
+            String assignment =
+                    role.getPostId() + "|" + role.getDivCode().trim();
+
+            assignments.add(assignment);
+
+            System.out.println("Generated Assignment: " + assignment);
+        }
+    });
+
+    System.out.println("Final Assignment Set: " + assignments);
+    System.out.println("==============================================");
+
+    return assignments;
 }
+
 
 {/*private String getLoggedInEmpCode() {
     Object empCode = session.getAttribute("empcode");
@@ -346,193 +386,283 @@ public GpfWithdrawlRequestDTO getByEmpcode(String empcode) {
 @Transactional
 public void processApplications(WorkflowProcessRequestDTO request) {
 
+    String stage = "Starting processApplications";
 
-    
-    if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
-        throw new IllegalArgumentException("No applications selected");
-    }
+    try {
+        System.out.println("========== PROCESS APPLICATIONS START ==========");
 
-    if (request.getActionId() == null) {
-        throw new IllegalArgumentException("Action is mandatory");
-    }
+        if (request.getApplicationIds() == null
+                || request.getApplicationIds().isEmpty()) {
+            throw new IllegalArgumentException("No applications selected");
+        }
 
-    ActionMaster action = actionRepo.findById(request.getActionId())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid action"));
+        if (request.getActionId() == null) {
+            throw new IllegalArgumentException("Action is mandatory");
+        }
 
-    for (Long appId : request.getApplicationIds()) {
-
-        GpfWithdrawlDetails details = detailsRepo.findByMaster_Id(appId)
+        stage = "Fetching action";
+        ActionMaster action = actionRepo.findById(request.getActionId())
                 .orElseThrow(() ->
-                        new IllegalStateException("Application not found: " + appId));
+                        new IllegalArgumentException("Invalid action"));
 
-        if (details.getCurrentOwnerRole() == 0) {
-            throw new IllegalStateException("Application already completed");
-        }
+        for (Long appId : request.getApplicationIds()) {
 
-        Long actingRole = details.getCurrentOwnerRole();
-        Long workflowId = details.getWorkflowId();
-        //new code for new columns action_by_div_code and action_by_emp_code
-        // Capture the acting employee before processing the action
-        System.out.println("reached process application");
-String actionByEmpCode = getLoggedInEmpCode();
-System.out.println("reached process application" + actionByEmpCode);
-// Capture the current step before modifying workflow state
-Integer actingStep = details.getCurrentStep();
-System.out.println("reached process application" + actingStep);
-// Fetch the transition corresponding to the current workflow step
-WorkflowTransition actingTransition =
-    workflowTransitionRepo
-        .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
-            workflowId,
-            actingStep
-        )
-        .orElseThrow(() ->
-            new IllegalStateException(
-                "Workflow transition not found for workflowId="
-                    + workflowId + ", stepOrder=" + actingStep
-            )
-        );
+            stage = "Processing application ID: " + appId;
 
-// Division code associated with the acting workflow step
-String actionByDivCode = actingTransition.getToRoleDivCode();
+            try {
+                System.out.println("\n========== APPLICATION PROCESSING ==========");
+                System.out.println("Application ID: " + appId);
+                System.out.println("Action ID: " + action.getActionId());
 
-        // 🔥 RESUME FLOW (HIGHEST PRIORITY)
-        if (details.getIsReturned() != null && details.getIsReturned()) {
-
-            System.out.println("🔥 RESUME FLOW IN PROCESS");
-
-           Integer resumeStep = details.getReturnFromStep();
-
-// 🔥 MOVE TO NEXT STEP DIRECTLY
-WorkflowTransition next =
-    workflowTransitionRepo
-        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
-            workflowId,
-            resumeStep - 2   // important
-        )
-        .orElseThrow(() -> new IllegalStateException("Next workflow step missing"));
-
-details.setCurrentOwnerRole(next.getToRole());
-details.setCurrentStep(next.getStepOrder());
-
-            // ✅ RESET FLAGS
-            details.setIsReturned(false);
-            details.setReturnFromStep(null);
-
-            details.setAction(action);
-
-            detailsRepo.save(details);
-
-            // ✅ TRAIL
-            ApplicationStatusTrail trail = new ApplicationStatusTrail();
-            trail.setApplicationId(details.getMaster().getId());
-            trail.setActionId(action.getActionId());
-            trail.setActionByRole(actingRole);
-            trail.setRemarks(request.getRemarks());
-
-            //two new columns added to table applicationstatustrail,action_by_div_code,action_by_emp_code
-// NEW COLUMNS
-trail.setActionByDivCode(actionByDivCode);
-trail.setActionByEmpCode(actionByEmpCode);
-
-            trailRepo.save(trail);
-
-            continue; // 🔥 VERY IMPORTANT (skip normal flow)
-        }
-
-        WorkflowTransition transition =
-                workflowTransitionRepo
-                        .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
-                                workflowId,
-                                details.getCurrentStep()
-                        )
+                stage = "Fetching application details";
+                GpfWithdrawlDetails details = detailsRepo.findByMaster_Id(appId)
                         .orElseThrow(() ->
-                                new IllegalStateException("Workflow step not found"));
-// 🔥 CANCEL / REJECT FLOW (HIGHEST PRIORITY)
-if (action.getActionId() == 12L) {
+                                new IllegalStateException(
+                                        "Application not found: " + appId));
 
-    System.out.println("🔥 CANCEL / REJECT IN PROCESS");
+                if (details.getCurrentOwnerRole() == null) {
+                    throw new IllegalStateException(
+                            "Current owner role is null for application: " + appId);
+                }
 
-    details.setCurrentOwnerRole(0L);  // ✅ completed
-    details.setCurrentStep(0);        // optional cleanup
-    details.setAction(action);
+                if (details.getCurrentOwnerRole() == 0L) {
+                    throw new IllegalStateException(
+                            "Application already completed: " + appId);
+                }
 
-    detailsRepo.save(details);
+                Long actingRole = details.getCurrentOwnerRole();
+                Long workflowId = details.getWorkflowId();
 
-    // ✅ TRAIL
-    ApplicationStatusTrail trail = new ApplicationStatusTrail();
-    trail.setApplicationId(details.getMaster().getId());
-    trail.setActionId(action.getActionId());
-    trail.setActionByRole(actingRole);
-    trail.setRemarks(request.getRemarks());
-//new columns
-trail.setActionByDivCode(actionByDivCode);
-trail.setActionByEmpCode(actionByEmpCode);
-    trailRepo.save(trail);
+                System.out.println("Acting role: " + actingRole);
+                System.out.println("Workflow ID: " + workflowId);
+                System.out.println("Current step: " + details.getCurrentStep());
 
-    continue; // 🔥 VERY IMPORTANT
-}
-        // 🔥 SEND BACK FLOW
-        if (request.getSendToRole() != null) {
+                stage = "Fetching logged-in employee code";
+                String actionByEmpCode = getLoggedInEmpCode();
+                System.out.println("Employee code: " + actionByEmpCode);
 
-            System.out.println("🔥 SEND BACK FLOW");
+                Integer actingStep = details.getCurrentStep();
 
-            // ✅ store ORIGINAL step (corrected earlier)
-            details.setReturnFromStep(details.getCurrentStep() + 1);
-            details.setIsReturned(true);
+                if (workflowId == null || actingStep == null) {
+                    throw new IllegalStateException(
+                            "Workflow ID or current step is null. Workflow ID: "
+                                    + workflowId + ", Step: " + actingStep);
+                }
 
-            Long sendToRole = request.getSendToRole();
-
-            WorkflowTransition target =
-                    workflowTransitionRepo
-                            .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
-                                    workflowId,
-                                    sendToRole
-                            )
-                            .orElseThrow(() ->
-                                    new IllegalStateException("Invalid sendTo role"));
-
-            details.setCurrentOwnerRole(sendToRole);
-            details.setCurrentStep(target.getStepOrder());
-            details.setAction(action);
-
-        } else {
-
-            // ✅ NORMAL FLOW
-
-            if (transition.getIsFinal()) {
-
-                details.setCurrentOwnerRole(0L);
-                details.setAction(action);
-
-            } else {
-
-                WorkflowTransition next =
+                stage = "Fetching acting workflow transition";
+                WorkflowTransition actingTransition =
                         workflowTransitionRepo
-                                .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
-                                        workflowId,
-                                        details.getCurrentStep()
-                                )
+                                .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
+                                        workflowId, actingStep)
                                 .orElseThrow(() ->
-                                        new IllegalStateException("Next workflow step missing"));
+                                        new IllegalStateException(
+                                                "Workflow transition not found. Workflow ID: "
+                                                        + workflowId
+                                                        + ", Step: " + actingStep));
 
-                details.setCurrentOwnerRole(next.getToRole());
-                details.setCurrentStep(next.getStepOrder());
-                details.setAction(action);
+                String actionByDivCode = actingTransition.getToRoleDivCode();
+
+                System.out.println("Acting transition found successfully");
+                System.out.println("Action by division: " + actionByDivCode);
+
+                // RESUME FLOW
+                if (Boolean.TRUE.equals(details.getIsReturned())) {
+
+                    System.out.println("RESUME FLOW IN PROCESS");
+
+                    stage = "Fetching next transition for resume flow";
+
+                    Integer resumeStep = details.getReturnFromStep();
+
+                    if (resumeStep == null) {
+                        throw new IllegalStateException(
+                                "Return-from-step is null for application: " + appId);
+                    }
+
+                    WorkflowTransition next =
+                            workflowTransitionRepo
+                                    .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+                                            workflowId, resumeStep - 2)
+                                    .orElseThrow(() ->
+                                            new IllegalStateException(
+                                                    "Next workflow step missing during resume. "
+                                                            + "Workflow ID: " + workflowId
+                                                            + ", Resume step: " + resumeStep));
+
+                    details.setCurrentOwnerRole(next.getToRole());
+                    details.setCurrentStep(next.getStepOrder());
+                    details.setIsReturned(false);
+                    details.setReturnFromStep(null);
+                    details.setAction(action);
+
+                    stage = "Saving resumed application details";
+                    detailsRepo.save(details);
+
+                    stage = "Saving resume status trail";
+                    ApplicationStatusTrail trail = new ApplicationStatusTrail();
+                    trail.setApplicationId(details.getMaster().getId());
+                    trail.setActionId(action.getActionId());
+                    trail.setActionByRole(actingRole);
+                    trail.setRemarks(request.getRemarks());
+                    trail.setActionByDivCode(actionByDivCode);
+                    trail.setActionByEmpCode(actionByEmpCode);
+
+                    trailRepo.save(trail);
+
+                    System.out.println("Resume flow completed for application: " + appId);
+                    continue;
+                }
+
+                stage = "Fetching current workflow transition";
+                WorkflowTransition transition =
+                        workflowTransitionRepo
+                                .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
+                                        workflowId, details.getCurrentStep())
+                                .orElseThrow(() ->
+                                        new IllegalStateException(
+                                                "Workflow step not found. Workflow ID: "
+                                                        + workflowId
+                                                        + ", Step: " + details.getCurrentStep()));
+
+                // CANCEL / REJECT FLOW
+                if (action.getActionId() == 12L) {
+
+                    System.out.println("CANCEL / REJECT FLOW IN PROCESS");
+
+                    details.setCurrentOwnerRole(0L);
+                    details.setCurrentStep(0);
+                    details.setAction(action);
+
+                    stage = "Saving cancelled/rejected application";
+                    detailsRepo.save(details);
+
+                    stage = "Saving cancel/reject status trail";
+                    ApplicationStatusTrail trail = new ApplicationStatusTrail();
+                    trail.setApplicationId(details.getMaster().getId());
+                    trail.setActionId(action.getActionId());
+                    trail.setActionByRole(actingRole);
+                    trail.setRemarks(request.getRemarks());
+                    trail.setActionByDivCode(actionByDivCode);
+                    trail.setActionByEmpCode(actionByEmpCode);
+
+                    trailRepo.save(trail);
+
+                    System.out.println("Cancel/reject completed for application: " + appId);
+                    continue;
+                }
+
+                // SEND BACK FLOW
+                if (request.getSendToRole() != null) {
+
+                    System.out.println("SEND BACK FLOW");
+
+                    details.setReturnFromStep(details.getCurrentStep() + 1);
+                    details.setIsReturned(true);
+
+                    Long sendToRole = request.getSendToRole();
+
+                    stage = "Fetching send-back target transition";
+                    WorkflowTransition target =
+                            workflowTransitionRepo
+                                    .findFirstByWorkflowIdAndFromRoleOrderByStepOrder(
+                                            workflowId, sendToRole)
+                                    .orElseThrow(() ->
+                                            new IllegalStateException(
+                                                    "Invalid send-to role: " + sendToRole
+                                                            + ", Workflow ID: " + workflowId));
+
+                    details.setCurrentOwnerRole(sendToRole);
+                    details.setCurrentStep(target.getStepOrder());
+                    details.setAction(action);
+
+                } else {
+
+                    // NORMAL FLOW
+                    if (Boolean.TRUE.equals(transition.getIsFinal())) {
+
+                        System.out.println("Final workflow step reached");
+
+                        details.setCurrentOwnerRole(0L);
+                        details.setCurrentStep(0);
+                        details.setAction(action);
+
+                    } else {
+
+                        stage = "Fetching next workflow transition";
+
+                        System.out.println("Fetching next transition. Workflow ID: "
+                                + workflowId + ", Current step: "
+                                + details.getCurrentStep());
+
+                        WorkflowTransition next =
+                                workflowTransitionRepo
+                                        .findFirstByWorkflowIdAndStepOrderGreaterThanOrderByStepOrder(
+                                                workflowId, details.getCurrentStep())
+                                        .orElseThrow(() ->
+                                                new IllegalStateException(
+                                                        "Next workflow step missing. Workflow ID: "
+                                                                + workflowId
+                                                                + ", Current step: "
+                                                                + details.getCurrentStep()));
+
+                        System.out.println("Next transition found. Step: "
+                                + next.getStepOrder()
+                                + ", Role: " + next.getToRole());
+
+                        details.setCurrentOwnerRole(next.getToRole());
+                        details.setCurrentStep(next.getStepOrder());
+                        details.setAction(action);
+                    }
+                }
+
+                stage = "Saving application details";
+                detailsRepo.save(details);
+                System.out.println("Application details saved");
+
+                stage = "Saving application status trail";
+                ApplicationStatusTrail trail = new ApplicationStatusTrail();
+                trail.setApplicationId(details.getMaster().getId());
+                trail.setActionId(action.getActionId());
+                trail.setActionByRole(actingRole);
+                trail.setRemarks(request.getRemarks());
+                trail.setActionByDivCode(actionByDivCode);
+                trail.setActionByEmpCode(actionByEmpCode);
+
+                trailRepo.save(trail);
+
+                System.out.println("Status trail saved successfully");
+                System.out.println("Application processed successfully: " + appId);
+
+            } catch (Exception e) {
+
+                System.err.println("\n========== APPLICATION PROCESSING ERROR ==========");
+                System.err.println("Application ID: " + appId);
+                System.err.println("Stage: " + stage);
+                System.err.println("Exception: " + e.getClass().getName());
+                System.err.println("Message: " + e.getMessage());
+                e.printStackTrace();
+                System.err.println("==================================================");
+
+                // Re-throw so Spring rolls back the transaction.
+                throw new IllegalStateException(
+                        "Failed to process application " + appId
+                                + " at stage: " + stage,
+                        e);
             }
         }
 
-        detailsRepo.save(details);
+        System.out.println("========== PROCESS APPLICATIONS COMPLETED ==========");
 
-        ApplicationStatusTrail trail = new ApplicationStatusTrail();
-        trail.setApplicationId(details.getMaster().getId());
-        trail.setActionId(action.getActionId());
-        trail.setActionByRole(actingRole);
-        trail.setRemarks(request.getRemarks());
-//new columns
-trail.setActionByDivCode(actionByDivCode);
-trail.setActionByEmpCode(actionByEmpCode);
-        trailRepo.save(trail);
+    } catch (Exception e) {
+
+        System.err.println("\n========== PROCESS APPLICATIONS FAILED ==========");
+        System.err.println("Last stage: " + stage);
+        System.err.println("Exception: " + e.getClass().getName());
+        System.err.println("Message: " + e.getMessage());
+        e.printStackTrace();
+        System.err.println("=================================================");
+
+        throw e;
     }
 }
 @Override
@@ -908,46 +1038,94 @@ public Long getCurrentWorkflowRole() {
 @Override
 public List<InboxApplicationDTO> getAllPendingApplications() {
 
-    // 1. Get logged-in employee's existing assignments
+    
+    // 1. Get assignments from the logged-in employee
     Set<String> assignments =
             new HashSet<>(getLoggedInRoleDivisionAssignments());
 
-    // 2. Check whether the logged-in employee is a Link Officer
+    System.out.println("========== INITIAL ASSIGNMENTS ==========");
+    System.out.println("Logged-in employee assignments:");
+    assignments.forEach(a -> System.out.println("  " + a));
+    System.out.println("==========================================");
+
+    // 2. Read logged-in employee details from session
     Object employeeDetails =
             session.getAttribute("GPF_EMPLOYEE_DETAILS");
 
-    if (employeeDetails instanceof GpfEmployeeDetailsDTO employee
-            && employee.getFunctionalRoles() != null) {
+    System.out.println("Session employee details type: "
+            + (employeeDetails == null
+                    ? "NULL"
+                    : employeeDetails.getClass().getName()));
+
+    if (employeeDetails instanceof GpfEmployeeDetailsDTO employee) {
+
+        System.out.println("Logged-in employee code: "
+                + employee.getEmpCode());
+
+        if (employee.getFunctionalRoles() != null) {
+            System.out.println("Logged-in employee functional roles:");
+
+            employee.getFunctionalRoles().forEach(role ->
+                System.out.println(
+                    "  postId=" + role.getPostId()
+                    + ", divCode=[" + role.getDivCode() + "]"
+                )
+            );
+        }
 
         boolean isLinkOfficer =
-                employee.getFunctionalRoles().stream()
-                        .anyMatch(role ->
-                                role.getPostId() != null
-                                && role.getPostId().longValue() == 13L
-                        );
+                employee.getFunctionalRoles() != null
+                && employee.getFunctionalRoles().stream()
+                    .anyMatch(role ->
+                        role.getPostId() != null
+                        && role.getPostId().longValue() == 13L
+                    );
 
-        // 3. Add the linked employee's assignments when applicable
+        System.out.println("Is Link Officer: " + isLinkOfficer);
+
+        // 3. Add linked employee assignments only for Link Officers
         if (isLinkOfficer) {
 
             Long empCode = employee.getEmpCode();
 
             employeeService.getLinkedEmployeeCode(empCode)
-                    .flatMap(employeeService::getEmployeeDetails)
-                    .ifPresent(linkedEmployee -> {
+                .flatMap(employeeService::getEmployeeDetails)
+                .ifPresentOrElse(linkedEmployee -> {
 
-                        if (linkedEmployee.getFunctionalRoles() != null) {
+                    System.out.println(
+                        "Linked employee assignments being added:"
+                    );
 
-                            linkedEmployee.getFunctionalRoles().stream()
-                                    .filter(role -> role.getPostId() != null)
-                                    .filter(role -> role.getDivCode() != null
-                                            && !role.getDivCode().isBlank())
-                                    .map(role -> role.getPostId()
-                                            + "|" + role.getDivCode().trim())
-                                    .forEach(assignments::add);
-                        }
-                    });
+                    if (linkedEmployee.getFunctionalRoles() != null) {
+
+                        linkedEmployee.getFunctionalRoles().stream()
+                            .filter(role -> role.getPostId() != null)
+                            .filter(role -> role.getDivCode() != null
+                                    && !role.getDivCode().isBlank())
+                            .map(role -> role.getPostId()
+                                    + "|" + role.getDivCode().trim())
+                            .forEach(a -> {
+                                System.out.println(
+                                    "  Linked assignment: " + a
+                                );
+                                assignments.add(a);
+                            });
+                    }
+
+                }, () -> System.out.println(
+                    "No linked employee details found."
+                ));
         }
+    } else {
+        System.out.println(
+            "WARNING: Session employee details are missing or have an unexpected type."
+        );
     }
+
+    System.out.println("========== FINAL ASSIGNMENTS ==========");
+    assignments.forEach(a -> System.out.println("  " + a));
+    System.out.println("=======================================");
+
 
     // 4. Fetch pending withdrawal applications
     List<GpfWithdrawlDetails> list =
@@ -961,26 +1139,45 @@ public List<InboxApplicationDTO> getAllPendingApplications() {
                     && d.getCurrentStep() != null
                     && d.getCurrentStep() > 0)
 
-            .filter(d -> {
-                String divisionCode =
-                        workflowTransitionRepo
-                                .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
-                                        d.getWorkflowId(),
-                                        d.getCurrentStep()
-                                )
-                                .map(WorkflowTransition::getToRoleDivCode)
-                                .orElse(null);
+            
+.filter(d -> {
+    java.util.Optional<WorkflowTransition> transitionOpt =
+            workflowTransitionRepo
+                    .findFirstByWorkflowIdAndStepOrderOrderByStepOrder(
+                            d.getWorkflowId(),
+                            d.getCurrentStep()
+                    );
 
-                if (divisionCode == null || divisionCode.isBlank()) {
-                    return false;
-                }
+    String divisionCode = transitionOpt
+            .map(WorkflowTransition::getToRoleDivCode)
+            .orElse(null);
 
-                String assignment =
-                        d.getCurrentOwnerRole()
-                                + "|" + divisionCode.trim();
+    System.out.println("========== WITHDRAWAL INBOX DEBUG ==========");
+    System.out.println("Application ID : "
+            + (d.getMaster() != null ? d.getMaster().getId() : null));
+    System.out.println("Workflow ID    : " + d.getWorkflowId());
+    System.out.println("Current Step   : " + d.getCurrentStep());
+    System.out.println("Current Owner   : " + d.getCurrentOwnerRole());
+    System.out.println("To Role Div Code: [" + divisionCode + "]");
 
-                return assignments.contains(assignment);
-            })
+    if (divisionCode == null || divisionCode.isBlank()) {
+        System.out.println("RESULT: EXCLUDED - Division code is missing");
+        return false;
+    }
+
+    String assignment =
+            d.getCurrentOwnerRole() + "|" + divisionCode.trim();
+
+    boolean matches = assignments.contains(assignment);
+
+    System.out.println("Assignment     : [" + assignment + "]");
+    System.out.println("All Assignments: " + assignments);
+    System.out.println("Assignment Match: " + matches);
+    System.out.println("============================================");
+
+    return matches;
+})
+
 
             .map(d -> {
                 InboxApplicationDTO dto = new InboxApplicationDTO();
