@@ -75,14 +75,28 @@ const pendingByRole = applications
       a.currentOwnerRole !== "Cancelled/Rejected"
   )
   .reduce((acc, app) => {
+
     const role = app.currentOwnerRole || "Unknown";
 
-    if (!acc[role]) {
-      acc[role] = 0;
+    const division =
+      app.currentDivisionName && app.currentDivisionName !== "-"
+        ? app.currentDivisionName
+        : "No Division";
+
+    const key = `${role} (${division})`;
+
+    if (!acc[key]) {
+      acc[key] = {
+        role,
+        division,
+        count: 0
+      };
     }
 
-    acc[role]++;
+    acc[key].count++;
+
     return acc;
+
   }, {});
   //const { master, details, trail } = application;
 
@@ -268,21 +282,26 @@ const handleViewOrder = async (app) => {
 </div>
 
   <div className="pending-role-inline">
-    {Object.entries(pendingByRole).map(([role, count], index) => (
-      <span
-  key={role}
-  className="role-inline-item"
-  onClick={() => setRoleFilter(role)}
->
-        <span className="role-name">{role}:</span>
-        <span className="role-count">{count}</span>
-
-        {index !== Object.entries(pendingByRole).length - 1 && (
-          <span className="role-separator">|</span>
-        )}
+  {Object.entries(pendingByRole).map(([key, item], index) => (
+    <span
+      key={key}
+      className="role-inline-item"
+      onClick={() => setRoleFilter(item.role)}
+    >
+      <span className="role-name">
+        {item.role} ({item.division}):
       </span>
-    ))}
-  </div>
+
+      <span className="role-count">
+        {item.count}
+      </span>
+
+      {index !== Object.entries(pendingByRole).length - 1 && (
+        <span className="role-separator">|</span>
+      )}
+    </span>
+  ))}
+</div>
 
 </div>
       <div className="status-table-wrapper">

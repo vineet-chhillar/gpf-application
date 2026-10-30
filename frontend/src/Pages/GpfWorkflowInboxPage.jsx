@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/axios";
-import { useNavigate } from "react-router-dom";
 import "../styles/GpfWorkflowPageworkflow.css";
-
+import { useNavigate, useLocation } from "react-router-dom";
 const GpfWorkflowInboxPage = () => {
   const [applications, setApplications] = useState([]);
   const [appType, setAppType] = useState("withdrawl");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,7 +54,7 @@ const GpfWorkflowInboxPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [appType]);
+  }, [appType, location.key]);
 
   return (
     <div className="workflow-container">

@@ -175,12 +175,19 @@ if (!details) return;
       );
   console.log("👉 Expected Next Step:", Number(details.currentStep) + 1);
     console.log("👉 Found Next:", next);
-      if (next) {
+ 
+   if (next) {
+  const roleName = (next.toRole || "").trim();
+
+  if (roleName.toLowerCase() === "approve") {
+    setNextRoleName("Approve");
+  } else {
     setNextRoleName(
-        [next.toRole, next.divName].filter(Boolean).join(" - ")
+      [next.toRole, next.divName].filter(Boolean).join(" - ")
     );
+  }
 } else {
-    setNextRoleName("Completed");
+  setNextRoleName("Approve");
 }
 
     } catch (err) {
@@ -420,9 +427,10 @@ const getButtonText = () => {
   }
 
   const isReturnMode =
-    selectedDetails?.isReturned && selectedDetails?.returnFromStep != null;
+    selectedDetails?.isReturned &&
+    selectedDetails?.returnFromStep != null;
 
-  // 🔁 RETURN MODE → use previous roles
+  // RETURN MODE
   if (isReturnMode && sendToOptions.length > 0) {
     const role = sendToOptions.find(
       r => String(r.roleId) === String(selectedSendTo)
@@ -431,7 +439,12 @@ const getButtonText = () => {
     return `Send To ${role?.roleName || ""}`;
   }
 
-  // ✅ NORMAL FLOW → use NEXT ROLE
+  // FINAL WORKFLOW STATE
+  if (nextRoleName === "Approve") {
+    return "Approve";
+  }
+
+  // NORMAL WORKFLOW
   if (nextRoleName) {
     return `Send To ${nextRoleName}`;
   }
