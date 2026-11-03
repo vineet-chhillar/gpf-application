@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
+
 import GPFApplicationStatus from "../Pages/GPFApplicationStatus";
 import MyApplicationStatus from "../Pages/MyApplicationStatus";
 import AdvanceApplicationStatus from "../Pages/AdvanceApplicationStatus";
@@ -165,6 +166,7 @@ const pageMap = {
 
 <Route path="/" element={<Navigate to="/home" />} />
 
+ <Route path="/home" element={<Home />} />
   <Route path="/" element={<Navigate to="/rule-master" />} />
 
   <Route path="/rule-master" element={<GpfRuleMaster />} />

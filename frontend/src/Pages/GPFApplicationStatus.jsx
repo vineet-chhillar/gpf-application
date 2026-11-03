@@ -41,6 +41,8 @@ const base = appType === "withdrawl" ? "/gpf-withdrawl" : "/gpf-advance";
 const res = await api.get(`${base}/status-all`);
 setApplications(res.data);
 
+
+
 console.log(applications);
 
 setExpandedRow(null);
