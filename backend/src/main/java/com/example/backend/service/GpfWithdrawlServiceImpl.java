@@ -113,11 +113,10 @@ private final GpfEmployeeService employeeService;
             GpfEmployeeService employeeService) {
         this.employeeService = employeeService;
     }
-private String getLoggedInEmpCode() {
+public String getLoggedInEmpCode() {
 
     //Object empCode = session.getAttribute("empcode");
-    Object employeeDetails =
-            session.getAttribute("GPF_EMPLOYEE_DETAILS");
+    Object employeeDetails =  session.getAttribute("GPF_EMPLOYEE_DETAILS");
 
             if (!(employeeDetails instanceof GpfEmployeeDetailsDTO employee)) {
         throw new IllegalStateException(
@@ -1049,13 +1048,9 @@ public List<InboxApplicationDTO> getAllPendingApplications() {
     System.out.println("==========================================");
 
     // 2. Read logged-in employee details from session
-    Object employeeDetails =
-            session.getAttribute("GPF_EMPLOYEE_DETAILS");
+    Object employeeDetails =  session.getAttribute("GPF_EMPLOYEE_DETAILS");
 
-    System.out.println("Session employee details type: "
-            + (employeeDetails == null
-                    ? "NULL"
-                    : employeeDetails.getClass().getName()));
+    System.out.println("Session employee details type: " + (employeeDetails == null ? "NULL" : employeeDetails.getClass().getName()));
 
     if (employeeDetails instanceof GpfEmployeeDetailsDTO employee) {
 

@@ -36,12 +36,15 @@ import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 
 
 @Service
 @Transactional
 public class SanctionOrderService {
+    private final GpfWithdrawlServiceImpl gpfWithdrawlServiceImpl;
+
     private static final Long COMPLETED_ROLE_ID = 0L; // replace with actual
     
     private final GpfWithdrawlMasterRepository gpfWithdrawlMasterRepository;
@@ -58,13 +61,32 @@ public class SanctionOrderService {
    @Autowired
     private JdbcTemplate jdbcTemplate;
 
-  SanctionOrderService(GpfWithdrawlMasterRepository gpfWithdrawlMasterRepository, GpfWithdrawlDetailsRepository gpfWithdrawlDetailsRepository, GpfAdvanceMasterRepo advanceMasterRepo, GpfAdvanceDetailsRepo advanceDetailsRepo, GpfSanctionOrderRepository sanctionOrderRepository) {
+    @Autowired
+private HttpSession session;
+
+  SanctionOrderService(GpfWithdrawlMasterRepository gpfWithdrawlMasterRepository, GpfWithdrawlDetailsRepository gpfWithdrawlDetailsRepository, GpfAdvanceMasterRepo advanceMasterRepo, GpfAdvanceDetailsRepo advanceDetailsRepo, GpfSanctionOrderRepository sanctionOrderRepository, GpfWithdrawlServiceImpl gpfWithdrawlServiceImpl) {
     this.gpfWithdrawlMasterRepository = gpfWithdrawlMasterRepository;
     this.gpfWithdrawlDetailsRepository = gpfWithdrawlDetailsRepository;
     this.sanctionOrderRepository = sanctionOrderRepository;
     this.advanceMasterRepo = advanceMasterRepo;
     this.advanceDetailsRepo = advanceDetailsRepo;
+    this.gpfWithdrawlServiceImpl = gpfWithdrawlServiceImpl;
+
+   
   }
+public void testSanctionOrder(Long applicationId) {
+
+    boolean exists =
+        sanctionOrderRepository.existsByApplicationId(applicationId);
+
+    System.out.println(
+        "Sanction order exists for " + applicationId + ": " + exists
+    );
+}
+
+
+
+
 
 
     public SanctionOrderDto buildSanctionOrder(Long applicationId) {
@@ -192,11 +214,11 @@ try {
 
     if ("withdrawl".equalsIgnoreCase(type)) {
 
-        pdfBytes = generatePdf(dto);
+        pdfBytes = generatePdf(dto, orderNumber);
 
     } else {
 
-        pdfBytes = generateAdvancePdf(dto);
+        pdfBytes = generateAdvancePdf(dto, orderNumber);
         System.out.println("Moved to advance sanction");
     }
 
@@ -217,10 +239,15 @@ try
     entity.setGeneratedOn(LocalDateTime.now());
     entity.setType(orderType);
        
+    
+    
+
+
+    String empCode=gpfWithdrawlServiceImpl.getLoggedInEmpCode();
 
     sanctionOrderRepository.insertSanctionOrder(
             applicationId,
-            "System", // generatedBy
+            empCode, // generatedBy
             entity.getGeneratedOn(),
             entity.getOrderNumber(),
             entity.getOrderPdf(),
@@ -351,10 +378,32 @@ private String generateOrderNumber(String type) {
 
     int year = LocalDate.now().getYear();
 
-    String prefix = "withdrawl".equalsIgnoreCase(type) ? "WDL" : "ADV";
+    String prefix;
+    long seq;
 
-    long seq = getNextSequence(type);
+    if ("WDL".equalsIgnoreCase(type) ||
+        "withdrawl".equalsIgnoreCase(type)) {
 
+        prefix = "WDL";
+        seq = jdbcTemplate.queryForObject(
+            "SELECT nextval('wdl_seq')", Long.class
+        );
+
+    } else if ("ADV".equalsIgnoreCase(type) ||
+               "advance".equalsIgnoreCase(type)) {
+
+        prefix = "ADV";
+        seq = jdbcTemplate.queryForObject(
+            "SELECT nextval('adv_seq')", Long.class
+        );
+
+    } else {
+        throw new IllegalArgumentException("Invalid sanction order type: " + type);
+    }
+System.out.println("TYPE RECEIVED: " + type);
+System.out.println("PREFIX GENERATED: " + prefix);
+System.out.println("FINAL ORDER NUMBER: " +
+    String.format("GPF/%s/%d/%05d", prefix, year, seq));
     return String.format("GPF/%s/%d/%05d", prefix, year, seq);
 }
 
@@ -375,7 +424,7 @@ private String generateOrderNumber(String type) {
         throw new RuntimeException("Error generating PDF", e);
     }
 }*/}
-public byte[] generateAdvancePdf(SanctionOrderDto dto) 
+public byte[] generateAdvancePdf(SanctionOrderDto dto, String orderNumber) 
 {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
         Document document = new Document();
@@ -479,7 +528,7 @@ headercenter.setSpacingAfter(10);
 // Add mixed content using chunks
 headercenter.add(new Chunk("आदेश संख्या /", hindiBold));
 headercenter.add(new Chunk("ORDER No: ", engBold));
-headercenter.add(new Chunk(generateOrderNumber("ADV"), engBold));
+headercenter.add(new Chunk(orderNumber, engBold));
 
 // Line break (cleaner than \n)
 headercenter.add(Chunk.NEWLINE);
@@ -634,7 +683,7 @@ dto.getEmpName()
         throw new RuntimeException("Error generating PDF", e);
         }
 }
-public byte[] generatePdf(SanctionOrderDto dto) 
+public byte[] generatePdf(SanctionOrderDto dto, String orderNumber) 
 {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
         Document document = new Document();
@@ -738,7 +787,7 @@ headercenter.setSpacingAfter(10);
 // Add mixed content using chunks
 headercenter.add(new Chunk("आदेश संख्या /", hindiBold));
 headercenter.add(new Chunk("ORDER No: ", engBold));
-headercenter.add(new Chunk(generateOrderNumber("WDL"), engBold));
+headercenter.add(new Chunk(orderNumber, engBold));
 
 // Line break (cleaner than \n)
 headercenter.add(Chunk.NEWLINE);
@@ -811,7 +860,7 @@ document.add(headercenter);
         table.addCell(new Phrase("Balance as on date of Sanction"));
         table.addCell(String.valueOf(totalOneToThree - dto.getSubsequentWithdrawl()));
 
-        table.setSpacingAfter(100);
+        table.setSpacingAfter(80);
         document.add(table);
 
         // ---------------- SIGNATURE ----------------
@@ -825,7 +874,7 @@ document.add(headercenter);
                 "1. The Senior Accounts Officer, Pay & Accounts Office, NICHQ, New Delhi-110003" + "\n"
                +"2. DDO, NICHQ, New Delhi-110003" + "\n"
                +"3. Individual Concerned, with the instruction that within one month of the drawal of the amount, he/she should produce certificate to the effect that the withdrawal sanctioned above has been utilised for the purpose for which it was drawn."+"\n"
-               +"4. Personal file " + dto.getEmpCode() + "\n"
+               +"4. Office Copy " + dto.getEmpCode() + "\n"
                 , normalFont);
 
                 
@@ -850,11 +899,36 @@ document.add(headercenter);
 }
 public byte[] getOrderPdf(Long applicationId) {
 
-    GpfSanctionOrder order = sanctionOrderRepository
-            .findByApplicationId(applicationId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+    System.out.println("getOrderPdf called. Application ID: " + applicationId);
 
-    return order.getOrderPdf();
+    try {
+        Optional<GpfSanctionOrder> result =
+                sanctionOrderRepository.findByApplicationId(applicationId);
+
+        System.out.println("Order found: " + result.isPresent());
+
+        GpfSanctionOrder order = result.orElseThrow(
+                () -> new RuntimeException("Order not found for ID: " + applicationId)
+        );
+
+        System.out.println("Order ID: " + order.getId());
+        System.out.println("Order Number: " + order.getOrderNumber());
+
+        byte[] pdf = order.getOrderPdf();
+
+        System.out.println("PDF is null: " + (pdf == null));
+        System.out.println("PDF size: " + (pdf == null ? 0 : pdf.length));
+
+        if (pdf == null || pdf.length == 0) {
+            throw new RuntimeException("PDF data is empty");
+        }
+
+        return pdf;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+    }
 }
 
 

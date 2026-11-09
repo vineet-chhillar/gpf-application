@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.css": "/GPF/static/css/main.5cd1fe3d.css",
-    "main.js": "/GPF/static/js/main.c438d982.js",
+    "main.css": "/GPF/static/css/main.35ec99e3.css",
+    "main.js": "/GPF/static/js/main.067d3bad.js",
     "static/js/206.2d5fc90f.chunk.js": "/GPF/static/js/206.2d5fc90f.chunk.js",
     "index.html": "/GPF/index.html"
   },
   "entrypoints": [
-    "static/css/main.5cd1fe3d.css",
-    "static/js/main.c438d982.js"
+    "static/css/main.35ec99e3.css",
+    "static/js/main.067d3bad.js"
   ]
 }

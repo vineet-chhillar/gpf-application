@@ -51,13 +51,24 @@ System.out.println("controller reached");
                 .header("Content-Disposition", "inline; filename=sanction-order.pdf")
                 .body(pdf);
     }
+
     @GetMapping("/check-order/{applicationId}")
-public ResponseEntity<Map<String, Boolean>> checkOrder(@PathVariable Long applicationId) {
+public ResponseEntity<Map<String, Boolean>> checkOrder(
+        @PathVariable Long applicationId) {
+
+    System.out.println("CHECK-ORDER API REACHED. Application ID: " + applicationId);
+
+    sanctionOrderService.testSanctionOrder(applicationId);
 
     boolean exists = sanctionOrderRepository
             .findByApplicationId(applicationId)
             .isPresent();
 
+    System.out.println("Repository result: " + exists);
+
     return ResponseEntity.ok(Map.of("exists", exists));
 }
+
+
+
 }
