@@ -24,13 +24,13 @@ const MainLayout = () => {
   //setActivePage(menuName);
 //};
 const navigate = useNavigate();
-
+const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 const handleMenuClick = (menuName) => {
   setActivePage(menuName);
 
   if (menuName === "GPF Rule Master") navigate("/rule-master");
   else if (menuName === "Dashboard") navigate("/status");
-  else if (menuName === "Application Status") navigate("/my-applications");
+  else if (menuName === "Track Status") navigate("/my-applications");
     else if (menuName === "WorkFlow HQ") navigate("/workflow-hq");
   else if (menuName === "WorkFlow States") navigate("/workflow-states");
   else if (menuName === "WithDrawl") navigate("/withdrawl");
@@ -83,7 +83,7 @@ const handleMenuClick = (menuName) => {
    
    {
     menuId: 8,
-    menuName: "Application Status"
+    menuName: "Track Status"
   },
   //{
     //menuId: 7,
@@ -100,7 +100,7 @@ const pageMap = {
   "Home":<Home/>,
   "GPF Rule Master": <GpfRuleMaster />,  
   "Dashboard": <GPFApplicationStatus />,
-  "Application Status": <MyApplicationStatus />,     
+  "Track Status": <MyApplicationStatus />,     
    "Advance Application Status": <AdvanceApplicationStatus />,
   "WorkFlow HQ": <WorkflowViewerPage />,
   "WorkFlow States": <AppFlowState />,
@@ -124,103 +124,89 @@ const pageMap = {
 
 
 
-  return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      
+  
+
+
+return (
+  <div className="app-layout">
+
+    {/* FULL WIDTH HEADER */}
+    <Header
+      title={activePage}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={() =>
+        setSidebarCollapsed(prev => !prev)
+      }
+    />
+
+    {/* SIDEBAR + MAIN CONTENT */}
+    <div className="app-body">
+
       {/* LEFT SIDEBAR */}
       <Sidebar
         menus={menus}
         activePage={activePage}
         onMenuClick={handleMenuClick}
-        
+        collapsed={sidebarCollapsed}
       />
 
       {/* RIGHT SIDE */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        
-        {/* HEADER */}
-        <Header title={activePage} />
+      <div className="app-main">
 
-        {/* CONTENT (TEMP) */}
-      {/*<div
-  style={{
-    padding: "10px",
-    background:"#f8fafc",
-    height: "100%",
-    overflowY: "auto",   
-    overflowX: "auto"  ,
-    width: "100%"  
-  }}
->*/}
-<div
-  style={{
-    flex: 1,
-    padding: "10px",
-    background: "#f8fafc",
-    overflowY: "auto",
-    overflowX: "auto",
-    width: "100%"
-  }}
->
-<Routes>
+        {/* CONTENT */}
+        <div className="app-content">
 
-<Route path="/" element={<Navigate to="/home" />} />
+          <Routes>
 
- <Route path="/home" element={<Home />} />
-  <Route path="/" element={<Navigate to="/rule-master" />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
 
-  <Route path="/rule-master" element={<GpfRuleMaster />} />
-  <Route path="/status" element={<GPFApplicationStatus />} />
-  <Route path="/my-applications" element={<MyApplicationStatus />} />
-  <Route path="/advance-status" element={<AdvanceApplicationStatus />} />
-  <Route path="/workflow-hq" element={<WorkflowViewerPage />} />
-  <Route path="/workflow-states" element={<AppFlowState />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/rule-master" element={<GpfRuleMaster />} />
+            <Route path="/status" element={<GPFApplicationStatus />} />
+            <Route path="/my-applications" element={<MyApplicationStatus />} />
+            <Route path="/advance-status" element={<AdvanceApplicationStatus />} />
+            <Route path="/workflow-hq" element={<WorkflowViewerPage />} />
+            <Route path="/workflow-states" element={<AppFlowState />} />
+            <Route path="/withdrawl" element={<GpfWithdrawlForm />} />
+            <Route path="/advance" element={<GpfAdvanceForm />} />
+            <Route path="/workflow" element={<GpfWorkflowInboxPage />} />
 
-  <Route path="/withdrawl" element={<GpfWithdrawlForm />} />
-  <Route path="/advance" element={<GpfAdvanceForm />} />
+            <Route
+              path="/workflow/:appType/:id/:empCode"
+              element={<GpfWorkflowDetailsPage />}
+            />
 
-  <Route path="/workflow" element={<GpfWorkflowInboxPage />} />
+          </Routes>
 
-  <Route
-    path="/workflow/:appType/:id/:empCode"
-    element={<GpfWorkflowDetailsPage />}
-  />
+        </div>
 
-</Routes>
-</div>
-<div
-  style={{
-    padding: "6px 10px",
-    background: "#ffffff",
-    borderTop: "1px solid #e5e7eb",
-    fontSize: "12px",
-    textAlign: "center",
-    lineHeight: "1.5"
-  }}
->
-  <div>
-    <b>
-      Designed and Developed by{" "}
-      <a
-        href="https://digital.nic.in/LocalTA/application/track#"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: "#1d4ed8", textDecoration: "none" }}
-      >
-        Office Automation Division, National Informatics Centre © 2026 Version 1.0
-      </a>
-    </b>
-  </div>
-  <div style={{ color: "#6b7280" }}>
-    Data displayed in portal is subject to verification by concerned administration
-  </div>
-</div>
+        {/* FOOTER */}
+        <div className="app-footer">
+          <div>
+            <b>
+              Designed and Developed by{" "}
+              <a
+                href="https://digital.nic.in/LocalTA/application/track#"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Office Automation Division, National Informatics Centre © 2026 Version 1.0
+              </a>
+            </b>
+          </div>
+
+          <div className="footer-note">
+            Data displayed in portal is subject to verification by concerned administration
+          </div>
+        </div>
 
       </div>
-      
     </div>
-    
-  );
+  </div>
+);
+
+
+
 };
 
 export default MainLayout;

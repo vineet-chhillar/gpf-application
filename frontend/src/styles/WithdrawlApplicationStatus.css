@@ -717,3 +717,18 @@ pointer-events: none;
   background: #9e9e9e;
   cursor: not-allowed;
 }
+
+.dashboard-cards .card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dashboard-cards .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-cards .card.active-card {
+    border: 2px solid #4e1d7c;
+    box-shadow: 0 0 0 2px rgba(78, 29, 124, 0.12);
+}

@@ -44,26 +44,74 @@ const [applications, setApplications] = useState([]);
     setLoading(true);
 
     try {
-      const base =
-        appType === "withdrawl"
-          ? "/gpf-withdrawl"
-          : "/gpf-advance";
+        const base =
+            appType === "withdrawl"
+                ? "/gpf-withdrawl"
+                : "/gpf-advance";
 
-      const res = await api.get(
-        `${base}/status-by-emp/${encodeURIComponent(empCode)}`
-      );
+        const res = await api.get(
+            `${base}/status-by-emp/${encodeURIComponent(empCode)}`
+        );
 
-      setApplications(
-        Array.isArray(res.data) ? res.data : []
-      );
-      setExpandedRow(null);
+        const applicationList = Array.isArray(res.data)
+            ? res.data
+            : [];
+
+        // Check sanction order existence before rendering applications
+        const updatedApplications = await Promise.all(
+            applicationList.map(async (app) => {
+
+                if (
+                    app.currentOwnerRole !== "Completed" ||
+                    !app.master?.id
+                ) {
+                    return {
+                        ...app,
+                        sanctionGenerated: false
+                    };
+                }
+
+                try {
+                    const sanctionRes = await api.get(
+                        `/sanction-order/check-order/${app.master.id}`
+                    );
+
+                    return {
+                        ...app,
+                        sanctionGenerated:
+                            sanctionRes.data?.exists === true
+                    };
+
+                } catch (error) {
+                    console.error(
+                        "Sanction existence check failed for application:",
+                        app.master.id,
+                        error
+                    );
+
+                    return {
+                        ...app,
+                        sanctionGenerated: false
+                    };
+                }
+            })
+        );
+
+        setApplications(updatedApplications);
+        setExpandedRow(null);
+
     } catch (err) {
-      console.error("Failed to load employee application status", err);
-      setApplications([]);
+        console.error(
+            "Failed to load employee application status",
+            err
+        );
+
+        setApplications([]);
+
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   loadData();
 }, [appType, empCode, employeeLoading]);
@@ -105,7 +153,7 @@ const handleGenerateOrder = async (app) => {
     const base =
       appType === "withdrawl"
         ? "/sanction-order"
-        : "/sanction-order-advance";
+        : "/sanction-order";
 
     const res = await api.post(`${base}/generate-order`, {
       applicationId: app.master?.id,
@@ -127,18 +175,28 @@ const handleGenerateOrder = async (app) => {
 
 const handleViewOrder = async (app) => {
   try {
-    const base =
-      appType === "withdrawl"
-        ? "/sanction-order"
-        : "/sanction-order-advance";
-
+    const base = "/sanction-order";
     const applicationId = app.master?.id;
 
-    // 🔥 Step 1: check if exists
-    const res = await api.get(`${base}/check-order/${applicationId}`);
+    console.log("handleViewOrder called");
+    console.log("Application:", app);
+    console.log("Application ID:", applicationId);
+    console.log("API Base URL:", api.defaults.baseURL);
+
+    if (!applicationId) {
+      console.error("Application ID is missing");
+      return;
+    }
+
+    const requestUrl = `${base}/check-order/${applicationId}`;
+
+    console.log("Calling API:", requestUrl);
+
+    const res = await api.get(requestUrl);
+
+    console.log("API Response:", res.data);
 
     if (res.data.exists) {
-      // ✅ open PDF
       const API_BASE = api.defaults.baseURL;
 
       window.open(
@@ -151,11 +209,18 @@ const handleViewOrder = async (app) => {
     }
 
   } catch (err) {
-    console.error(err);
+    console.error("Sanction order API error:", err);
+    console.error("Error message:", err.message);
+    console.error("Request URL:", err.config?.baseURL, err.config?.url);
+    console.error("HTTP Status:", err.response?.status);
+    console.error("Response data:", err.response?.data);
 
-    setModalMessage("Error fetching sanction order");
+    setModalMessage(
+        err.response?.data?.message ||
+        `Error fetching sanction order (${err.response?.status || "Network Error"})`
+    );
     setShowModal(true);
-  }
+}
 };
 
   return (
@@ -233,6 +298,12 @@ const master = app.master || {};
 const details = app.details || {};
 const trail = app.trail || [];
 const lastTrail = trail.length > 0 ? trail[trail.length - 1] : {};
+console.log("Sanction Debug:", {
+    applicationId: app.master?.id,
+    currentOwnerRole: app.currentOwnerRole,
+    sanctionGenerated: app.sanctionGenerated,
+    app
+});
 return (
 <React.Fragment key={index}>
 
@@ -257,23 +328,34 @@ return (
 
     return (
       <div className="status-cell">
-        <span
-          className={
+    <span
+        className={
             isRejected
-              ? "status-reject"
-              : isCompleted
-              ? "status-complete"
-              : "status-pending"
-          }
-        >
-               {app.currentDivisionName && app.currentDivisionName !== "-"
-  ? `${app.currentOwnerRole} (${app.currentDivisionName})`
-  : app.currentOwnerRole}
-          
-        </span>
+                ? "status-reject"
+                : isCompleted
+                ? "status-complete"
+                : "status-pending"
+        }
+    >
+        {app.currentDivisionName && app.currentDivisionName !== "-"
+            ? `${app.currentOwnerRole} (${app.currentDivisionName})`
+            : app.currentOwnerRole}
+    </span>
 
-      
-      </div>
+    {isCompleted && app.sanctionGenerated && (
+        <div className="status-actions">
+            <button
+                className="btn-view"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewOrder(app);
+                }}
+            >
+                View Sanction
+            </button>
+        </div>
+    )}
+</div>
     );
   })()}
 </td>

@@ -1,7 +1,11 @@
 import React from "react";
 import "./Header.css";
 import { useAuth } from "../context/AuthContext";
-const Header = ({ title }) => {
+const Header = ({
+  title,
+  sidebarCollapsed,
+  onToggleSidebar
+}) => {
 
 const { employee, loading, error, logout } = useAuth();
 
@@ -44,45 +48,44 @@ return (
   <div className="header">
 
     {/* LEFT */}
-    <div className="header-left">
+    {/* LEFT */}
+<div className="header-left">
 
-      <div className="title-icon">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <rect x="3" y="7" width="18" height="13" rx="2"/>
-          <path d="M16 3H8v4h8V3z"/>
-        </svg>
-      </div>
-
-      <div className="header-system">
-
-        <div className="system-title">
-          GPF/CPF Processing System
-        </div>
-
-        <div className="system-subtitle">
-            Office Automation Division
-        </div>
-
-      </div>
-
+  <div className="header-system">
+    <div className="system-title">
+      DigitalNIC
     </div>
+  </div>
+
+  <button
+    type="button"
+    className="sidebar-toggle"
+    onClick={onToggleSidebar}
+    title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+    aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+  >
+    <span className="hamburger-lines">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
+  </button>
+
+</div>
+
+    
 
     {/* CENTER PAGE TITLE */}
-    <div className="dynamic-title">
+    {/*<div className="dynamic-title">
       {getTitle(title)}
-    </div>
+    
+
+    </div>*/}
 
     {/* RIGHT */}
     <div className="header-right">
 
-      <div className="back-link">
+      {/*<div className="back-link">
 
         <svg
           width="16"
@@ -99,7 +102,7 @@ return (
           Back to Digital
         </span>
 
-      </div>
+      </div>*/}
 
       <div className="divider"></div>
 

@@ -12,6 +12,8 @@ const [appType, setAppType] = useState("withdrawl");
 const [modalMessage, setModalMessage] = useState("");
 const [showModal, setShowModal] = useState(false);
 const [roleFilter, setRoleFilter] = useState("");
+
+const [statusFilter, setStatusFilter] = useState("all");
   {/*const [application, setApplication] = useState({
     master: {},
     details: {},
@@ -23,14 +25,27 @@ const formatLabel = (key) => {
     .replace(/^./, str => str.toUpperCase()); // capitalize
 };
 const [applications, setApplications] = useState([]);
-const filteredApps = applications.filter(a =>
-  (!roleFilter || a.currentOwnerRole === roleFilter) &&
+const filteredApps = applications.filter(a => {
 
-  (
+  const matchesRole =
+    !roleFilter || a.currentOwnerRole === roleFilter;
+
+  const matchesSearch =
     a.master?.empname?.toLowerCase().includes(search.toLowerCase()) ||
-    a.master?.empcode?.toLowerCase().includes(search.toLowerCase())
-  )
-);
+    a.master?.empcode?.toLowerCase().includes(search.toLowerCase());
+
+  const matchesStatus =
+    statusFilter === "all" ||
+    (statusFilter === "pending" &&
+      a.currentOwnerRole !== "Completed" &&
+      a.currentOwnerRole !== "Cancelled/Rejected") ||
+    (statusFilter === "completed" &&
+      a.currentOwnerRole === "Completed") ||
+    (statusFilter === "rejected" &&
+      a.currentOwnerRole === "Cancelled/Rejected");
+
+  return matchesRole && matchesSearch && matchesStatus;
+});
   const [loading, setLoading] = useState(true);
 
 
@@ -193,60 +208,55 @@ const handleViewOrder = async (app) => {
 
  <div className="dashboard-cards">
 
-  <div className="card total">
+  <div
+    className={`card total ${statusFilter === "all" ? "active-card" : ""}`}
+    onClick={() => {
+      setStatusFilter("all");
+      setRoleFilter("");
+    }}
+  >
     <h3>Total Applications</h3>
     <p>{applications.length}</p>
   </div>
 
-  <div className="card pending">
+  <div
+    className={`card pending ${statusFilter === "pending" ? "active-card" : ""}`}
+    onClick={() => {
+      setStatusFilter("pending");
+      setRoleFilter("");
+    }}
+  >
     <h3>Pending</h3>
-    <p>
-      {
-        applications.filter(
-          a =>
-            a.currentOwnerRole !== "Completed" &&
-            a.currentOwnerRole !== "Cancelled/Rejected"
-        ).length
-      }
-    </p>
+    <p>{pendingApps.length}</p>
   </div>
-  {/*<div className="card pending-role-card">
-  <h3>Pending by Role</h3>
 
-  {Object.keys(pendingByRole).length === 0 ? (
-    <p>No pending</p>
-  ) : (
-    <div className="role-list">
-      {Object.entries(pendingByRole).map(([role, count]) => (
-        <div key={role} className="role-item">
-          <span>{role}</span>
-          <b>{count}</b>
-        </div>
-      ))}
-    </div>
-  )}
-</div>*/}
-
-  <div className="card completed">
+  <div
+    className={`card completed ${statusFilter === "completed" ? "active-card" : ""}`}
+    onClick={() => {
+      setStatusFilter("completed");
+      setRoleFilter("");
+    }}
+  >
     <h3>Completed</h3>
     <p>
-      {
-        applications.filter(
-          a => a.currentOwnerRole === "Completed"
-        ).length
-      }
+      {applications.filter(
+        a => a.currentOwnerRole === "Completed"
+      ).length}
     </p>
   </div>
 
-  {/* 🔥 NEW CARD */}
-  <div className="card rejected">
+  <div
+    className={`card rejected ${statusFilter === "rejected" ? "active-card" : ""}`}
+    onClick={() => {
+      setStatusFilter("rejected");
+      setRoleFilter("");
+    }}
+  >
     <h3>Cancelled / Rejected</h3>
     <p>
-      {
-        applications.filter(
-          a => a.currentOwnerRole === "Cancelled/Rejected"
-        ).length
-      }
+      {applications.filter(
+        a => a.currentOwnerRole === "Cancelled/Rejected"
+      ).length}
     </p>
   </div>
 
@@ -275,7 +285,10 @@ const handleViewOrder = async (app) => {
   {roleFilter && (
     <span
       className="clear-filter"
-      onClick={() => setRoleFilter("")}
+      onClick={() => {
+  setRoleFilter("");
+  setStatusFilter("all");
+}}
     >
       ✖
     </span>
