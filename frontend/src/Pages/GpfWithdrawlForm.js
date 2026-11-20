@@ -324,9 +324,7 @@ useEffect(() => {
   setUserInput(prev => ({
     ...prev,
     concernedofficername:
-      detailsApiData.concernedofficername || prev.concernedofficername,
-
-    
+      detailsApiData.nameoftheofficermaintainingthePFAccount || ""
   }));
 
 }, [detailsApiData]);
@@ -1194,6 +1192,105 @@ const handleSubmit = () => {
   
     {/* ---- USER INPUT ---- */}
   <div className="form-group">
+
+<div className="gpf-financial-summary">
+
+  <div className="gpf-numbered-info">
+
+    {/* 1. BASIC PAY */}
+    <div className="gpf-info-row">
+      <span className="gpf-info-sno">1</span>
+      <span className="gpf-info-label">Basic Pay</span>
+      <strong className="gpf-info-value">
+        ₹{detailsApiData?.basicpay ?? "-"}
+      </strong>
+    </div>
+
+    {/* 2. CLOSING BALANCE */}
+    <div className="gpf-info-row">
+      <span className="gpf-info-sno">2</span>
+      <span className="gpf-info-label">
+  Closing Balance As On: <strong>{formatDate(getLastFinancialYearEndDate())}</strong>
+</span>
+      <strong className="gpf-info-value">
+        ₹{detailsApiData?.closingbalance ?? "-"}
+      </strong>
+    </div>
+
+    {/* 3. CREDIT INFORMATION */}
+    <div className="gpf-period-strip">
+      <div className="gpf-period-title">
+        <span className="gpf-info-sno">3</span>
+        Credit Information
+      </div>
+
+      <div className="gpf-period-items">
+        <div className="gpf-period-item">
+          <span>Credit From:</span>
+          <strong>{formatDate(getCurrentFinancialYearStartDate())}</strong>
+        </div>
+
+        <div className="gpf-period-item">
+          <span>Credit To:</span>
+          <strong>{formatDate(getTodayDate())}</strong>
+        </div>
+
+        <div className="gpf-period-item">
+          <span>Total Credit Amount:</span>
+          <strong>₹{detailsApiData?.totalcreditamount ?? "-"}</strong>
+        </div>
+      </div>
+    </div>
+
+    {/* 4. REFUND */}
+    <div className="gpf-info-row">
+      <span className="gpf-info-sno">4</span>
+      <span className="gpf-info-label">
+        Refund After Closing Balance
+      </span>
+      <strong className="gpf-info-value">
+        ₹{detailsApiData?.refundafterdateofoutstandingbalance ?? "-"}
+      </strong>
+    </div>
+
+    {/* 5. WITHDRAWAL INFORMATION */}
+    <div className="gpf-period-strip">
+      <div className="gpf-period-title">
+        <span className="gpf-info-sno">5</span>
+        Withdrawal Information
+      </div>
+
+      <div className="gpf-period-items">
+        <div className="gpf-period-item">
+          <span>Withdrawal From:</span>
+          <strong>{formatDate(getCurrentFinancialYearStartDate())}</strong>
+        </div>
+
+        <div className="gpf-period-item">
+          <span>Withdrawal To:</span>
+          <strong>{formatDate(getTodayDate())}</strong>
+        </div>
+
+        <div className="gpf-period-item">
+          <span>Total Withdrawal Amount:</span>
+          <strong>₹{detailsApiData?.totalwithdrawlamount ?? "-"}</strong>
+        </div>
+      </div>
+    </div>
+
+    {/* 6. NET BALANCE */}
+    <div className="gpf-info-row">
+      <span className="gpf-info-sno">6</span>
+      <span className="gpf-info-label"><strong>Net Balance ((II + III + IV) - V)</strong></span>
+      <strong className="gpf-info-value">
+        ₹{detailsApiData?.netbalance ?? "-"}
+      </strong>
+    </div>
+
+  </div>
+
+</div>
+
   <label className="form-label">Withdrawal Rule <span className="required">*</span></label>
   <div className="custom-dropdown" ref={dropdownRef}>
 
@@ -1262,7 +1359,7 @@ const handleSubmit = () => {
     >
       (
       {selectedRule.maxPercentage
-        ? (`${selectedRule.maxPercentage}%`) + " of balance"
+        ? (`${selectedRule.maxPercentage}%`) + " of Closing Balance"
         : "N/A"}
 
       {selectedRule.maxMonthsPay
@@ -1324,14 +1421,14 @@ const handleSubmit = () => {
   <label className="form-label">
     Name of accounts officer maintaining the PF account <span className="required">*</span>
   </label>
-
- <input
+{/*value={userInput.concernedofficername || ""}*/}
+<input
   className="form-input"
   name="concernedofficername"
-  value={userInput.concernedofficername || ""}
+  value={userInput.concernedofficername}
   onChange={handleUserChange}
   placeholder="Enter officer name"
-  readOnly={!!detailsApiData?.concernedofficername}
+  readOnly={!!detailsApiData?.nameoftheofficermaintainingthePFAccount}
 />
 </div>
   
@@ -1419,69 +1516,11 @@ const handleSubmit = () => {
 
 </div>
   </div>
-<div className="info-grid">
-
-  
-
-    <div className="info-card">
-<div className="info-label">Basic Pay</div>
-<div className="info-value">₹{detailsApiData?.basicpay || "-"}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Closing Balance As On</div>
-<div className="info-value">{formatDate(getLastFinancialYearEndDate())}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Closing Balance</div>
-<div className="info-value">₹{detailsApiData?.closingbalance || "-"}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Credit From</div>
-<div className="info-value">{formatDate(getCurrentFinancialYearStartDate())}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Credit To</div>
-<div className="info-value">{formatDate(getTodayDate())}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Total Credit Amount</div>
-<div className="info-value">₹{detailsApiData?.totalcreditamount || "-"}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Refund After Closing Balance</div>
-<div className="info-value">
-₹{detailsApiData?.refundafterdateofoutstandingbalance || "-"}
-</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Withdrawal From</div>
-<div className="info-value">{formatDate(getCurrentFinancialYearStartDate())}</div>
-</div>
-
-<div className="info-card">
-<div className="info-label">Withdrawal To</div>
-<div className="info-value">{formatDate(getTodayDate())}</div>
-</div>
 
 
-<div className="info-card">
-<div className="info-label">Total Withdrawal Amount</div>
-<div className="info-value">₹{detailsApiData?.totalwithdrawalamount || "-"}</div>
-</div>
 
-<div className="info-card">
-<div className="info-label">Net Balance</div>
-<div className="info-value">₹{detailsApiData?.netbalance || "-"}</div>
-</div>
 
-</div>
+
 
   
 {/*}  {selectedRule && (

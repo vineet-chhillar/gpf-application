@@ -403,64 +403,164 @@ h2::after {
   background-color: #dc3545;
   color: white;
 }
+
+/* =========================================
+   CUSTOM WITHDRAWAL RULE DROPDOWN
+========================================= */
+
 .custom-dropdown {
-     width: 95%;  
-   
+  position: relative;
+  width: 95%;
+  max-width: 100%;
+  min-width: 0;
+  z-index: 100;
 }
+
+/* Selected dropdown value */
 
 .dropdown-selected {
-  padding: 10px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  color: #000 !important;
-  background: #fff;
-   white-space: nowrap;        /* 🔥 single line */
-  overflow: hidden;           /* hide overflow */
-  text-overflow: ellipsis;    /* show ... if long */
-  width: 100%;  
-  
-}
-
-.dropdown-menu {
-  position: absolute;
   width: 100%;
-  background: white;
-  border: 1px solid #ccc;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 999;
-   padding: 4px 0;   /* remove large gaps */
-}
+  box-sizing: border-box;
+  padding: 10px 12px;
 
-.dropdown-item {
-  padding: 6px 10px;     /* 🔥 reduce from 10–12px */
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #1e293b !important;
+
+  font-size: 14px;
   cursor: pointer;
 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
-  line-height: 1.2;      /* tighter text */
+  transition: border-color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.dropdown-selected:hover {
+  border-color: #3b82c4;
+}
+
+.dropdown-selected:focus {
+  outline: none;
+  border-color: #25649a;
+  box-shadow: 0 0 0 3px rgba(59, 130, 196, 0.15);
+}
+
+/* Dropdown options */
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 4px 0;
+
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.14);
+
+  z-index: 1000;
+}
+
+/* Individual options */
+
+.dropdown-item {
+  padding: 8px 12px;
+
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.4;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  transition: background 0.15s ease,
+              color 0.15s ease;
 }
 
 .dropdown-item:hover {
-  background: #f0f0f0;
+  background: #eaf3fb;
+  color: #1d5f91;
 }
 
+/* =========================================
+   RULE DESCRIPTION HOVER POPUP
+   Appears beside the dropdown
+========================================= */
+
+/* =========================================
+   RULE DESCRIPTION POPUP - ABOVE DROPDOWN
+========================================= */
 
 .rule-hover-modal {
-  position: fixed;
-  right: 20px;
-  bottom: 105%;   
+  position: absolute !important;
+
+  bottom: calc(100% + 10px) !important;
+  top: auto !important;
+
+  left: 0 !important;
+  right: auto !important;
+
   width: 500px;
-  
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 12px;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #3b82c4;
   border-radius: 8px;
 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  z-index: 9999;
+  padding: 12px 15px;
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.6;
+
+  z-index: 2000;
+}
+
+.rule-hover-modal strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #25649a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rule-hover-modal p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+  .rule-hover-modal {
+    width: 100%;
+    max-width: 100%;
+    left: 0 !important;
+    bottom: calc(100% + 8px) !important;
+  }
 }
 /* ===== SMALL INPUT ===== */
 .form-input-sm {
@@ -771,5 +871,221 @@ h2::after {
 @keyframes employee-status-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+
+/* GPF FINANCIAL SUMMARY */
+
+.gpf-financial-summary {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* SERIAL NUMBERED INFORMATION */
+
+.gpf-numbered-info {
+  width: 100%;
+  border: 1px solid #dbe5ef;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.gpf-info-row {
+  display: grid;
+  grid-template-columns: 42px 1fr 220px;
+  align-items: center;
+  min-height: 42px;
+  padding: 6px 14px;
+  border-bottom: 1px solid #e9eef4;
+  gap: 12px;
+}
+
+.gpf-info-row:last-child {
+  border-bottom: none;
+}
+
+.gpf-info-sno {
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaf3fb;
+  color: #25649a;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gpf-info-label {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.gpf-info-value {
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: right;
+}
+
+/* CREDIT AND WITHDRAWAL STRIPS */
+
+.gpf-period-strip {
+  width: 100%;
+  border: 1px solid #dbe5ef;
+  border-radius: 8px;
+  background: #f4f8fc;
+  padding: 10px 14px;
+}
+
+.gpf-period-title {
+  color: #25649a;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+
+.gpf-period-items {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+
+.gpf-period-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.gpf-period-item span {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.gpf-period-item strong {
+  color: #1e293b;
+  font-weight: 650;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+  .gpf-info-row {
+    grid-template-columns: 32px 1fr auto;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .gpf-period-items {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gpf-period-item {
+    white-space: normal;
+    flex-wrap: wrap;
+  }
+}
+.gpf-period-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #25649a;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+
+/* FINANCIAL SUMMARY - CONTAINER FIX */
+
+.gpf-financial-summary,
+.gpf-numbered-info,
+.gpf-period-strip {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.gpf-numbered-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* NUMBERED ROWS */
+
+.gpf-info-row {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* CREDIT AND WITHDRAWAL STRIPS */
+
+.gpf-period-strip {
+  padding: 10px 14px;
+  overflow: hidden;
+}
+
+.gpf-period-items {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  box-sizing: border-box;
+}
+
+.gpf-period-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  gap: 5px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+
+.gpf-period-item strong {
+  overflow-wrap: anywhere;
+}
+
+/* SERIAL NUMBER AND HEADING */
+
+.gpf-period-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* SMALL SCREENS */
+
+@media (max-width: 768px) {
+  .gpf-info-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .gpf-period-items {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
