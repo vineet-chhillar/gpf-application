@@ -20,7 +20,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>(false, message, null);
     }
 
-    // ✅ ADD THESE
+    
     public boolean isSuccess() {
         return success;
     }
